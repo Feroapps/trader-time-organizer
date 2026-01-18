@@ -29,8 +29,12 @@ function getLocalTime(): LocalTime {
   };
 }
 
-function getIndicatorPosition(time: LocalTime): number {
-  const totalMinutes = time.hours * 60 + time.minutes + time.seconds / 60;
+function getIndicatorPosition(): number {
+  const now = new Date();
+  const utcHours = now.getUTCHours();
+  const utcMinutes = now.getUTCMinutes();
+  const utcSeconds = now.getUTCSeconds();
+  const totalMinutes = utcHours * 60 + utcMinutes + utcSeconds / 60;
   return (totalMinutes / (24 * 60)) * 100;
 }
 
@@ -94,7 +98,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
   }, []);
 
   const indicatorPosition = useMemo(
-    () => getIndicatorPosition(localTime),
+    () => getIndicatorPosition(),
     [localTime]
   );
 
