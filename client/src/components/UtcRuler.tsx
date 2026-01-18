@@ -131,11 +131,30 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="relative h-12 bg-muted rounded-md overflow-hidden border"
           data-testid="ruler-track"
         >
-          {(marketStatus.isOpen || marketStatus.reason === 'sunday_before_sydney') && timeSegments.map((segment) => (
+          {marketStatus.isOpen && timeSegments.map((segment) => (
             <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
           ))}
 
-          {!marketStatus.isOpen && marketStatus.reason === 'saturday' && (
+          {marketStatus.reason === 'sunday_before_sydney' && (
+            <>
+              <div
+                className="absolute inset-0 flex items-center justify-center z-5"
+                style={{ right: `${((24 - 21) / 24) * 100}%` }}
+                data-testid="market-closed-overlay"
+              >
+                <span className="text-muted-foreground font-medium text-lg">
+                  Market closed
+                </span>
+              </div>
+              {timeSegments
+                .filter((seg) => seg.startHour >= 21 && seg.sessions.includes('sydney'))
+                .map((segment) => (
+                  <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
+                ))}
+            </>
+          )}
+
+          {marketStatus.reason === 'saturday' && (
             <div
               className="absolute inset-0 flex items-center justify-center z-5"
               data-testid="market-closed-overlay"
