@@ -1,10 +1,188 @@
-export function Calendar() {
+import { useState, useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
+interface UTCDate {
+  year: number;
+  month: number;
+  day: number;
+}
+
+function getUTCToday(): UTCDate {
+  const now = new Date();
+  return {
+    year: now.getUTCFullYear(),
+    month: now.getUTCMonth(),
+    day: now.getUTCDate(),
+  };
+}
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+function getFirstDayOfMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 1)).getUTCDay();
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+interface MonthGridProps {
+  year: number;
+  month: number;
+  today: UTCDate;
+  selectedDate: UTCDate | null;
+  onSelectDate: (date: UTCDate) => void;
+}
+
+function MonthGrid({ year, month, today, selectedDate, onSelectDate }: MonthGridProps) {
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  
+  const days: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    days.push(day);
+  }
+
+  const isToday = (day: number) => 
+    today.year === year && today.month === month && today.day === day;
+
+  const isSelected = (day: number) =>
+    selectedDate?.year === year && selectedDate?.month === month && selectedDate?.day === day;
+
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold" data-testid="text-page-title">Calendar</h1>
-      <p className="text-muted-foreground mt-2" data-testid="text-page-description">
-        Calendar page placeholder
-      </p>
+    <div className="border rounded-md p-2" data-testid={`month-grid-${month}`}>
+      <h3 className="text-sm font-medium text-center mb-2" data-testid={`month-name-${month}`}>
+        {MONTH_NAMES[month]}
+      </h3>
+      <div className="grid grid-cols-7 gap-0.5 text-[10px]">
+        {DAY_NAMES.map((d) => (
+          <div key={d} className="text-center text-muted-foreground font-medium py-0.5">
+            {d[0]}
+          </div>
+        ))}
+        {days.map((day, idx) => (
+          <div key={idx} className="aspect-square flex items-center justify-center">
+            {day !== null && (
+              <button
+                onClick={() => onSelectDate({ year, month, day })}
+                className={`w-full h-full flex items-center justify-center rounded-sm text-[10px] transition-colors hover-elevate ${
+                  isToday(day)
+                    ? "bg-primary text-primary-foreground font-bold"
+                    : isSelected(day)
+                    ? "bg-accent text-accent-foreground"
+                    : "text-foreground"
+                }`}
+                data-testid={`day-${year}-${month}-${day}`}
+              >
+                {day}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface DayTimelineProps {
+  date: UTCDate;
+}
+
+function DayTimeline({ date }: DayTimelineProps) {
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const dateStr = `${date.year}-${String(date.month + 1).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+
+  return (
+    <Card className="p-4" data-testid="day-timeline">
+      <h3 className="text-lg font-semibold mb-4" data-testid="timeline-date">
+        {MONTH_NAMES[date.month]} {date.day}, {date.year} (UTC)
+      </h3>
+      <div className="space-y-1">
+        {hours.map((hour) => (
+          <div
+            key={hour}
+            className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50"
+            data-testid={`timeline-hour-${hour}`}
+          >
+            <span className="font-mono text-sm text-muted-foreground w-12">
+              {String(hour).padStart(2, "0")}:00
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+export function Calendar() {
+  const today = useMemo(() => getUTCToday(), []);
+  const [viewYear, setViewYear] = useState(today.year);
+  const [selectedDate, setSelectedDate] = useState<UTCDate | null>(null);
+
+  const months = Array.from({ length: 12 }, (_, i) => i);
+
+  return (
+    <div className="max-w-7xl mx-auto p-4 sm:p-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold" data-testid="text-page-title">
+          Calendar
+        </h1>
+        <div className="flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setViewYear(viewYear - 1)}
+            data-testid="button-prev-year"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="font-mono text-lg font-semibold min-w-[60px] text-center" data-testid="text-current-year">
+            {viewYear}
+          </span>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setViewYear(viewYear + 1)}
+            data-testid="button-next-year"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-sm text-muted-foreground mb-4" data-testid="text-utc-notice">
+        All dates are in UTC+00:00
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6" data-testid="yearly-grid">
+        {months.map((month) => (
+          <MonthGrid
+            key={month}
+            year={viewYear}
+            month={month}
+            today={today}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+        ))}
+      </div>
+
+      {selectedDate && (
+        <div className="mt-6">
+          <DayTimeline date={selectedDate} />
+        </div>
+      )}
     </div>
   );
 }
