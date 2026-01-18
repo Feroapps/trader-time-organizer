@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
+import { UtcRuler, LocalTimeRuler, NoteModal, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms, createAlarm } from "@/storage/alarmsRepo";
+import { createNote } from "@/storage/notesRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
 import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Plus, StickyNote } from "lucide-react";
 import { AlertModal } from "@/components/AlertModal";
-import type { Alarm, CreateAlarmInput } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import type { Alarm, CreateAlarmInput, CreateNoteInput } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
 
@@ -21,9 +23,11 @@ function getUtcHour(): number {
 }
 
 export function Home() {
+  const { toast } = useToast();
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [notesOpen, setNotesOpen] = useState(false);
   const [addAlertOpen, setAddAlertOpen] = useState(false);
+  const [addNoteOpen, setAddNoteOpen] = useState(false);
   const [dailyNote, setDailyNote] = useState<DailyNote>(() => getDailyNote(getUtcDayOfWeek()));
   const [tradingContext, setTradingContext] = useState<TradingContext | null>(() => {
     const status = getMarketStatus();
@@ -35,6 +39,11 @@ export function Home() {
     await createAlarm(alertData);
     const allAlarms = await getAlarms();
     setAlarms(allAlarms);
+  }
+
+  async function handleAddNote(noteData: CreateNoteInput) {
+    await createNote(noteData);
+    toast({ title: "Note saved", description: "Your note has been saved and will appear in the Calendar." });
   }
 
   useEffect(() => {
@@ -116,17 +125,30 @@ export function Home() {
 
       <div className="mb-6">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setNotesOpen(!notesOpen)}
-            className="gap-2"
-            data-testid="button-toggle-notes"
-          >
-            <FileText className="w-4 h-4" />
-            Notes
-            {notesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNotesOpen(!notesOpen)}
+              className="gap-2"
+              data-testid="button-toggle-notes"
+            >
+              <FileText className="w-4 h-4" />
+              Notes
+              {notesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddNoteOpen(true)}
+              className="gap-2"
+              data-testid="button-add-note"
+            >
+              <StickyNote className="w-4 h-4" />
+              Add Note
+            </Button>
+          </div>
 
           <Button
             size="sm"
@@ -233,6 +255,12 @@ export function Home() {
         open={addAlertOpen}
         onOpenChange={setAddAlertOpen}
         onSave={handleAddAlert}
+      />
+
+      <NoteModal
+        open={addNoteOpen}
+        onOpenChange={setAddNoteOpen}
+        onSave={handleAddNote}
       />
     </div>
   );

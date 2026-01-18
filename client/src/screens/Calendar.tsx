@@ -407,7 +407,8 @@ export function Calendar() {
   const handleAddNote = async (text: string, timeUTC: string) => {
     if (!selectedDate) return;
     const dateUTC = formatDateUTC(selectedDate);
-    await createNote({ dateUTC, timeUTC, text });
+    const createdAt = new Date().toISOString();
+    await createNote({ dateUTC, timeUTC, text, createdAt });
     await loadData();
     toast({ title: "Note added" });
   };
