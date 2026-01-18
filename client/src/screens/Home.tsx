@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
-import { Button } from "@/components/ui/button";
 import type { Alarm } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
 
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
-  const [audioEnabled, setAudioEnabled] = useState(false);
 
   useEffect(() => {
     async function initializeAlarms() {
@@ -98,38 +96,6 @@ export function Home() {
           <UtcRuler alerts={utcAlerts} />
         </section>
       </div>
-
-      {!audioEnabled && (
-        <div className="mt-8">
-          <Button
-            onClick={async () => {
-              console.log("[Audio] Attempting to unlock browser audio...");
-              const audio = new Audio('/alarm.mp3');
-              try {
-                await audio.play();
-                audio.pause();
-                audio.currentTime = 0;
-                console.log("[Audio] AUDIO UNLOCKED - browser permission granted");
-                setAudioEnabled(true);
-                
-                const testPlay = new Audio('/alarm.mp3');
-                testPlay.play().then(() => {
-                  console.log("[Audio] PLAYBACK SUCCESS");
-                  testPlay.pause();
-                  testPlay.currentTime = 0;
-                }).catch((err) => {
-                  console.error("[Audio] PLAYBACK FAILED:", err);
-                });
-              } catch (err) {
-                console.error("[Audio] Failed to unlock:", err);
-              }
-            }}
-            data-testid="button-enable-audio"
-          >
-            Enable Alarm Sound
-          </Button>
-        </div>
-      )}
 
       {alarms.length > 0 && (
         <div className="mt-8 p-4 bg-muted rounded-md" data-testid="alarms-debug">

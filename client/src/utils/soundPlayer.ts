@@ -16,6 +16,7 @@ export function playAlarm(durationSeconds: number): void {
   }, durationSeconds * 1000);
 
   console.log(`[SoundPlayer] Playing alarm for ${durationSeconds} seconds`);
+  console.log('ALARM_VOLUME_SOURCE: DEVICE_SYSTEM_VOLUME');
 }
 
 export function stopAlarm(): void {
