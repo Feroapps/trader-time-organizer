@@ -148,9 +148,10 @@ export function LocalTimeRuler() {
       </div>
 
       <div className="relative h-6 mt-1" data-testid="local-ruler-labels">
-        {localHourLabels.map(({ utcHour, label }) => {
+        {localHourLabels.map(({ utcHour, localHour, label }) => {
           const leftPosition = (utcHour / 24) * 100;
-          const showLabel = utcHour % 3 === 0;
+          const isMajorLabel = utcHour % 3 === 0;
+          const minorLabel = formatHour(localHour, use24Hour);
           return (
             <div
               key={utcHour}
@@ -161,12 +162,19 @@ export function LocalTimeRuler() {
               }}
             >
               <div className="w-px h-2 bg-border" />
-              {showLabel && (
+              {isMajorLabel ? (
                 <span
                   className="text-xs text-muted-foreground font-mono mt-0.5"
                   data-testid={`local-hour-label-${utcHour}`}
                 >
                   {label}
+                </span>
+              ) : (
+                <span
+                  className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5"
+                  data-testid={`local-hour-label-minor-${utcHour}`}
+                >
+                  {minorLabel}
                 </span>
               )}
             </div>

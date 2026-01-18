@@ -165,7 +165,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
       <div className="relative h-6 mt-1" data-testid="ruler-labels">
         {hours.map((hour) => {
           const leftPosition = (hour / 24) * 100;
-          const showLabel = hour % 3 === 0;
+          const isMajorLabel = hour % 3 === 0;
           return (
             <div
               key={hour}
@@ -176,10 +176,17 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
               }}
             >
               <div className="w-px h-2 bg-border" />
-              {showLabel && (
+              {isMajorLabel ? (
                 <span
                   className="text-xs text-muted-foreground font-mono mt-0.5"
                   data-testid={`hour-label-${hour}`}
+                >
+                  {hour.toString().padStart(2, "0")}
+                </span>
+              ) : (
+                <span
+                  className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5"
+                  data-testid={`hour-label-minor-${hour}`}
                 >
                   {hour.toString().padStart(2, "0")}
                 </span>
