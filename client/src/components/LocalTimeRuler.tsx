@@ -44,12 +44,8 @@ function utcHourToLocalHour(utcHour: number): number {
   return Math.floor(localHour);
 }
 
-function getAlertLocalPosition(utcHour: number, utcMinute: number): number {
-  const now = new Date();
-  const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, utcMinute));
-  const localHours = utcDate.getHours();
-  const localMinutes = utcDate.getMinutes();
-  const totalMinutes = localHours * 60 + localMinutes;
+function getAlertPosition(utcHour: number, utcMinute: number): number {
+  const totalMinutes = utcHour * 60 + utcMinute;
   return (totalMinutes / (24 * 60)) * 100;
 }
 
@@ -163,7 +159,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
           {alerts
             .filter((alert) => alert.enabled)
             .map((alert) => {
-              const position = getAlertLocalPosition(alert.utcHour, alert.utcMinute);
+              const position = getAlertPosition(alert.utcHour, alert.utcMinute);
               return (
                 <div
                   key={alert.id}
