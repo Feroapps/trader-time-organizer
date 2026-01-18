@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
+import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
 import type { Alarm } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
@@ -22,9 +23,15 @@ export function Home() {
       const allAlarms = await getAlarms();
       console.log("[Alarms] Final fixed alarms:", allAlarms);
       setAlarms(allAlarms);
+      
+      startScheduler();
     }
 
     initializeAlarms();
+    
+    return () => {
+      stopScheduler();
+    };
   }, []);
 
   const utcAlerts: AlertMarker[] = alarms.map((alarm) => ({
