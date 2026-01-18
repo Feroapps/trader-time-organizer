@@ -131,11 +131,11 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="relative h-12 bg-muted rounded-md overflow-hidden border"
           data-testid="ruler-track"
         >
-          {marketStatus.isOpen && timeSegments.map((segment) => (
+          {(marketStatus.isOpen || marketStatus.reason === 'sunday_before_sydney') && timeSegments.map((segment) => (
             <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
           ))}
 
-          {!marketStatus.isOpen && (
+          {!marketStatus.isOpen && marketStatus.reason === 'saturday' && (
             <div
               className="absolute inset-0 flex items-center justify-center z-5"
               data-testid="market-closed-overlay"
