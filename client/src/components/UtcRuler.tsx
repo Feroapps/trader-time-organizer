@@ -58,9 +58,6 @@ function SegmentBand({ segment }: { segment: TimeSegment }) {
   );
 }
 
-// COLOR_PREVIEW_MODE (temporary)
-const COLOR_PREVIEW_MODE = true;
-
 export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
   const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
@@ -126,11 +123,11 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         className="relative h-12 bg-muted rounded-md overflow-hidden border"
         data-testid="ruler-track"
       >
-        {(COLOR_PREVIEW_MODE || marketStatus.isOpen) && timeSegments.map((segment) => (
+        {marketStatus.isOpen && timeSegments.map((segment) => (
           <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
         ))}
 
-        {!COLOR_PREVIEW_MODE && !marketStatus.isOpen && (
+        {!marketStatus.isOpen && (
           <div
             className="absolute inset-0 flex items-center justify-center z-5"
             data-testid="market-closed-overlay"
