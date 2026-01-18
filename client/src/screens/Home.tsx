@@ -159,7 +159,7 @@ export function Home() {
 
       <div className="space-y-8">
         <section>
-          <LocalTimeRuler />
+          <LocalTimeRuler alerts={utcAlerts} />
         </section>
         <section>
           <UtcRuler alerts={utcAlerts} />

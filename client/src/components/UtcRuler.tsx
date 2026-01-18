@@ -138,14 +138,14 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           </div>
         )}
 
-        {marketStatus.isOpen && alerts
+        {alerts
           .filter((alert: AlertMarker) => alert.enabled)
           .map((alert: AlertMarker) => {
             const position = getAlertPosition(alert.utcHour, alert.utcMinute);
             return (
               <div
                 key={alert.id}
-                className="absolute top-0 h-full w-0.5 bg-destructive z-10"
+                className="absolute top-0 h-full w-0.5 bg-black z-10"
                 style={{ left: `${position}%` }}
                 title={`${alert.label} - ${alert.utcHour.toString().padStart(2, "0")}:${alert.utcMinute.toString().padStart(2, "0")} UTC`}
                 data-testid={`alert-marker-${alert.id}`}

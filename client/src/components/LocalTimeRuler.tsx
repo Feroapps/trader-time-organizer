@@ -6,6 +6,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { AlertMarker } from "./UtcRuler";
+
+interface LocalTimeRulerProps {
+  alerts?: AlertMarker[];
+}
 
 interface LocalTime {
   hours: number;
@@ -37,6 +42,15 @@ function utcHourToLocalHour(utcHour: number): number {
   if (localHour < 0) localHour += 24;
   if (localHour >= 24) localHour -= 24;
   return Math.floor(localHour);
+}
+
+function getAlertLocalPosition(utcHour: number, utcMinute: number): number {
+  const now = new Date();
+  const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, utcMinute));
+  const localHours = utcDate.getHours();
+  const localMinutes = utcDate.getMinutes();
+  const totalMinutes = localHours * 60 + localMinutes;
+  return (totalMinutes / (24 * 60)) * 100;
 }
 
 function formatHour(hour: number, use24Hour: boolean): string {
@@ -72,7 +86,7 @@ function getTimezoneLabel(): string {
   return `UTC${sign}${wholeHours}:${minutes.toString().padStart(2, "0")}`;
 }
 
-export function LocalTimeRuler() {
+export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
   const [localTime, setLocalTime] = useState<LocalTime>(getLocalTime);
   const [use24Hour, setUse24Hour] = useState(true);
 
@@ -138,6 +152,20 @@ export function LocalTimeRuler() {
         className="relative h-12 bg-muted rounded-md overflow-hidden border"
         data-testid="local-ruler-track"
       >
+        {alerts
+          .filter((alert) => alert.enabled)
+          .map((alert) => {
+            const position = getAlertLocalPosition(alert.utcHour, alert.utcMinute);
+            return (
+              <div
+                key={alert.id}
+                className="absolute top-0 h-full w-0.5 bg-black z-10"
+                style={{ left: `${position}%` }}
+                data-testid={`local-alert-marker-${alert.id}`}
+              />
+            );
+          })}
+
         <div
           className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
           style={{ left: `${indicatorPosition}%` }}
