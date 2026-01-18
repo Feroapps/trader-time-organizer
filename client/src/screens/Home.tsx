@@ -30,6 +30,19 @@ export function Home() {
     }
 
     initializeAlarms();
+
+    const audioUrl = `${window.location.origin}/alarm.mp3`;
+    console.log("[Audio] Alarm file available at:", audioUrl);
+    
+    const testAudio = new Audio('/alarm.mp3');
+    testAudio.load();
+    testAudio.addEventListener('canplaythrough', () => {
+      console.log("[Audio] Playback test SUCCESS - audio file loaded correctly");
+      console.log("ALARM AUDIO READY AT /alarm.mp3");
+    });
+    testAudio.addEventListener('error', () => {
+      console.error("[Audio] Playback test FAILED - audio file could not load");
+    });
     
     return () => {
       stopScheduler();
