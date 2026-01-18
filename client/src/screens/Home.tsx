@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
+import { playAlarm, stopAlarm } from "@/utils/soundPlayer";
+import { Button } from "@/components/ui/button";
 import type { Alarm } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
 
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   useEffect(() => {
     async function initializeAlarms() {
@@ -61,6 +64,23 @@ export function Home() {
           <UtcRuler alerts={utcAlerts} />
         </section>
       </div>
+
+      {!audioEnabled && (
+        <div className="mt-8">
+          <Button
+            onClick={() => {
+              playAlarm(1);
+              setTimeout(() => {
+                stopAlarm();
+                setAudioEnabled(true);
+              }, 100);
+            }}
+            data-testid="button-enable-audio"
+          >
+            Enable Alarm Sound
+          </Button>
+        </div>
+      )}
 
       {alarms.length > 0 && (
         <div className="mt-8 p-4 bg-muted rounded-md" data-testid="alarms-debug">
