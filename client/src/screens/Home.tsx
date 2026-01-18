@@ -137,9 +137,10 @@ export function Home() {
               Notes
               {notesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </Button>
+          </div>
 
+          <div className="flex flex-col gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setAddNoteOpen(true)}
               className="gap-2"
@@ -148,17 +149,16 @@ export function Home() {
               <StickyNote className="w-4 h-4" />
               Add Note
             </Button>
+            <Button
+              size="sm"
+              onClick={() => setAddAlertOpen(true)}
+              className="gap-2"
+              data-testid="button-add-alert"
+            >
+              <Plus className="w-4 h-4" />
+              Add Alert
+            </Button>
           </div>
-
-          <Button
-            size="sm"
-            onClick={() => setAddAlertOpen(true)}
-            className="gap-2"
-            data-testid="button-add-alert"
-          >
-            <Plus className="w-4 h-4" />
-            Add Alert
-          </Button>
         </div>
 
         {notesOpen && (
