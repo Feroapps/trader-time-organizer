@@ -111,7 +111,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="font-mono text-2xl font-medium tabular-nums"
           data-testid="text-utc-current-time"
         >
-          {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)}
+          {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)} UTC
         </div>
       </div>
 
