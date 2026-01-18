@@ -1,0 +1,78 @@
+Implement fixed daily notes on the MAIN SCREEN ONLY, including full detailed bullet points.
+
+Design & behavior:
+- Add a small button/icon on the left side of the MAIN screen labeled "Notes" (or an icon).
+- When pressed, show a collapsible section directly below the button.
+- Do NOT use a modal.
+- Do NOT navigate to another screen.
+
+Visibility rules:
+- Daily notes must appear ONLY on the main screen.
+- Do NOT display daily notes inside the Calendar view.
+- Do NOT reference daily notes from the Calendar in any way.
+
+Content rules:
+- Display static educational notes based on the current UTC weekday.
+- The notes must include ALL bullet points exactly as defined below.
+- Notes are read-only and not editable.
+
+Daily notes content (must be implemented exactly):
+
+Monday — Preparation Day
+- Low liquidity and the market is often in a range.
+- Focus on preparation rather than profit.
+- Determine the week's High / Low.
+- Draw supports and resistances.
+- Read the general market trend.
+- Avoid swing trades.
+- Light scalping only when necessary.
+
+Tuesday — Expansion Day
+- Liquidity starts to rise.
+- Often the real movement of the week begins.
+- Pay attention to inflation news (CPI) when present.
+- Entering with the breakout is more appropriate than oscillation.
+- Avoid entering before important news.
+
+Wednesday — Trend Day
+- Highest liquidity during the week.
+- The trend often continues.
+- The best day for overall performance.
+- Reinforce winning trades only.
+- Avoid trading against the trend.
+- Pay attention to interest rate decisions if present.
+
+Thursday — Retracement Day
+- Medium liquidity.
+- Corrections and profit taking occur.
+- Opportunities are with the main trend.
+- Possible short reversals from strong levels.
+- Avoid overtrading.
+
+Friday — Liquidity Day
+- Liquidity is irregular.
+- Spread of false breakouts.
+- Liquidity grabs and stop-hunts.
+- Fast scalping only.
+- Early exit is better.
+- Avoid trading at the end of the day.
+
+Saturday — Market Closed
+- Market closed.
+
+Sunday — Market Closed
+- Market closed with anticipation of the start of the Asia session.
+
+Logic rules:
+- Weekday detection must use UTC time only.
+- Notes update automatically when the UTC day changes.
+
+Constraints:
+- Do NOT add user notes.
+- Do NOT add notifications.
+- Do NOT modify the Calendar screen.
+- Do NOT change alarm or session logic.
+- Keep UI minimal and consistent with existing design.
+
+Goal:
+Provide full daily trading context with detailed notes, accessible from the main screen only.
