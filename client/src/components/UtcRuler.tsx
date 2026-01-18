@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { tradingSessions, type TradingSession } from "@/data/sessionSchedule";
+import { getMarketStatus, logWeekendLogicApplied, logMarketStatus } from "@/utils/marketHours";
 
 export interface AlertMarker {
   id: string;
@@ -89,13 +90,28 @@ function SessionBand({ session }: { session: TradingSession }) {
 
 export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
+  const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
+  const lastLoggedReason = useRef<string | null>(null);
 
   useEffect(() => {
+    logWeekendLogicApplied();
+    
     const interval = setInterval(() => {
       setUtcTime(getUtcTime());
+      setMarketStatus(getMarketStatus());
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (lastLoggedReason.current !== marketStatus.reason) {
+      logMarketStatus(marketStatus);
+      if (!marketStatus.isOpen) {
+        console.log(`[UtcRuler] Market CLOSED - suppressing session rendering (${marketStatus.reason})`);
+      }
+      lastLoggedReason.current = marketStatus.reason;
+    }
+  }, [marketStatus.reason, marketStatus.isOpen, marketStatus.utcDay, marketStatus.utcHour]);
 
   const indicatorPosition = useMemo(
     () => getIndicatorPosition(utcTime),
@@ -142,11 +158,22 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         className="relative h-12 bg-muted rounded-md overflow-hidden border"
         data-testid="ruler-track"
       >
-        {tradingSessions.map((session) => (
+        {marketStatus.isOpen && tradingSessions.map((session) => (
           <SessionBand key={session.id} session={session} />
         ))}
 
-        {alerts
+        {!marketStatus.isOpen && (
+          <div
+            className="absolute inset-0 flex items-center justify-center z-5"
+            data-testid="market-closed-overlay"
+          >
+            <span className="text-muted-foreground font-medium text-lg">
+              Market closed
+            </span>
+          </div>
+        )}
+
+        {marketStatus.isOpen && alerts
           .filter((alert: AlertMarker) => alert.enabled)
           .map((alert: AlertMarker) => {
             const position = getAlertPosition(alert.utcHour, alert.utcMinute);

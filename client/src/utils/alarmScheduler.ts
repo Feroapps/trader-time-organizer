@@ -1,5 +1,6 @@
 import { getAlarms } from '@/storage/alarmsRepo';
 import { playAlarm } from '@/utils/soundPlayer';
+import { shouldAlarmTrigger } from '@/utils/marketHours';
 import type { Alarm } from '@/types/Alarm';
 
 const CHECK_INTERVAL_MS = 30000; // 30 seconds
@@ -19,7 +20,7 @@ function createTriggerKey(alarmId: string, hours: number, minutes: number): stri
   return `${alarmId}-${hours}-${minutes}`;
 }
 
-function shouldTriggerAlarm(alarm: Alarm, utcTime: { hours: number; minutes: number; dayOfWeek: number }): boolean {
+function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: { hours: number; minutes: number; dayOfWeek: number }): boolean {
   if (!alarm.isEnabled) {
     return false;
   }
@@ -32,6 +33,10 @@ function shouldTriggerAlarm(alarm: Alarm, utcTime: { hours: number; minutes: num
     return false;
   }
 
+  if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -40,7 +45,7 @@ async function checkAlarms(): Promise<void> {
   const alarms = await getAlarms();
 
   for (const alarm of alarms) {
-    if (shouldTriggerAlarm(alarm, utcTime)) {
+    if (shouldTriggerAlarmCheck(alarm, utcTime)) {
       const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes);
       
       if (lastTriggeredKey !== triggerKey) {
