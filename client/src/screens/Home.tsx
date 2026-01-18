@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
-import { playAlarm, stopAlarm } from "@/utils/soundPlayer";
 import { Button } from "@/components/ui/button";
 import type { Alarm } from "@/types";
 
@@ -69,11 +68,14 @@ export function Home() {
         <div className="mt-8">
           <Button
             onClick={() => {
-              playAlarm(1);
-              setTimeout(() => {
-                stopAlarm();
+              const audio = new Audio('/alarm.mp3');
+              audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
                 setAudioEnabled(true);
-              }, 100);
+              }).catch((err) => {
+                console.warn('[Audio] Failed to unlock:', err.message);
+              });
             }}
             data-testid="button-enable-audio"
           >
