@@ -31,18 +31,40 @@ export function Home() {
 
     initializeAlarms();
 
-    const audioUrl = `${window.location.origin}/alarm.mp3`;
-    console.log("[Audio] Alarm file available at:", audioUrl);
+    async function verifyAudioFile() {
+      const audioUrl = `${window.location.origin}/alarm.mp3`;
+      console.log("=== AUDIO DIAGNOSTIC REPORT ===");
+      console.log("[Audio] URL:", audioUrl);
+      
+      try {
+        const response = await fetch('/alarm.mp3', { method: 'HEAD' });
+        console.log("[Audio] HTTP Status:", response.status);
+        console.log("[Audio] Content-Type:", response.headers.get('Content-Type'));
+        console.log("[Audio] Content-Length:", response.headers.get('Content-Length'));
+        
+        if (response.headers.get('Content-Type')?.includes('audio')) {
+          console.log("[Audio] File verification: PASSED (audio MIME type confirmed)");
+        } else {
+          console.error("[Audio] File verification: FAILED (unexpected Content-Type)");
+        }
+      } catch (err) {
+        console.error("[Audio] Fetch failed:", err);
+      }
+      
+      const testAudio = new Audio('/alarm.mp3');
+      testAudio.load();
+      testAudio.addEventListener('canplaythrough', () => {
+        console.log("[Audio] Load test: SUCCESS - audio file loaded correctly");
+        console.log("ALARM AUDIO READY AT /alarm.mp3");
+        console.log("=== END DIAGNOSTIC REPORT ===");
+      });
+      testAudio.addEventListener('error', (e) => {
+        console.error("[Audio] Load test: FAILED", e);
+        console.log("=== END DIAGNOSTIC REPORT ===");
+      });
+    }
     
-    const testAudio = new Audio('/alarm.mp3');
-    testAudio.load();
-    testAudio.addEventListener('canplaythrough', () => {
-      console.log("[Audio] Playback test SUCCESS - audio file loaded correctly");
-      console.log("ALARM AUDIO READY AT /alarm.mp3");
-    });
-    testAudio.addEventListener('error', () => {
-      console.error("[Audio] Playback test FAILED - audio file could not load");
-    });
+    verifyAudioFile();
     
     return () => {
       stopScheduler();
@@ -80,15 +102,27 @@ export function Home() {
       {!audioEnabled && (
         <div className="mt-8">
           <Button
-            onClick={() => {
+            onClick={async () => {
+              console.log("[Audio] Attempting to unlock browser audio...");
               const audio = new Audio('/alarm.mp3');
-              audio.play().then(() => {
+              try {
+                await audio.play();
                 audio.pause();
                 audio.currentTime = 0;
+                console.log("[Audio] AUDIO UNLOCKED - browser permission granted");
                 setAudioEnabled(true);
-              }).catch((err) => {
-                console.warn('[Audio] Failed to unlock:', err.message);
-              });
+                
+                const testPlay = new Audio('/alarm.mp3');
+                testPlay.play().then(() => {
+                  console.log("[Audio] PLAYBACK SUCCESS");
+                  testPlay.pause();
+                  testPlay.currentTime = 0;
+                }).catch((err) => {
+                  console.error("[Audio] PLAYBACK FAILED:", err);
+                });
+              } catch (err) {
+                console.error("[Audio] Failed to unlock:", err);
+              }
             }}
             data-testid="button-enable-audio"
           >
