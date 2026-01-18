@@ -1,49 +1,10 @@
 import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
-import { getAlarms, seedFixedAlarms, clearAllAlarms, toggleAlarm } from "@/storage/alarmsRepo";
+import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
-import { Switch } from "@/components/ui/switch";
 import type { Alarm } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
-
-function formatTime(hour: number, minute: number): string {
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} UTC`;
-}
-
-function formatDays(days: number[]): string {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  if (days.length === 5 && !days.includes(0) && !days.includes(6)) {
-    return 'Mon-Fri';
-  }
-  if (days.length === 1 && days[0] === 0) {
-    return 'Sun only';
-  }
-  return days.map(d => dayNames[d]).join(', ');
-}
-
-function AlarmRow({ alarm, onToggle }: { alarm: Alarm; onToggle: (enabled: boolean) => void }) {
-  return (
-    <div
-      className="flex items-center justify-between p-3 bg-muted rounded-md"
-      data-testid={`alarm-row-${alarm.id}`}
-    >
-      <div className="flex-1 min-w-0">
-        <p className={`font-medium truncate ${!alarm.isEnabled ? 'text-muted-foreground' : ''}`}>
-          {alarm.label}
-        </p>
-        <p className="text-sm text-muted-foreground font-mono">
-          {formatTime(alarm.hourUTC, alarm.minuteUTC)} · {formatDays(alarm.repeatDays)}
-        </p>
-      </div>
-      <Switch
-        checked={alarm.isEnabled}
-        onCheckedChange={onToggle}
-        data-testid={`switch-alarm-${alarm.id}`}
-      />
-    </div>
-  );
-}
 
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
@@ -113,24 +74,6 @@ export function Home() {
         </section>
       </div>
 
-      {alarms.length > 0 && (
-        <div className="mt-8" data-testid="alarms-section">
-          <h2 className="text-lg font-semibold mb-4">Fixed Alarms</h2>
-          <div className="space-y-2">
-            {alarms.filter(a => a.isFixed).map((alarm) => (
-              <AlarmRow
-                key={alarm.id}
-                alarm={alarm}
-                onToggle={async (enabled) => {
-                  await toggleAlarm(alarm.id, enabled);
-                  const updated = await getAlarms();
-                  setAlarms(updated);
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
