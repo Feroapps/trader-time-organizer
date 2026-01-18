@@ -1,4 +1,5 @@
 import { getAlarms } from '@/storage/alarmsRepo';
+import { playAlarm } from '@/utils/soundPlayer';
 import type { Alarm } from '@/types/Alarm';
 
 const CHECK_INTERVAL_MS = 30000; // 30 seconds
@@ -45,6 +46,7 @@ async function checkAlarms(): Promise<void> {
       if (lastTriggeredKey !== triggerKey) {
         const timeStr = `${alarm.hourUTC.toString().padStart(2, '0')}:${alarm.minuteUTC.toString().padStart(2, '0')} UTC`;
         console.log(`ALARM TRIGGERED: ${alarm.label} (${timeStr})`);
+        playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
       }
     }
