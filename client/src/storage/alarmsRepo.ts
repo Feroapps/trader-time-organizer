@@ -17,11 +17,9 @@ export async function seedFixedAlarms(): Promise<Alarm[]> {
   const existingAlarms = await getAlarms();
   
   if (existingAlarms.length > 0) {
-    console.log("[Alarms] Alarms already exist, skipping seed");
     return existingAlarms;
   }
   
-  console.log("[Alarms] Seeding fixed alarms...");
   const seededAlarms: Alarm[] = [];
   
   for (const fixedAlarm of fixedAlarms) {
@@ -33,7 +31,6 @@ export async function seedFixedAlarms(): Promise<Alarm[]> {
   }
   
   await localforage.setItem(ALARMS_KEY, seededAlarms);
-  console.log("[Alarms] Seeded fixed alarms:", seededAlarms);
   return seededAlarms;
 }
 
@@ -79,7 +76,6 @@ export async function deleteAlarm(id: string): Promise<boolean> {
   }
   
   if (alarm.isFixed) {
-    console.log("[Alarms] Cannot delete fixed alarm:", alarm.label);
     return false;
   }
   
@@ -90,5 +86,4 @@ export async function deleteAlarm(id: string): Promise<boolean> {
 
 export async function clearAllAlarms(): Promise<void> {
   await localforage.removeItem(ALARMS_KEY);
-  console.log("[Alarms] Cleared all alarms from storage");
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { tradingSessions, type TradingSession } from "@/data/sessionSchedule";
-import { getMarketStatus, logWeekendLogicApplied, logMarketStatus } from "@/utils/marketHours";
+import { getMarketStatus } from "@/utils/marketHours";
 
 export interface AlertMarker {
   id: string;
@@ -91,11 +91,9 @@ function SessionBand({ session }: { session: TradingSession }) {
 export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
   const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
-  const lastLoggedReason = useRef<string | null>(null);
+  const lastLoggedIsOpen = useRef<boolean | null>(null);
 
   useEffect(() => {
-    logWeekendLogicApplied();
-    
     const interval = setInterval(() => {
       setUtcTime(getUtcTime());
       setMarketStatus(getMarketStatus());
@@ -104,14 +102,11 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   }, []);
 
   useEffect(() => {
-    if (lastLoggedReason.current !== marketStatus.reason) {
-      logMarketStatus(marketStatus);
-      if (!marketStatus.isOpen) {
-        console.log(`[UtcRuler] Market CLOSED - suppressing session rendering (${marketStatus.reason})`);
-      }
-      lastLoggedReason.current = marketStatus.reason;
+    if (lastLoggedIsOpen.current !== marketStatus.isOpen) {
+      console.log("WEEKEND_LOGIC_APPLIED");
+      lastLoggedIsOpen.current = marketStatus.isOpen;
     }
-  }, [marketStatus.reason, marketStatus.isOpen, marketStatus.utcDay, marketStatus.utcHour]);
+  }, [marketStatus.isOpen]);
 
   const indicatorPosition = useMemo(
     () => getIndicatorPosition(utcTime),

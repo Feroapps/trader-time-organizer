@@ -1,6 +1,6 @@
 export interface MarketStatus {
   isOpen: boolean;
-  reason: 'open' | 'saturday' | 'sunday_before_sydney' | 'friday_after_close';
+  reason: 'open' | 'saturday' | 'sunday_before_sydney';
   utcDay: number;
   utcHour: number;
 }
@@ -10,28 +10,18 @@ export function getMarketStatus(): MarketStatus {
   const utcDay = now.getUTCDay();
   const utcHour = now.getUTCHours();
 
+  // Saturday: fully closed
   if (utcDay === 6) {
     return { isOpen: false, reason: 'saturday', utcDay, utcHour };
   }
   
+  // Sunday before 21:00 UTC: closed until Sydney opens
   if (utcDay === 0 && utcHour < 21) {
     return { isOpen: false, reason: 'sunday_before_sydney', utcDay, utcHour };
   }
-  
-  if (utcDay === 5 && utcHour >= 21) {
-    return { isOpen: false, reason: 'friday_after_close', utcDay, utcHour };
-  }
 
+  // Sunday 21:00+ and Monday-Friday: market open
   return { isOpen: true, reason: 'open', utcDay, utcHour };
-}
-
-export function logMarketStatus(status: MarketStatus): void {
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  if (!status.isOpen) {
-    console.log(`[Market] ${dayNames[status.utcDay]} ${status.utcHour}:xx UTC - MARKET CLOSED (${status.reason})`);
-  } else {
-    console.log(`[Market] ${dayNames[status.utcDay]} ${status.utcHour}:xx UTC - MARKET OPEN`);
-  }
 }
 
 export function shouldAlarmTrigger(
@@ -43,19 +33,15 @@ export function shouldAlarmTrigger(
 ): boolean {
   const status = getMarketStatus();
 
+  // Special case: Sydney session alarm at Sunday 21:00 UTC
   if (alarmLabel === "Start of Sydney session" && utcDay === 0 && utcHour === 21) {
-    console.log(`[Market] Sunday 21:00 UTC - Sydney session alarm ACTIVE`);
     return true;
   }
 
+  // All other alarms suppressed when market closed
   if (!status.isOpen) {
-    console.log(`[Market] Alarm "${alarmLabel}" SUPPRESSED - market closed (${status.reason})`);
     return false;
   }
 
   return true;
-}
-
-export function logWeekendLogicApplied(): void {
-  console.log("WEEKEND_LOGIC_APPLIED");
 }

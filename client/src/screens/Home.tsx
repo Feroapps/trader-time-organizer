@@ -14,14 +14,12 @@ export function Home() {
       const lastVersion = localStorage.getItem("alarms_seed_version");
       
       if (lastVersion !== String(RESEED_VERSION)) {
-        console.log("[Alarms] New seed version detected, clearing storage...");
         await clearAllAlarms();
         localStorage.setItem("alarms_seed_version", String(RESEED_VERSION));
       }
       
       await seedFixedAlarms();
       const allAlarms = await getAlarms();
-      console.log("[Alarms] Final fixed alarms:", allAlarms);
       setAlarms(allAlarms);
       
       startScheduler();
@@ -30,36 +28,15 @@ export function Home() {
     initializeAlarms();
 
     async function verifyAudioFile() {
-      const audioUrl = `${window.location.origin}/alarm.mp3`;
-      console.log("=== AUDIO DIAGNOSTIC REPORT ===");
-      console.log("[Audio] URL:", audioUrl);
-      
       try {
-        const response = await fetch('/alarm.mp3', { method: 'HEAD' });
-        console.log("[Audio] HTTP Status:", response.status);
-        console.log("[Audio] Content-Type:", response.headers.get('Content-Type'));
-        console.log("[Audio] Content-Length:", response.headers.get('Content-Length'));
-        
-        if (response.headers.get('Content-Type')?.includes('audio')) {
-          console.log("[Audio] File verification: PASSED (audio MIME type confirmed)");
-        } else {
-          console.error("[Audio] File verification: FAILED (unexpected Content-Type)");
-        }
+        const testAudio = new Audio('/alarm.mp3');
+        testAudio.load();
+        testAudio.addEventListener('error', (e) => {
+          console.error("[Audio] Load failed:", e);
+        });
       } catch (err) {
-        console.error("[Audio] Fetch failed:", err);
+        console.error("[Audio] Error:", err);
       }
-      
-      const testAudio = new Audio('/alarm.mp3');
-      testAudio.load();
-      testAudio.addEventListener('canplaythrough', () => {
-        console.log("[Audio] Load test: SUCCESS - audio file loaded correctly");
-        console.log("ALARM AUDIO READY AT /alarm.mp3");
-        console.log("=== END DIAGNOSTIC REPORT ===");
-      });
-      testAudio.addEventListener('error', (e) => {
-        console.error("[Audio] Load test: FAILED", e);
-        console.log("=== END DIAGNOSTIC REPORT ===");
-      });
     }
     
     verifyAudioFile();

@@ -49,8 +49,6 @@ async function checkAlarms(): Promise<void> {
       const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes);
       
       if (lastTriggeredKey !== triggerKey) {
-        const timeStr = `${alarm.hourUTC.toString().padStart(2, '0')}:${alarm.minuteUTC.toString().padStart(2, '0')} UTC`;
-        console.log(`ALARM TRIGGERED: ${alarm.label} (${timeStr})`);
         playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
       }
@@ -60,22 +58,18 @@ async function checkAlarms(): Promise<void> {
 
 export function startScheduler(): void {
   if (schedulerInterval !== null) {
-    console.log('[Scheduler] Already running');
     return;
   }
 
-  console.log('[Scheduler] Starting alarm scheduler (30s interval)');
   checkAlarms();
   schedulerInterval = setInterval(checkAlarms, CHECK_INTERVAL_MS);
 }
 
 export function stopScheduler(): void {
   if (schedulerInterval === null) {
-    console.log('[Scheduler] Not running');
     return;
   }
 
-  console.log('[Scheduler] Stopping alarm scheduler');
   clearInterval(schedulerInterval);
   schedulerInterval = null;
   lastTriggeredKey = null;
