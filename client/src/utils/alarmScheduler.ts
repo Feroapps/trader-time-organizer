@@ -49,7 +49,6 @@ async function checkAlarms(): Promise<void> {
       const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes);
       
       if (lastTriggeredKey !== triggerKey) {
-        console.log(`[AlarmScheduler] Triggering alarm: ${alarm.label} at ${utcTime.hours}:${utcTime.minutes} UTC`);
         playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
       }

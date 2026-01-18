@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { tradingSessions, timeSegments, type TradingSession, type TimeSegment } from "@/data/sessionSchedule";
 import { getMarketStatus } from "@/utils/marketHours";
 
@@ -61,7 +61,6 @@ function SegmentBand({ segment }: { segment: TimeSegment }) {
 export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
   const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
-  const lastLoggedIsOpen = useRef<boolean | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -71,12 +70,6 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (lastLoggedIsOpen.current !== marketStatus.isOpen) {
-      console.log("WEEKEND_LOGIC_APPLIED");
-      lastLoggedIsOpen.current = marketStatus.isOpen;
-    }
-  }, [marketStatus.isOpen]);
 
   const indicatorPosition = useMemo(
     () => getIndicatorPosition(utcTime),
@@ -135,26 +128,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
             <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
           ))}
 
-          {marketStatus.reason === 'sunday_before_sydney' && (
-            <>
-              <div
-                className="absolute inset-0 flex items-center justify-center z-5"
-                style={{ right: `${((24 - 21) / 24) * 100}%` }}
-                data-testid="market-closed-overlay"
-              >
-                <span className="text-muted-foreground font-medium text-lg">
-                  Market closed
-                </span>
-              </div>
-              {timeSegments
-                .filter((seg) => seg.startHour >= 21 && seg.sessions.includes('sydney'))
-                .map((segment) => (
-                  <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
-                ))}
-            </>
-          )}
-
-          {marketStatus.reason === 'saturday' && (
+          {!marketStatus.isOpen && (
             <div
               className="absolute inset-0 flex items-center justify-center z-5"
               data-testid="market-closed-overlay"

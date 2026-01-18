@@ -1,0 +1,45 @@
+Revert previous Sunday visual changes (full UI rollback; visual-only).
+
+Scope: Undo the recent Sunday visual-only patch that hid session bands and left only Sydney visible. This revert must not change any alarm logic, scheduling, storage, or persisted data—pure UI rollback only.
+
+Actions (apply exactly):
+
+1) Disable Sunday visual override:
+   - Set ENABLE_SUNDAY_VISUAL_OVERRIDE = false or remove the override guard.
+   - Restore original session-band rendering so all session bands (Sydney, Tokyo, London, New York) render on Sundays exactly as they do on other weekdays.
+   - Remove application of any CSS/class that hid non-Sydney sessions on Sunday (e.g., .session-hidden, .sunday-visual-only-sydney) or ensure those classes are not applied.
+
+2) Restore "Market closed" behavior to prior state:
+   - Revert any changes that altered the Market closed label's placement, visibility, or timing. Market closed should behave exactly as before the patch.
+
+3) Restore alarm markers rendering:
+   - Re-enable any previous rendering/filters that displayed system/fixed alarms on rulers (i.e., undo filters that hid fixed alarms).
+   - Remove color overrides and glow applied to user alarm lines; restore original alarm marker styles.
+   - Remove or neutralize any temporary comments or flags that changed alarm rendering unless harmless.
+
+4) Restore current-time indicator visuals:
+   - Revert any added black-arrow styling if it did not exist before.
+   - Restore .current-time-indicator CSS to pre-patch values.
+
+5) Restore Add Note / Add Alert placement:
+   - Move Add Note back to its previous location. If Add Note did not exist before, remove it. If it existed but below Add Alert, return it there.
+   - Restore exact original button styles.
+
+6) Remove debug logs / preview flags:
+   - Remove console.debug statements added for the patch.
+   - Disable or remove any temporary preview toggles or flags introduced for this UI patch.
+
+7) Safety:
+   - Do NOT remove or alter user data in IndexedDB/localForage.
+   - Do NOT change any scheduling/time logic files.
+   - Ensure no new persistent keys are written. If any preview keys were added during earlier patch, stop writing them going forward but do not delete user data.
+
+Verification (manual):
+- Open preview and confirm:
+  * Sunday shows the full set of session bands (Sydney, Tokyo, London, New York) identical to Monday–Friday.
+  * Market closed displays as it did prior to the patch.
+  * Alarm markers on rulers match the pre-patch rendering (system and user alarms appear as before).
+  * Add Note/Add Alert button positions match the previous UI.
+  * Current-time indicator appearance matches the previous UI.
+
+If file or variable names differ, apply changes to the same files/locations modified by the last UI patch. After applying the revert, return one screenshot showing Sunday on the UTC ruler or reply with "تم" to confirm completion.
