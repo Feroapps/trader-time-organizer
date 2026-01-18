@@ -1,4 +1,4 @@
-import { UtcRuler } from "@/components";
+import { UtcRuler, LocalTimeRuler } from "@/components";
 
 export function Home() {
   return (
@@ -13,6 +13,9 @@ export function Home() {
       </div>
 
       <div className="space-y-8">
+        <section>
+          <LocalTimeRuler />
+        </section>
         <section>
           <UtcRuler />
         </section>
