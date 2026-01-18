@@ -154,11 +154,11 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           })}
 
         <div
-          className="absolute top-0 h-full w-0.5 bg-primary z-20 transition-all duration-1000 ease-linear"
+          className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
           style={{ left: `${indicatorPosition}%` }}
           data-testid="utc-indicator"
         >
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-primary" />
+          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[2px] border-r-[2px] border-t-[3px] border-l-transparent border-r-transparent border-t-black" />
         </div>
       </div>
 
