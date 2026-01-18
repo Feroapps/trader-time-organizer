@@ -3,6 +3,8 @@ import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
 import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
+import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
+import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, FileText } from "lucide-react";
 import type { Alarm } from "@/types";
@@ -13,10 +15,19 @@ function getUtcDayOfWeek(): number {
   return new Date().getUTCDay();
 }
 
+function getUtcHour(): number {
+  return new Date().getUTCHours();
+}
+
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [notesOpen, setNotesOpen] = useState(false);
   const [dailyNote, setDailyNote] = useState<DailyNote>(() => getDailyNote(getUtcDayOfWeek()));
+  const [tradingContext, setTradingContext] = useState<TradingContext | null>(() => {
+    const status = getMarketStatus();
+    return getTradingContext(getUtcHour(), status.isOpen);
+  });
+  const [isMarketOpen, setIsMarketOpen] = useState(() => getMarketStatus().isOpen);
 
   useEffect(() => {
     async function initializeAlarms() {
@@ -64,6 +75,15 @@ export function Home() {
     }, 60000);
     return () => clearInterval(interval);
   }, [dailyNote.dayOfWeek]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const status = getMarketStatus();
+      setIsMarketOpen(status.isOpen);
+      setTradingContext(getTradingContext(getUtcHour(), status.isOpen));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const utcAlerts: AlertMarker[] = alarms.map((alarm) => ({
     id: alarm.id,
@@ -123,6 +143,67 @@ export function Home() {
         </section>
         <section>
           <UtcRuler alerts={utcAlerts} />
+        </section>
+        <section
+          className="p-4 bg-muted rounded-md border"
+          data-testid="trading-context-frame"
+        >
+          {tradingContext ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="font-semibold" data-testid="text-context-time-range">
+                  {tradingContext.timeRange} UTC
+                </span>
+                {tradingContext.liquidity && (
+                  <span className="text-sm text-muted-foreground" data-testid="text-context-liquidity">
+                    Liquidity: {tradingContext.liquidity}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm" data-testid="text-context-behavior">
+                <span className="text-muted-foreground">Behavior: </span>
+                <span className="font-medium">{tradingContext.behavior}</span>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm">
+                {tradingContext.majorPairs && (
+                  <div data-testid="context-major-pairs">
+                    <span className="text-muted-foreground">Major pairs: </span>
+                    <span className="font-mono">{tradingContext.majorPairs.join(", ")}</span>
+                  </div>
+                )}
+                {tradingContext.minorPairs && (
+                  <div data-testid="context-minor-pairs">
+                    <span className="text-muted-foreground">Minor pairs: </span>
+                    <span className="font-mono">{tradingContext.minorPairs.join(", ")}</span>
+                  </div>
+                )}
+                {tradingContext.reactivePairs && (
+                  <div data-testid="context-reactive-pairs">
+                    <span className="text-muted-foreground">Most reactive pairs: </span>
+                    <span className="font-mono">{tradingContext.reactivePairs.join(", ")}</span>
+                  </div>
+                )}
+                {tradingContext.liquidPairs && (
+                  <div data-testid="context-liquid-pairs">
+                    <span className="text-muted-foreground">Most liquid pairs: </span>
+                    <span className="font-mono">{tradingContext.liquidPairs.join(", ")}</span>
+                  </div>
+                )}
+                {tradingContext.additionalPairs && (
+                  <div data-testid="context-additional-pairs">
+                    <span className="text-muted-foreground">Additional active pairs: </span>
+                    <span className="font-mono">{tradingContext.additionalPairs.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4" data-testid="context-closed-message">
+              <p className="whitespace-pre-line text-muted-foreground">
+                {closedMessage}
+              </p>
+            </div>
+          )}
         </section>
       </div>
 
