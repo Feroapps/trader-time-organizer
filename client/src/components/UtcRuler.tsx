@@ -153,8 +153,8 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
               return (
                 <div
                   key={alert.id}
-                  className="absolute top-0 h-full w-0.5 bg-black z-10"
-                  style={{ left: `${position}%` }}
+                  className="absolute top-0 h-full w-0.5 z-10"
+                  style={{ left: `${position}%`, backgroundColor: '#2DFF6A' }}
                   title={`${alert.label} - ${alert.utcHour.toString().padStart(2, "0")}:${alert.utcMinute.toString().padStart(2, "0")} UTC`}
                   data-testid={`alert-marker-${alert.id}`}
                 />

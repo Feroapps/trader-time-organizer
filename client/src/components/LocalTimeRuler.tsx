@@ -163,8 +163,8 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
               return (
                 <div
                   key={alert.id}
-                  className="absolute top-0 h-full w-0.5 bg-black z-10"
-                  style={{ left: `${position}%` }}
+                  className="absolute top-0 h-full w-0.5 z-10"
+                  style={{ left: `${position}%`, backgroundColor: '#2DFF6A' }}
                   data-testid={`local-alert-marker-${alert.id}`}
                 />
               );
