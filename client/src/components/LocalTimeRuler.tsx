@@ -171,7 +171,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
           style={{ left: `${indicatorPosition}%` }}
           data-testid="local-indicator"
         >
-          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[2px] border-r-[2px] border-t-[3px] border-l-transparent border-r-transparent border-t-black" />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-l-transparent border-r-transparent border-b-black" />
         </div>
       </div>
 

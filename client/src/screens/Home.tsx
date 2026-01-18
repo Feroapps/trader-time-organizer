@@ -93,13 +93,15 @@ export function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const utcAlerts: AlertMarker[] = alarms.map((alarm) => ({
-    id: alarm.id,
-    label: alarm.label,
-    utcHour: alarm.hourUTC,
-    utcMinute: alarm.minuteUTC,
-    enabled: alarm.isEnabled,
-  }));
+  const utcAlerts: AlertMarker[] = alarms
+    .filter((alarm) => !alarm.isFixed)
+    .map((alarm) => ({
+      id: alarm.id,
+      label: alarm.label,
+      utcHour: alarm.hourUTC,
+      utcMinute: alarm.minuteUTC,
+      enabled: alarm.isEnabled,
+    }));
 
   return (
     <div className="max-w-6xl mx-auto p-8">
