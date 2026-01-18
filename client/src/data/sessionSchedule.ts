@@ -21,8 +21,8 @@ export const tradingSessions: TradingSession[] = [
     label: "Tokyo",
     startHour: 0,
     endHour: 9,
-    color: "hsl(45 65% 65%)",
-    textColor: "hsl(45 65% 20%)",
+    color: "hsl(38 70% 58%)",
+    textColor: "hsl(38 70% 20%)",
   },
   {
     id: "london",
@@ -37,8 +37,8 @@ export const tradingSessions: TradingSession[] = [
     label: "New York",
     startHour: 13,
     endHour: 22,
-    color: "hsl(140 40% 70%)",
-    textColor: "hsl(140 40% 25%)",
+    color: "hsl(140 55% 65%)",
+    textColor: "hsl(140 55% 25%)",
   },
 ];
 
@@ -62,7 +62,7 @@ export const timeSegments: TimeSegment[] = [
     startHour: 6,
     endHour: 8,
     sessions: ["tokyo"],
-    color: "hsl(45 65% 65%)",
+    color: "hsl(38 70% 58%)",
     label: "Tokyo",
   },
   {
@@ -83,21 +83,21 @@ export const timeSegments: TimeSegment[] = [
     startHour: 13,
     endHour: 17,
     sessions: ["london", "new-york"],
-    color: "hsl(150 40% 40%)",
+    color: "hsl(150 45% 32%)",
     label: "London + New York",
   },
   {
     startHour: 17,
     endHour: 21,
     sessions: ["new-york"],
-    color: "hsl(140 40% 70%)",
+    color: "hsl(140 55% 65%)",
     label: "New York",
   },
   {
     startHour: 21,
     endHour: 22,
     sessions: ["sydney", "new-york"],
-    color: "hsl(80 35% 50%)",
+    color: "hsl(75 35% 40%)",
     label: "Sydney + New York",
   },
   {
