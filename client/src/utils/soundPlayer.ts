@@ -1,5 +1,29 @@
 let audioElement: HTMLAudioElement | null = null;
 let stopTimeout: ReturnType<typeof setTimeout> | null = null;
+let audioUnlocked = false;
+
+export function unlockAudio(): void {
+  if (audioUnlocked) return;
+  
+  try {
+    const audio = new Audio('/alarm.mp3');
+    audio.volume = 0.001;
+    audio.play().then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioUnlocked = true;
+      console.log('[SoundPlayer] Audio unlocked successfully');
+    }).catch((error) => {
+      console.warn('[SoundPlayer] Audio unlock failed:', error.message);
+    });
+  } catch (error) {
+    console.warn('[SoundPlayer] Audio unlock error:', error);
+  }
+}
+
+export function isAudioUnlocked(): boolean {
+  return audioUnlocked;
+}
 
 export function playAlarm(durationSeconds: number): void {
   stopAlarm();

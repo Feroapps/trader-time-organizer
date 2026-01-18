@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Home, Calendar, Settings } from "@/screens";
 import NotFound from "@/pages/not-found";
 import { Clock, CalendarDays, Cog } from "lucide-react";
+import { unlockAudio, isAudioUnlocked } from "@/utils/soundPlayer";
 
 function Navigation() {
   const [location] = useLocation();
@@ -65,6 +67,27 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!isAudioUnlocked()) {
+        unlockAudio();
+      }
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
