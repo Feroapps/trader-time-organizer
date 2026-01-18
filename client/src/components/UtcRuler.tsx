@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { tradingSessions, type TradingSession } from "@/data/sessionSchedule";
+import { tradingSessions, timeSegments, type TradingSession, type TimeSegment } from "@/data/sessionSchedule";
 import { getMarketStatus } from "@/utils/marketHours";
 
 export interface AlertMarker {
@@ -39,52 +39,22 @@ function getAlertPosition(hour: number, minute: number): number {
   return (totalMinutes / (24 * 60)) * 100;
 }
 
-function SessionBand({ session }: { session: TradingSession }) {
-  const { startHour, endHour } = session;
-
-  if (startHour < endHour) {
-    const left = (startHour / 24) * 100;
-    const width = ((endHour - startHour) / 24) * 100;
-    return (
-      <div
-        className="absolute top-0 h-full opacity-40"
-        style={{
-          left: `${left}%`,
-          width: `${width}%`,
-          backgroundColor: session.color,
-        }}
-        title={session.label}
-        data-testid={`session-band-${session.id}`}
-      />
-    );
-  }
-
-  const firstPartWidth = ((24 - startHour) / 24) * 100;
-  const secondPartWidth = (endHour / 24) * 100;
+function SegmentBand({ segment }: { segment: TimeSegment }) {
+  const { startHour, endHour } = segment;
+  const left = (startHour / 24) * 100;
+  const width = ((endHour - startHour) / 24) * 100;
 
   return (
-    <>
-      <div
-        className="absolute top-0 h-full opacity-40"
-        style={{
-          left: `${(startHour / 24) * 100}%`,
-          width: `${firstPartWidth}%`,
-          backgroundColor: session.color,
-        }}
-        title={session.label}
-        data-testid={`session-band-${session.id}-part1`}
-      />
-      <div
-        className="absolute top-0 h-full opacity-40"
-        style={{
-          left: "0%",
-          width: `${secondPartWidth}%`,
-          backgroundColor: session.color,
-        }}
-        title={session.label}
-        data-testid={`session-band-${session.id}-part2`}
-      />
-    </>
+    <div
+      className="absolute top-0 h-full"
+      style={{
+        left: `${left}%`,
+        width: `${width}%`,
+        backgroundColor: segment.color,
+      }}
+      title={segment.label}
+      data-testid={`segment-band-${segment.startHour}-${segment.endHour}`}
+    />
   );
 }
 
@@ -153,8 +123,8 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         className="relative h-12 bg-muted rounded-md overflow-hidden border"
         data-testid="ruler-track"
       >
-        {marketStatus.isOpen && tradingSessions.map((session) => (
-          <SessionBand key={session.id} session={session} />
+        {marketStatus.isOpen && timeSegments.map((segment) => (
+          <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
         ))}
 
         {!marketStatus.isOpen && (
