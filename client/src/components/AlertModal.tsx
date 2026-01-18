@@ -33,7 +33,7 @@ const DAY_LABELS = [
 export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertModalProps) {
   const [hour, setHour] = useState(0);
   const [minute, setMinute] = useState(0);
-  const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [repeatDays, setRepeatDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [label, setLabel] = useState("");
   const [isEnabled, setIsEnabled] = useState(true);
 
@@ -48,7 +48,7 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
       } else {
         setHour(0);
         setMinute(0);
-        setRepeatDays([1, 2, 3, 4, 5]);
+        setRepeatDays([0, 1, 2, 3, 4, 5, 6]);
         setLabel("");
         setIsEnabled(true);
       }
