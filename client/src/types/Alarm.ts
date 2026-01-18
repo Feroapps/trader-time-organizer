@@ -6,6 +6,7 @@ export interface Alarm {
   label: string;
   isEnabled: boolean;
   isFixed: boolean;
+  duration: number;
 }
 
 export type CreateAlarmInput = Omit<Alarm, 'id'>;

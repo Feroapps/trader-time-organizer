@@ -87,3 +87,8 @@ export async function deleteAlarm(id: string): Promise<boolean> {
   await localforage.setItem(ALARMS_KEY, filtered);
   return true;
 }
+
+export async function clearAllAlarms(): Promise<void> {
+  await localforage.removeItem(ALARMS_KEY);
+  console.log("[Alarms] Cleared all alarms from storage");
+}

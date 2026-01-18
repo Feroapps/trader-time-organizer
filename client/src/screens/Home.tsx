@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
-import { getAlarms, seedFixedAlarms } from "@/storage/alarmsRepo";
+import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
 import type { Alarm } from "@/types";
+
+const RESEED_VERSION = 2; // Increment this to force reseed
 
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
 
   useEffect(() => {
     async function initializeAlarms() {
+      const lastVersion = localStorage.getItem("alarms_seed_version");
+      
+      if (lastVersion !== String(RESEED_VERSION)) {
+        console.log("[Alarms] New seed version detected, clearing storage...");
+        await clearAllAlarms();
+        localStorage.setItem("alarms_seed_version", String(RESEED_VERSION));
+      }
+      
       await seedFixedAlarms();
       const allAlarms = await getAlarms();
-      console.log("[Alarms] Loaded alarms:", allAlarms);
+      console.log("[Alarms] Final fixed alarms:", allAlarms);
       setAlarms(allAlarms);
     }
 
