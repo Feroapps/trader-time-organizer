@@ -124,9 +124,16 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="relative h-12 bg-muted rounded-md overflow-hidden border"
           data-testid="ruler-track"
         >
-          {marketStatus.isOpen && timeSegments.map((segment) => (
-            <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
-          ))}
+          {marketStatus.isOpen && (() => {
+            const now = new Date();
+            const isSunday = now.getUTCDay() === 0;
+            const segments = isSunday 
+              ? timeSegments.filter((seg) => seg.sessions.includes('sydney'))
+              : timeSegments;
+            return segments.map((segment) => (
+              <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
+            ));
+          })()}
 
           {!marketStatus.isOpen && (
             <div
