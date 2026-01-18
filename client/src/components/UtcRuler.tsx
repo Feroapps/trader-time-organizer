@@ -124,27 +124,48 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="relative h-12 bg-muted rounded-md overflow-hidden border"
           data-testid="ruler-track"
         >
-          {marketStatus.isOpen && (() => {
+          {(() => {
             const now = new Date();
             const isSunday = now.getUTCDay() === 0;
-            const segments = isSunday 
-              ? timeSegments.filter((seg) => seg.sessions.includes('sydney'))
-              : timeSegments;
-            return segments.map((segment) => (
-              <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
-            ));
+            const utcHour = now.getUTCHours();
+            
+            if (isSunday) {
+              if (utcHour < 21) {
+                return (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center z-5"
+                    data-testid="market-closed-overlay"
+                  >
+                    <span className="text-muted-foreground font-medium text-lg">
+                      Market closed
+                    </span>
+                  </div>
+                );
+              } else {
+                const sydneySegments = timeSegments.filter((seg) => seg.sessions.includes('sydney'));
+                return sydneySegments.map((segment) => (
+                  <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
+                ));
+              }
+            }
+            
+            if (marketStatus.isOpen) {
+              return timeSegments.map((segment) => (
+                <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
+              ));
+            }
+            
+            return (
+              <div
+                className="absolute inset-0 flex items-center justify-center z-5"
+                data-testid="market-closed-overlay"
+              >
+                <span className="text-muted-foreground font-medium text-lg">
+                  Market closed
+                </span>
+              </div>
+            );
           })()}
-
-          {!marketStatus.isOpen && (
-            <div
-              className="absolute inset-0 flex items-center justify-center z-5"
-              data-testid="market-closed-overlay"
-            >
-              <span className="text-muted-foreground font-medium text-lg">
-                Market closed
-              </span>
-            </div>
-          )}
 
           {alerts
             .filter((alert: AlertMarker) => alert.enabled)
