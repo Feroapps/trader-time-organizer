@@ -142,10 +142,21 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
                   </div>
                 );
               } else {
-                const sydneySegments = timeSegments.filter((seg) => seg.sessions.includes('sydney'));
-                return sydneySegments.map((segment) => (
-                  <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
-                ));
+                const sydneyColor = "hsl(48 70% 75%)";
+                const left = (21 / 24) * 100;
+                const width = ((24 - 21) / 24) * 100;
+                return (
+                  <div
+                    className="absolute top-0 h-full"
+                    style={{
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      backgroundColor: sydneyColor,
+                    }}
+                    title="Sydney"
+                    data-testid="segment-band-sunday-sydney"
+                  />
+                );
               }
             }
             
