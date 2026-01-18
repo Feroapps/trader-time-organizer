@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
-import { getAlarms, seedFixedAlarms, clearAllAlarms } from "@/storage/alarmsRepo";
+import { getAlarms, seedFixedAlarms, clearAllAlarms, createAlarm } from "@/storage/alarmsRepo";
 import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
 import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
-import type { Alarm } from "@/types";
+import { ChevronDown, ChevronUp, FileText, Plus } from "lucide-react";
+import { AlertModal } from "@/components/AlertModal";
+import type { Alarm, CreateAlarmInput } from "@/types";
 
 const RESEED_VERSION = 2; // Increment this to force reseed
 
@@ -22,12 +23,19 @@ function getUtcHour(): number {
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [addAlertOpen, setAddAlertOpen] = useState(false);
   const [dailyNote, setDailyNote] = useState<DailyNote>(() => getDailyNote(getUtcDayOfWeek()));
   const [tradingContext, setTradingContext] = useState<TradingContext | null>(() => {
     const status = getMarketStatus();
     return getTradingContext(getUtcHour(), status.isOpen);
   });
   const [isMarketOpen, setIsMarketOpen] = useState(() => getMarketStatus().isOpen);
+
+  async function handleAddAlert(alertData: CreateAlarmInput) {
+    await createAlarm(alertData);
+    const allAlarms = await getAlarms();
+    setAlarms(allAlarms);
+  }
 
   useEffect(() => {
     async function initializeAlarms() {
@@ -105,17 +113,29 @@ export function Home() {
       </div>
 
       <div className="mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setNotesOpen(!notesOpen)}
-          className="gap-2"
-          data-testid="button-toggle-notes"
-        >
-          <FileText className="w-4 h-4" />
-          Notes
-          {notesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </Button>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNotesOpen(!notesOpen)}
+            className="gap-2"
+            data-testid="button-toggle-notes"
+          >
+            <FileText className="w-4 h-4" />
+            Notes
+            {notesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => setAddAlertOpen(true)}
+            className="gap-2"
+            data-testid="button-add-alert"
+          >
+            <Plus className="w-4 h-4" />
+            Add Alert
+          </Button>
+        </div>
 
         {notesOpen && (
           <div
@@ -207,6 +227,11 @@ export function Home() {
         </section>
       </div>
 
+      <AlertModal
+        open={addAlertOpen}
+        onOpenChange={setAddAlertOpen}
+        onSave={handleAddAlert}
+      />
     </div>
   );
 }
