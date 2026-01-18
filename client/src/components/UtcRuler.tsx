@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { tradingSessions, getSessionsForHour, type TradingSession } from "@/data/sessionSchedule";
+import { tradingSessions, type TradingSession } from "@/data/sessionSchedule";
 import type { Alarm } from "@/types";
 
 interface UtcRulerProps {
@@ -29,30 +29,6 @@ function getIndicatorPosition(time: UtcTime): number {
 function getAlertPosition(hour: number, minute: number): number {
   const totalMinutes = hour * 60 + minute;
   return (totalMinutes / (24 * 60)) * 100;
-}
-
-function getSessionStyle(session: TradingSession): {
-  left: string;
-  width: string;
-  backgroundColor: string;
-} {
-  const { startHour, endHour } = session;
-
-  if (startHour < endHour) {
-    const left = (startHour / 24) * 100;
-    const width = ((endHour - startHour) / 24) * 100;
-    return {
-      left: `${left}%`,
-      width: `${width}%`,
-      backgroundColor: session.color,
-    };
-  } else {
-    return {
-      left: "0%",
-      width: "0%",
-      backgroundColor: session.color,
-    };
-  }
 }
 
 function SessionBand({ session }: { session: TradingSession }) {
