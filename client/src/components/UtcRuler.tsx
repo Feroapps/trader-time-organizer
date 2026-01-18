@@ -119,50 +119,53 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         ))}
       </div>
 
-      <div
-        className="relative h-12 bg-muted rounded-md overflow-hidden border"
-        data-testid="ruler-track"
-      >
-        {marketStatus.isOpen && timeSegments.map((segment) => (
-          <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
-        ))}
-
-        {!marketStatus.isOpen && (
-          <div
-            className="absolute inset-0 flex items-center justify-center z-5"
-            data-testid="market-closed-overlay"
-          >
-            <span className="text-muted-foreground font-medium text-lg">
-              Market closed
-            </span>
-          </div>
-        )}
-
-        {alerts
-          .filter((alert: AlertMarker) => alert.enabled)
-          .map((alert: AlertMarker) => {
-            const position = getAlertPosition(alert.utcHour, alert.utcMinute);
-            return (
-              <div
-                key={alert.id}
-                className="absolute top-0 h-full w-0.5 bg-black z-10"
-                style={{ left: `${position}%` }}
-                title={`${alert.label} - ${alert.utcHour.toString().padStart(2, "0")}:${alert.utcMinute.toString().padStart(2, "0")} UTC`}
-                data-testid={`alert-marker-${alert.id}`}
-              />
-            );
-          })}
-
+      <div className="relative pt-2">
         <div
-          className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
-          style={{ left: `${indicatorPosition}%` }}
-          data-testid="utc-indicator"
-        />
-        <div
-          className="absolute z-20"
-          style={{ left: `${indicatorPosition}%`, top: '-6px', transform: 'translateX(-50%)' }}
+          className="absolute z-30"
+          style={{ left: `${indicatorPosition}%`, top: '0px', transform: 'translateX(-50%)' }}
         >
-          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-l-transparent border-r-transparent border-t-black" />
+          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black" />
+        </div>
+        
+        <div
+          className="relative h-12 bg-muted rounded-md overflow-hidden border"
+          data-testid="ruler-track"
+        >
+          {marketStatus.isOpen && timeSegments.map((segment) => (
+            <SegmentBand key={`${segment.startHour}-${segment.endHour}`} segment={segment} />
+          ))}
+
+          {!marketStatus.isOpen && (
+            <div
+              className="absolute inset-0 flex items-center justify-center z-5"
+              data-testid="market-closed-overlay"
+            >
+              <span className="text-muted-foreground font-medium text-lg">
+                Market closed
+              </span>
+            </div>
+          )}
+
+          {alerts
+            .filter((alert: AlertMarker) => alert.enabled)
+            .map((alert: AlertMarker) => {
+              const position = getAlertPosition(alert.utcHour, alert.utcMinute);
+              return (
+                <div
+                  key={alert.id}
+                  className="absolute top-0 h-full w-0.5 bg-black z-10"
+                  style={{ left: `${position}%` }}
+                  title={`${alert.label} - ${alert.utcHour.toString().padStart(2, "0")}:${alert.utcMinute.toString().padStart(2, "0")} UTC`}
+                  data-testid={`alert-marker-${alert.id}`}
+                />
+              );
+            })}
+
+          <div
+            className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
+            style={{ left: `${indicatorPosition}%` }}
+            data-testid="utc-indicator"
+          />
         </div>
       </div>
 

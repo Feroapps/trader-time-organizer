@@ -148,34 +148,37 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
         </div>
       </div>
 
-      <div
-        className="relative h-12 bg-muted rounded-md overflow-hidden border"
-        data-testid="local-ruler-track"
-      >
-        {alerts
-          .filter((alert) => alert.enabled)
-          .map((alert) => {
-            const position = getAlertLocalPosition(alert.utcHour, alert.utcMinute);
-            return (
-              <div
-                key={alert.id}
-                className="absolute top-0 h-full w-0.5 bg-black z-10"
-                style={{ left: `${position}%` }}
-                data-testid={`local-alert-marker-${alert.id}`}
-              />
-            );
-          })}
-
+      <div className="relative pt-2">
         <div
-          className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
-          style={{ left: `${indicatorPosition}%` }}
-          data-testid="local-indicator"
-        />
-        <div
-          className="absolute z-20"
-          style={{ left: `${indicatorPosition}%`, top: '-6px', transform: 'translateX(-50%)' }}
+          className="absolute z-30"
+          style={{ left: `${indicatorPosition}%`, top: '0px', transform: 'translateX(-50%)' }}
         >
-          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-l-transparent border-r-transparent border-t-black" />
+          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black" />
+        </div>
+        
+        <div
+          className="relative h-12 bg-muted rounded-md overflow-hidden border"
+          data-testid="local-ruler-track"
+        >
+          {alerts
+            .filter((alert) => alert.enabled)
+            .map((alert) => {
+              const position = getAlertLocalPosition(alert.utcHour, alert.utcMinute);
+              return (
+                <div
+                  key={alert.id}
+                  className="absolute top-0 h-full w-0.5 bg-black z-10"
+                  style={{ left: `${position}%` }}
+                  data-testid={`local-alert-marker-${alert.id}`}
+                />
+              );
+            })}
+
+          <div
+            className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
+            style={{ left: `${indicatorPosition}%` }}
+            data-testid="local-indicator"
+          />
         </div>
       </div>
 
