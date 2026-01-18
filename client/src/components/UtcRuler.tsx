@@ -1,9 +1,16 @@
 import { useEffect, useState, useMemo } from "react";
 import { tradingSessions, type TradingSession } from "@/data/sessionSchedule";
-import type { Alarm } from "@/types";
+
+export interface AlertMarker {
+  id: string;
+  label: string;
+  utcHour: number;
+  utcMinute: number;
+  enabled: boolean;
+}
 
 interface UtcRulerProps {
-  alerts?: Alarm[];
+  alerts?: AlertMarker[];
 }
 
 interface UtcTime {
@@ -140,8 +147,8 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         ))}
 
         {alerts
-          .filter((alert) => alert.enabled)
-          .map((alert) => {
+          .filter((alert: AlertMarker) => alert.enabled)
+          .map((alert: AlertMarker) => {
             const position = getAlertPosition(alert.utcHour, alert.utcMinute);
             return (
               <div
