@@ -1,0 +1,69 @@
+Implement Calendar integration for user-created Notes and user-created Alarms (created from Home) exactly as specified below.
+
+Scope: Calendar is the authoritative read/write display for user items only (Notes + user-created Alarms). System/fixed alarms must remain functional but must NOT be shown on Calendar or rulers.
+
+1) Data model (ensure these fields exist and are used):
+- Note:
+  - id
+  - dateUTC (YYYY-MM-DD)
+  - timeUTC (HH:mm)
+  - text
+- Alarm (user-created only):
+  - id
+  - hourUTC (0-23)
+  - minuteUTC (0-59)
+  - repeatDays: number[] // 0=Sun .. 6=Sat
+  - isFixed: boolean (must be false for user-created)
+  - isEnabled: boolean
+
+Store all items in the existing IndexedDB / localForage storage. Do NOT change system/fixed alarms.
+
+2) Calendar visual rules (computed in UTC):
+- Highlight days that contain at least one user Note or at least one occurrence of a user Alarm:
+  - Highlight color: light Grau (light gray).
+- The current UTC date must always be highlighted in blue (blue takes precedence over Grau).
+- Do NOT display note text inside calendar cells — only shading.
+
+3) Day panel interaction (on clicking a highlighted day):
+- Open a read-only panel listing:
+  - Notes for that UTC date:
+    - show full text and display the note time as UTC and converted local time.
+    - provide a Delete button for each Note.
+  - Alarm occurrences for that date:
+    - show alarm label (if any), UTC time, and converted local time.
+    - provide a Delete action for each occurrence shown.
+
+4) Deletion semantics (exact behavior):
+- Deleting a Note from the Calendar:
+  - Remove the Note record from storage.
+  - Remove day shading if no other user items remain for that day.
+
+- Deleting an Alarm occurrence from the Calendar (occurrence of a recurring alarm):
+  - Remove the corresponding weekday from the parent alarm's repeatDays array (persist the updated alarm).
+  - If alarm.repeatDays becomes empty after removal, delete the alarm entirely.
+  - Update Calendar shading and rulers immediately.
+
+- Deleting a full Alarm:
+  - Full deletion must be performed from Settings → My Alerts (not from Calendar).
+  - Full delete removes all Calendar shading and ruler markers for that alarm.
+
+5) Time rules:
+- All scheduling and storage operate in UTC only.
+- For display inside Day Panel, show both UTC and the user's local-converted time (local is for display only).
+- Calendar logic and shading must be computed using UTC.
+
+6) Constraints:
+- Only use user-created items (isFixed === false) for Calendar shading and details.
+- Do NOT expose system/fixed alarms in Calendar or on rulers.
+- In Calendar panel, Notes are read-only except for Delete; no editing of text.
+- Keep Calendar performant for at least ±1 year view range.
+
+7) Acceptance criteria (must pass these tests):
+- Adding a Note results in the Calendar shading that UTC date (Grau). Clicking the date shows the Note and its time (UTC + local).
+- Adding a user Alarm with repeatDays shades all matching weekdays in Calendar. Home rulers show markers for user alarms only.
+- Deleting an Alarm occurrence from Calendar removes the weekday from alarm.repeatDays; if empty, alarm is deleted.
+- Deleting a Note from Calendar removes the note and updates shading immediately.
+- Current UTC date always blue; other user days Grau.
+- System/fixed alarms do not appear visually anywhere.
+
+This is the authoritative spec for Calendar ↔ User Notes & Alarms integration. Implement exactly and report back with a screenshot of the Calendar showing: (1) current UTC day in blue, (2) at least one Grau-shaded day, and (3) the Day Panel open for a shaded day showing a Note and an Alarm occurrence.
