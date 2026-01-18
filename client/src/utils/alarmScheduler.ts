@@ -3,7 +3,7 @@ import { playAlarm } from '@/utils/soundPlayer';
 import { shouldAlarmTrigger } from '@/utils/marketHours';
 import type { Alarm } from '@/types/Alarm';
 
-const CHECK_INTERVAL_MS = 30000; // 30 seconds
+const CHECK_INTERVAL_MS = 10000; // 10 seconds for more reliable alarm detection
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 let lastTriggeredKey: string | null = null;
 
@@ -33,7 +33,7 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: { hours: number; minutes
     return false;
   }
 
-  if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours)) {
+  if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
     return false;
   }
 
@@ -49,6 +49,7 @@ async function checkAlarms(): Promise<void> {
       const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes);
       
       if (lastTriggeredKey !== triggerKey) {
+        console.log(`[AlarmScheduler] Triggering alarm: ${alarm.label} at ${utcTime.hours}:${utcTime.minutes} UTC`);
         playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
       }

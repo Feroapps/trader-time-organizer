@@ -29,8 +29,14 @@ export function shouldAlarmTrigger(
   alarmHourUTC: number,
   alarmRepeatDays: number[],
   utcDay: number,
-  utcHour: number
+  utcHour: number,
+  isFixed: boolean = false
 ): boolean {
+  // User-created alarms always trigger (not subject to market hours)
+  if (!isFixed) {
+    return true;
+  }
+
   const status = getMarketStatus();
 
   // Special case: Sydney session alarm at Sunday 21:00 UTC
@@ -38,7 +44,7 @@ export function shouldAlarmTrigger(
     return true;
   }
 
-  // All other alarms suppressed when market closed
+  // Fixed system alarms suppressed when market closed
   if (!status.isOpen) {
     return false;
   }
