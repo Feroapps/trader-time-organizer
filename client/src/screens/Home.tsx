@@ -1,42 +1,20 @@
 import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, type AlertMarker } from "@/components";
-import { getAlarms, createAlarm, toggleAlarm } from "@/storage/alarmsRepo";
+import { getAlarms, seedFixedAlarms } from "@/storage/alarmsRepo";
 import type { Alarm } from "@/types";
 
 export function Home() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
 
   useEffect(() => {
-    async function testAlarmsStorage() {
-      let currentAlarms = await getAlarms();
-      console.log("[Alarms] Initial alarms:", currentAlarms);
-
-      if (currentAlarms.length === 0) {
-        const newAlarm = await createAlarm({
-          hourUTC: 14,
-          minuteUTC: 30,
-          repeatDays: [1, 2, 3, 4, 5],
-          label: "Test Alarm",
-          isEnabled: true,
-          isFixed: false,
-        });
-        console.log("[Alarms] Created alarm:", newAlarm);
-
-        currentAlarms = await getAlarms();
-        console.log("[Alarms] After create:", currentAlarms);
-      }
-
-      if (currentAlarms.length > 0) {
-        const toggled = await toggleAlarm(currentAlarms[0].id, !currentAlarms[0].isEnabled);
-        console.log("[Alarms] Toggled alarm:", toggled);
-      }
-
-      const finalAlarms = await getAlarms();
-      console.log("[Alarms] Final alarms:", finalAlarms);
-      setAlarms(finalAlarms);
+    async function initializeAlarms() {
+      await seedFixedAlarms();
+      const allAlarms = await getAlarms();
+      console.log("[Alarms] Loaded alarms:", allAlarms);
+      setAlarms(allAlarms);
     }
 
-    testAlarmsStorage();
+    initializeAlarms();
   }, []);
 
   const utcAlerts: AlertMarker[] = alarms.map((alarm) => ({
@@ -69,8 +47,8 @@ export function Home() {
 
       {alarms.length > 0 && (
         <div className="mt-8 p-4 bg-muted rounded-md" data-testid="alarms-debug">
-          <p className="text-sm text-muted-foreground mb-2">
-            Debug: {alarms.length} alarm(s) in storage (check console for CRUD logs)
+          <p className="text-sm text-muted-foreground">
+            {alarms.length} alarm(s) loaded ({alarms.filter(a => a.isFixed).length} fixed)
           </p>
         </div>
       )}
