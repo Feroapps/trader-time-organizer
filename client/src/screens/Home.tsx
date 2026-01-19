@@ -130,7 +130,7 @@ export function Home() {
               variant="outline"
               size="sm"
               onClick={() => setNotesOpen(!notesOpen)}
-              className="gap-2"
+              className="gap-2 bg-[#A8E6A1]"
               data-testid="button-toggle-notes"
             >
               <FileText className="w-4 h-4" />
