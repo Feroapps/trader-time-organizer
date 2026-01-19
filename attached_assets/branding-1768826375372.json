@@ -1,0 +1,93 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "gdsherpa",
+      "count": 13
+    },
+    {
+      "family": "Helvetica",
+      "count": 13
+    },
+    {
+      "family": "Arial",
+      "count": 13
+    },
+    {
+      "family": "sans-serif",
+      "count": 13
+    }
+  ],
+  "colors": {
+    "primary": "#D8EFEF",
+    "accent": "#09757A",
+    "background": "#FFFFFF",
+    "textPrimary": "#111111",
+    "link": "#09757A"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "gdsherpa",
+      "heading": "gdsherpa"
+    },
+    "fontStacks": {
+      "body": [
+        "gdsherpa",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "heading": [
+        "gdsherpa",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "gdsherpa",
+        "Helvetica",
+        "Arial",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "60px",
+      "h2": "60px",
+      "body": "20px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "21px"
+  },
+  "components": {},
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "File saved at: attached_assets/favicon.png",
+    "ogImage": null
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Strong indicators: in header, no link (brand logos usually link to homepage, penalty), header location, visible, highest logo on page, src contains logo, class contains logo, reasonable size, SVG format. Score: 75 (clear winner by 75 points)",
+    "confidence": 0.9
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "confidence": 0
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}
