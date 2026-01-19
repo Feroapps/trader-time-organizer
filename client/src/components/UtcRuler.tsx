@@ -39,6 +39,42 @@ function getAlertPosition(hour: number, minute: number): number {
   return (totalMinutes / (24 * 60)) * 100;
 }
 
+function getSessionLabel(): string {
+  const now = new Date();
+  const utcDay = now.getUTCDay();
+  const utcHour = now.getUTCHours();
+
+  // Saturday (all day): show nothing
+  if (utcDay === 6) return "";
+
+  // Friday from 22:00 UTC onward: show nothing
+  if (utcDay === 5 && utcHour >= 22) return "";
+
+  // Sunday before 21:00 UTC: show nothing
+  if (utcDay === 0 && utcHour < 21) return "";
+
+  // Sunday from 21:00 UTC onward: show "Sydney session"
+  if (utcDay === 0 && utcHour >= 21) return "Sydney session";
+
+  // Monday–Friday behavior (UTC):
+  if (utcHour >= 0 && utcHour < 6) return "Sydney + Tokyo overlap";
+  if (utcHour >= 6 && utcHour < 7) return "Tokyo session";
+  if (utcHour >= 7 && utcHour < 9) return "Tokyo + London + Frankfurt overlap";
+  if (utcHour >= 9 && utcHour < 13) return "London + Frankfurt session";
+  if (utcHour >= 13 && utcHour < 15) return "New York + London + Frankfurt overlap";
+  if (utcHour >= 15 && utcHour < 16) return "New York + London session";
+  if (utcHour >= 16 && utcHour < 21) return "New York session";
+
+  // 21:00–24:00
+  if (utcHour >= 21) {
+    // Friday: show nothing (already handled above)
+    // Mon–Thu: "New York close / Sydney opens"
+    if (utcDay >= 1 && utcDay <= 4) return "New York close / Sydney opens";
+  }
+
+  return "";
+}
+
 function SegmentBand({ segment }: { segment: TimeSegment }) {
   const { startHour, endHour } = segment;
   const left = (startHour / 24) * 100;
@@ -88,11 +124,21 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         <h2 className="text-xl font-semibold" data-testid="text-utc-title">
           UTC Time
         </h2>
-        <div
-          className="font-mono text-2xl font-medium tabular-nums"
-          data-testid="text-utc-current-time"
-        >
-          {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)} UTC
+        <div className="flex items-center gap-4">
+          {getSessionLabel() && (
+            <span
+              className="text-sm text-muted-foreground"
+              data-testid="text-session-label"
+            >
+              {getSessionLabel()}
+            </span>
+          )}
+          <div
+            className="font-mono text-2xl font-medium tabular-nums"
+            data-testid="text-utc-current-time"
+          >
+            {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)} UTC
+          </div>
         </div>
       </div>
 
