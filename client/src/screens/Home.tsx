@@ -146,7 +146,7 @@ export function Home() {
               variant="outline"
               size="sm"
               onClick={() => setNotesOpen(!notesOpen)}
-              className="gap-2 bg-[#A8E6A1]"
+              className="gap-2 bg-[#166534] text-white dark:bg-[#166534] dark:text-white"
               data-testid="button-toggle-notes"
             >
               <FileText className="w-4 h-4" />
