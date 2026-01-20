@@ -13,16 +13,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getNotes, createNote, deleteNote } from "@/storage/notesRepo";
 import { getAlarms, createAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
+import { AlertModal } from "@/components/AlertModal";
 import type { Note, Alarm, CreateAlarmInput } from "@/types";
 
 const MONTH_NAMES = [
@@ -145,103 +139,6 @@ function AddNoteDialog({ open, date, onClose, onSave }: AddNoteDialogProps) {
   );
 }
 
-interface AddAlertDialogProps {
-  open: boolean;
-  date: UTCDate;
-  dayOfWeek: number;
-  onClose: () => void;
-  onSave: (data: CreateAlarmInput) => void;
-}
-
-function AddAlertDialog({ open, date, dayOfWeek, onClose, onSave }: AddAlertDialogProps) {
-  const [label, setLabel] = useState("");
-  const [hour, setHour] = useState("12");
-  const [minute, setMinute] = useState("00");
-
-  const handleSave = () => {
-    const alertData: CreateAlarmInput = {
-      label: label.trim() || "Alert",
-      hourUTC: parseInt(hour, 10),
-      minuteUTC: parseInt(minute, 10),
-      repeatDays: [dayOfWeek],
-      isEnabled: true,
-      isFixed: false,
-      duration: 10,
-    };
-    onSave(alertData);
-    setLabel("");
-    setHour("12");
-    setMinute("00");
-    onClose();
-  };
-
-  const dateStr = `${MONTH_NAMES[date.month]} ${date.day}, ${date.year}`;
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Alert</DialogTitle>
-          <DialogDescription>
-            Add an alert for {DAY_NAMES[dayOfWeek]}s at a specific time (UTC)
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="alert-label">Label (optional)</Label>
-            <Input
-              id="alert-label"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Alert name..."
-              data-testid="input-alert-label"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="alert-hour">Hour (UTC)</Label>
-              <Select value={hour} onValueChange={setHour}>
-                <SelectTrigger data-testid="select-alert-hour">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {String(i).padStart(2, "0")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="alert-minute">Minute</Label>
-              <Select value={minute} onValueChange={setMinute}>
-                <SelectTrigger data-testid="select-alert-minute">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["00", "15", "30", "45"].map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} data-testid="button-cancel-alert">
-              Cancel
-            </Button>
-            <Button onClick={handleSave} data-testid="button-save-alert">
-              Save
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export function DayView() {
   const params = useParams<{ date: string }>();
@@ -370,8 +267,8 @@ export function DayView() {
           <StickyNote className="w-4 h-4 mr-2" />
           Add Note
         </Button>
-        <Button variant="outline" onClick={() => setShowAddAlert(true)} data-testid="button-add-alert">
-          <Bell className="w-4 h-4 mr-2" />
+        <Button onClick={() => setShowAddAlert(true)} data-testid="button-add-alert">
+          <Plus className="w-4 h-4 mr-2" />
           Add Alert
         </Button>
       </div>
@@ -457,11 +354,9 @@ export function DayView() {
         onSave={handleAddNote}
       />
 
-      <AddAlertDialog
+      <AlertModal
         open={showAddAlert}
-        date={date}
-        dayOfWeek={dayOfWeek}
-        onClose={() => setShowAddAlert(false)}
+        onOpenChange={setShowAddAlert}
         onSave={handleAddAlert}
       />
     </div>
