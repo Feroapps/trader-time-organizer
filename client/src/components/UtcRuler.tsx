@@ -1,6 +1,31 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { tradingSessions, timeSegments, type TradingSession, type TimeSegment } from "@/data/sessionSchedule";
 import { getMarketStatus } from "@/utils/marketHours";
+
+function useResponsiveLabelInterval(): number {
+  const [interval, setInterval] = useState(3);
+  
+  const updateInterval = useCallback(() => {
+    const width = window.innerWidth;
+    if (width < 380) {
+      setInterval(6);
+    } else if (width < 480) {
+      setInterval(4);
+    } else if (width < 640) {
+      setInterval(3);
+    } else {
+      setInterval(2);
+    }
+  }, []);
+  
+  useEffect(() => {
+    updateInterval();
+    window.addEventListener('resize', updateInterval);
+    return () => window.removeEventListener('resize', updateInterval);
+  }, [updateInterval]);
+  
+  return interval;
+}
 
 export interface AlertMarker {
   id: string;
@@ -97,6 +122,7 @@ function SegmentBand({ segment }: { segment: TimeSegment }) {
 export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
   const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
+  const labelInterval = useResponsiveLabelInterval();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -247,10 +273,11 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         </div>
       </div>
 
-      <div className="relative h-6 mt-1" data-testid="ruler-labels">
+      <div className="relative h-6 mt-2" data-testid="ruler-labels">
         {hours.map((hour) => {
           const leftPosition = (hour / 24) * 100;
-          const isMajorLabel = hour % 3 === 0;
+          const showLabel = hour % labelInterval === 0;
+          if (!showLabel) return null;
           return (
             <div
               key={hour}
@@ -261,21 +288,12 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
               }}
             >
               <div className="w-px h-2 bg-border" />
-              {isMajorLabel ? (
-                <span
-                  className="text-xs text-muted-foreground font-mono mt-0.5"
-                  data-testid={`hour-label-${hour}`}
-                >
-                  {hour.toString().padStart(2, "0")}
-                </span>
-              ) : (
-                <span
-                  className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5"
-                  data-testid={`hour-label-minor-${hour}`}
-                >
-                  {hour.toString().padStart(2, "0")}
-                </span>
-              )}
+              <span
+                className="text-[10px] sm:text-xs text-muted-foreground font-mono mt-1"
+                data-testid={`hour-label-${hour}`}
+              >
+                {hour.toString().padStart(2, "0")}
+              </span>
             </div>
           );
         })}
