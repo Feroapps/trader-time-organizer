@@ -44,11 +44,12 @@ interface MonthGridProps {
   year: number;
   month: number;
   today: UTCDate;
+  selectedDate: string | null;
   highlightedDates: Set<string>;
-  onSelectDate: (date: UTCDate) => void;
+  onClickDate: (date: UTCDate) => void;
 }
 
-function MonthGrid({ year, month, today, highlightedDates, onSelectDate }: MonthGridProps) {
+function MonthGrid({ year, month, today, selectedDate, highlightedDates, onClickDate }: MonthGridProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   
@@ -62,6 +63,11 @@ function MonthGrid({ year, month, today, highlightedDates, onSelectDate }: Month
 
   const isToday = (day: number) => 
     today.year === year && today.month === month && today.day === day;
+
+  const isSelected = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return selectedDate === dateStr;
+  };
 
   const isHighlighted = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -83,8 +89,12 @@ function MonthGrid({ year, month, today, highlightedDates, onSelectDate }: Month
           <div key={idx} className="aspect-square flex items-center justify-center">
             {day !== null && (
               <button
-                onClick={() => onSelectDate({ year, month, day })}
+                onClick={() => onClickDate({ year, month, day })}
                 className={`w-full h-full flex items-center justify-center rounded-sm text-[10px] transition-colors hover-elevate ${
+                  isSelected(day)
+                    ? "ring-2 ring-primary ring-offset-1"
+                    : ""
+                } ${
                   isToday(day)
                     ? "bg-blue-600 dark:bg-blue-500 text-white font-bold"
                     : isHighlighted(day)
@@ -107,6 +117,7 @@ export function Calendar() {
   const [, setLocation] = useLocation();
   const today = useMemo(() => getUTCToday(), []);
   const [viewYear, setViewYear] = useState(today.year);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [alarms, setAlarms] = useState<Alarm[]>([]);
 
@@ -146,9 +157,13 @@ export function Calendar() {
     return dates;
   }, [notes, alarms, viewYear]);
 
-  const handleSelectDate = (date: UTCDate) => {
+  const handleClickDate = (date: UTCDate) => {
     const dateStr = formatDateUTC(date);
-    setLocation(`/calendar/day/${dateStr}`);
+    if (selectedDate === dateStr) {
+      setLocation(`/calendar/day/${dateStr}`);
+    } else {
+      setSelectedDate(dateStr);
+    }
   };
 
   const months = Array.from({ length: 12 }, (_, i) => i);
@@ -183,7 +198,7 @@ export function Calendar() {
       </div>
 
       <div className="text-sm text-muted-foreground mb-4" data-testid="text-utc-notice">
-        All dates are in UTC+00:00. <span className="inline-block w-3 h-3 bg-blue-600 dark:bg-blue-500 rounded-sm align-middle mx-1"></span> Today <span className="inline-block w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-sm align-middle mx-1"></span> Has notes/alerts
+        All dates are in UTC+00:00. Click once to select, click again to open. <span className="inline-block w-3 h-3 bg-blue-600 dark:bg-blue-500 rounded-sm align-middle mx-1"></span> Today <span className="inline-block w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-sm align-middle mx-1"></span> Has notes/alerts
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3" data-testid="yearly-grid">
@@ -193,8 +208,9 @@ export function Calendar() {
             year={viewYear}
             month={month}
             today={today}
+            selectedDate={selectedDate}
             highlightedDates={highlightedDates}
-            onSelectDate={handleSelectDate}
+            onClickDate={handleClickDate}
           />
         ))}
       </div>

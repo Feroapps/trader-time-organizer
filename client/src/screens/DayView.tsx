@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useParams, Link } from "wouter";
-import { ChevronLeft, Plus, Bell, StickyNote, Trash2 } from "lucide-react";
+import { useParams, Link, useLocation } from "wouter";
+import { ChevronLeft, ChevronRight, Plus, Bell, StickyNote, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,6 +74,24 @@ function parseTimeUTC(timeUTC: string): { hour: number; minute: number } {
   return { hour: h, minute: m };
 }
 
+function getPrevDay(date: UTCDate): UTCDate {
+  const d = new Date(Date.UTC(date.year, date.month, date.day - 1));
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    day: d.getUTCDate(),
+  };
+}
+
+function getNextDay(date: UTCDate): UTCDate {
+  const d = new Date(Date.UTC(date.year, date.month, date.day + 1));
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    day: d.getUTCDate(),
+  };
+}
+
 interface AddNoteDialogProps {
   open: boolean;
   date: UTCDate;
@@ -142,6 +160,7 @@ function AddNoteDialog({ open, date, onClose, onSave }: AddNoteDialogProps) {
 
 export function DayView() {
   const params = useParams<{ date: string }>();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [utcTime, setUtcTime] = useState(getUTCTime);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -185,6 +204,16 @@ export function DayView() {
   const dayOfWeek = getUTCDayOfWeek(date);
   const dateStr = formatDateUTC(date);
   const displayDate = `${MONTH_NAMES[date.month]} ${date.day}, ${date.year}`;
+
+  const goToPrevDay = () => {
+    const prev = getPrevDay(date);
+    setLocation(`/calendar/day/${formatDateUTC(prev)}`);
+  };
+
+  const goToNextDay = () => {
+    const next = getNextDay(date);
+    setLocation(`/calendar/day/${formatDateUTC(next)}`);
+  };
 
   const dayNotes = notes.filter((n) => n.dateUTC === dateStr);
   const dayAlarms = alarms.filter((a) => a.isEnabled && a.repeatDays.includes(dayOfWeek));
@@ -241,23 +270,29 @@ export function DayView() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-8" data-testid="day-view">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link href="/calendar">
             <Button variant="ghost" size="icon" data-testid="button-back">
               <ChevronLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold" data-testid="text-date-title">
+          <Button variant="outline" size="icon" onClick={goToPrevDay} data-testid="button-prev-day">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="text-center">
+            <h1 className="text-xl sm:text-2xl font-bold" data-testid="text-date-title">
               {displayDate}
             </h1>
             <p className="text-sm text-muted-foreground" data-testid="text-day-name">
               {DAY_NAMES[dayOfWeek]} (UTC)
             </p>
           </div>
+          <Button variant="outline" size="icon" onClick={goToNextDay} data-testid="button-next-day">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
-        <div className="font-mono text-xl tabular-nums" data-testid="text-current-time">
+        <div className="font-mono text-lg sm:text-xl tabular-nums" data-testid="text-current-time">
           {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)} UTC
         </div>
       </div>
