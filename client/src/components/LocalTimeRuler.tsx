@@ -9,18 +9,16 @@ import {
 import type { AlertMarker } from "./UtcRuler";
 
 function useResponsiveLabelInterval(): number {
-  const [interval, setInterval] = useState(3);
+  const [interval, setInterval] = useState(() => window.innerWidth >= 768 ? 1 : 3);
   
   const updateInterval = useCallback(() => {
     const width = window.innerWidth;
-    if (width < 380) {
-      setInterval(6);
-    } else if (width < 480) {
+    if (width >= 768) {
+      setInterval(1);
+    } else if (width < 400) {
       setInterval(4);
-    } else if (width < 640) {
-      setInterval(3);
     } else {
-      setInterval(2);
+      setInterval(3);
     }
   }, []);
   
@@ -224,7 +222,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
             >
               <div className="w-px h-2 bg-border" />
               <span
-                className="text-[10px] sm:text-xs text-muted-foreground font-mono mt-1"
+                className="text-[9px] md:text-[10px] text-muted-foreground font-mono mt-0.5"
                 data-testid={`local-hour-label-${utcHour}`}
               >
                 {label}
