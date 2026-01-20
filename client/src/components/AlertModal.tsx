@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -97,26 +98,86 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
 
           <div className="space-y-2">
             <Label>Time (UTC)</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={23}
-                value={hour}
-                onChange={(e) => setHour(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)))}
-                className="w-20 font-mono text-center"
-                data-testid="input-alert-hour"
-              />
-              <span className="text-lg font-mono">:</span>
-              <Input
-                type="number"
-                min={0}
-                max={59}
-                value={minute}
-                onChange={(e) => setMinute(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                className="w-20 font-mono text-center"
-                data-testid="input-alert-minute"
-              />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <div className="flex flex-col">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-8"
+                    onClick={() => setHour((h) => (h >= 23 ? 0 : h + 1))}
+                    data-testid="button-hour-up"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-8"
+                    onClick={() => setHour((h) => (h <= 0 ? 23 : h - 1))}
+                    data-testid="button-hour-down"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={hour.toString().padStart(2, "0")}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setHour(Math.max(0, Math.min(23, val)));
+                    } else if (e.target.value === "") {
+                      setHour(0);
+                    }
+                  }}
+                  className="w-14 font-mono text-center text-lg"
+                  data-testid="input-alert-hour"
+                />
+              </div>
+              <span className="text-xl font-mono">:</span>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={minute.toString().padStart(2, "0")}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setMinute(Math.max(0, Math.min(59, val)));
+                    } else if (e.target.value === "") {
+                      setMinute(0);
+                    }
+                  }}
+                  className="w-14 font-mono text-center text-lg"
+                  data-testid="input-alert-minute"
+                />
+                <div className="flex flex-col">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-8"
+                    onClick={() => setMinute((m) => (m >= 59 ? 0 : m + 1))}
+                    data-testid="button-minute-up"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-8"
+                    onClick={() => setMinute((m) => (m <= 0 ? 59 : m - 1))}
+                    data-testid="button-minute-down"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
               <span className="text-sm text-muted-foreground">UTC</span>
             </div>
           </div>
