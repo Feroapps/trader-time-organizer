@@ -85,7 +85,7 @@ function getSessionLabel(): string {
   if (utcHour >= 7 && utcHour < 9) return "Tokyo + London + Frankfurt overlap";
   if (utcHour >= 9 && utcHour < 13) return "London + Frankfurt session";
   if (utcHour >= 13 && utcHour < 15) return "New York + London + Frankfurt overlap";
-  if (utcHour >= 15 && utcHour < 16) return "New York + London session";
+  if (utcHour >= 15 && utcHour < 16) return "New York + London + Frankfurt session";
   if (utcHour >= 16 && utcHour < 21) return "New York session";
 
   // 21:00–24:00

@@ -26,7 +26,7 @@ export const tradingSessions: TradingSession[] = [
   },
   {
     id: "london",
-    label: "London",
+    label: "London + Frankfurt",
     startHour: 8,
     endHour: 17,
     color: "hsl(210 50% 75%)",
@@ -70,21 +70,21 @@ export const timeSegments: TimeSegment[] = [
     endHour: 9,
     sessions: ["tokyo", "london"],
     color: "hsl(0 45% 35%)",
-    label: "Tokyo + London",
+    label: "Tokyo + London + Frankfurt",
   },
   {
     startHour: 9,
     endHour: 13,
     sessions: ["london"],
     color: "hsl(210 50% 75%)",
-    label: "London",
+    label: "London + Frankfurt",
   },
   {
     startHour: 13,
     endHour: 17,
     sessions: ["london", "new-york"],
     color: "hsl(150 45% 32%)",
-    label: "London + New York",
+    label: "London + Frankfurt + New York",
   },
   {
     startHour: 17,

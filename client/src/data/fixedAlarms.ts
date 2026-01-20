@@ -70,7 +70,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     hourUTC: 16,
     minuteUTC: 0,
     repeatDays: [1, 2, 3, 4, 5], // Monday-Friday
-    label: "End of London session",
+    label: "End of London + Frankfurt session",
     isFixed: true,
     isEnabled: true,
     duration: 10,
