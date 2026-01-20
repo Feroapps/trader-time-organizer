@@ -121,11 +121,11 @@ function MonthGrid({ year, month, today, selectedDate, highlightedDates, onSelec
                 onClick={() => onSelectDate({ year, month, day })}
                 className={`w-full h-full flex items-center justify-center rounded-sm text-[10px] transition-colors hover-elevate ${
                   isToday(day)
-                    ? "bg-blue-500 text-white font-bold"
+                    ? "bg-blue-600 dark:bg-blue-500 text-white font-bold"
                     : isSelected(day)
                     ? "bg-accent text-accent-foreground ring-2 ring-primary"
                     : isHighlighted(day)
-                    ? "bg-gray-200 dark:bg-gray-700 text-foreground"
+                    ? "bg-slate-400 dark:bg-slate-500 text-white"
                     : "text-foreground"
                 }`}
                 data-testid={`day-${year}-${month}-${day}`}
@@ -445,7 +445,7 @@ export function Calendar() {
       </div>
 
       <div className="text-sm text-muted-foreground mb-4" data-testid="text-utc-notice">
-        All dates are in UTC+00:00. <span className="inline-block w-3 h-3 bg-blue-500 rounded-sm align-middle mx-1"></span> Today <span className="inline-block w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-sm align-middle mx-1"></span> Has notes/alarms
+        All dates are in UTC+00:00. <span className="inline-block w-3 h-3 bg-blue-600 dark:bg-blue-500 rounded-sm align-middle mx-1"></span> Today <span className="inline-block w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-sm align-middle mx-1"></span> Has notes/alarms
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6" data-testid="yearly-grid">
