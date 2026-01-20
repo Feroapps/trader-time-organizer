@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Home, Calendar, Settings } from "@/screens";
 import NotFound from "@/pages/not-found";
 import { Clock, CalendarDays, Cog } from "lucide-react";
-import { unlockAudio, isAudioUnlocked } from "@/utils/soundPlayer";
+import { preloadAudio, isAudioPreloaded } from "@/utils/soundPlayer";
 
 function Navigation() {
   const [location] = useLocation();
@@ -69,8 +69,8 @@ function Router() {
 function App() {
   useEffect(() => {
     const handleFirstInteraction = () => {
-      if (!isAudioUnlocked()) {
-        unlockAudio();
+      if (!isAudioPreloaded()) {
+        preloadAudio();
       }
       document.removeEventListener('click', handleFirstInteraction);
       document.removeEventListener('touchstart', handleFirstInteraction);

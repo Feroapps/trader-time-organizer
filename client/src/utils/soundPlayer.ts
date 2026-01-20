@@ -1,28 +1,24 @@
 let audioElement: HTMLAudioElement | null = null;
 let stopTimeout: ReturnType<typeof setTimeout> | null = null;
-let audioUnlocked = false;
+let audioPreloaded = false;
 
-export function unlockAudio(): void {
-  if (audioUnlocked) return;
+// Preload audio file without playing - prepares for future playback
+export function preloadAudio(): void {
+  if (audioPreloaded) return;
   
   try {
     const audio = new Audio('/alarm.mp3');
-    audio.volume = 0.001;
-    audio.play().then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-      audioUnlocked = true;
-      console.log('[SoundPlayer] Audio unlocked successfully');
-    }).catch((error) => {
-      console.warn('[SoundPlayer] Audio unlock failed:', error.message);
-    });
+    audio.preload = 'auto';
+    audio.load();
+    audioPreloaded = true;
+    console.log('[SoundPlayer] Audio preloaded (no playback)');
   } catch (error) {
-    console.warn('[SoundPlayer] Audio unlock error:', error);
+    console.warn('[SoundPlayer] Audio preload error:', error);
   }
 }
 
-export function isAudioUnlocked(): boolean {
-  return audioUnlocked;
+export function isAudioPreloaded(): boolean {
+  return audioPreloaded;
 }
 
 export function playAlarm(durationSeconds: number): void {
