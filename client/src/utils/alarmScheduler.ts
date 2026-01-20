@@ -6,6 +6,7 @@ import type { Alarm } from '@/types/Alarm';
 const CHECK_INTERVAL_MS = 10000; // 10 seconds for more reliable alarm detection
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 let lastTriggeredKey: string | null = null;
+let onFixedAlarmTriggered: (() => void) | null = null;
 
 function getUtcTime(): { hours: number; minutes: number; dayOfWeek: number } {
   const now = new Date();
@@ -51,6 +52,11 @@ async function checkAlarms(): Promise<void> {
       if (lastTriggeredKey !== triggerKey) {
         playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
+        
+        // Notify callback only for fixed (built-in) alarms
+        if (alarm.isFixed && onFixedAlarmTriggered) {
+          onFixedAlarmTriggered();
+        }
       }
     }
   }
@@ -77,4 +83,8 @@ export function stopScheduler(): void {
 
 export function isSchedulerRunning(): boolean {
   return schedulerInterval !== null;
+}
+
+export function setFixedAlarmCallback(callback: (() => void) | null): void {
+  onFixedAlarmTriggered = callback;
 }

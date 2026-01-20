@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { UtcRuler, LocalTimeRuler, NoteModal, type AlertMarker } from "@/components";
 import { getAlarms, seedFixedAlarms, clearAllAlarms, createAlarm } from "@/storage/alarmsRepo";
 import { createNote } from "@/storage/notesRepo";
-import { startScheduler, stopScheduler } from "@/utils/alarmScheduler";
+import { startScheduler, stopScheduler, setFixedAlarmCallback } from "@/utils/alarmScheduler";
 import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, FileText, Plus, StickyNote, Moon, Sun } from "lucide-react";
 import { AlertModal } from "@/components/AlertModal";
+import { FixedAlarmModal } from "@/components/FixedAlarmModal";
 import { useToast } from "@/hooks/use-toast";
 import type { Alarm, CreateAlarmInput, CreateNoteInput } from "@/types";
 
@@ -28,6 +29,7 @@ export function Home() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [addAlertOpen, setAddAlertOpen] = useState(false);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
+  const [fixedAlarmModalOpen, setFixedAlarmModalOpen] = useState(false);
   const [dailyNote, setDailyNote] = useState<DailyNote>(() => getDailyNote(getUtcDayOfWeek()));
   const [tradingContext, setTradingContext] = useState<TradingContext | null>(() => {
     const status = getMarketStatus();
@@ -77,9 +79,14 @@ export function Home() {
     }
     
     verifyAudioFile();
+
+    setFixedAlarmCallback(() => {
+      setFixedAlarmModalOpen(true);
+    });
     
     return () => {
       stopScheduler();
+      setFixedAlarmCallback(null);
     };
   }, []);
 
@@ -277,6 +284,11 @@ export function Home() {
         open={addNoteOpen}
         onOpenChange={setAddNoteOpen}
         onSave={handleAddNote}
+      />
+
+      <FixedAlarmModal
+        open={fixedAlarmModalOpen}
+        onOpenChange={setFixedAlarmModalOpen}
       />
     </div>
   );
