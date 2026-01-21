@@ -1,0 +1,60 @@
+Strict task: Add Dark Mode toggle and an Extras section button to the Settings page.
+
+Scope:
+- Modify ONLY the Settings page UI and related state logic.
+- Do NOT change layout, routing, existing content, or visual identity.
+- Do NOT remove or rename any existing settings items.
+- Additions must be clean, minimal, and professional.
+
+Goals:
+1) Allow the user to manually toggle Dark Mode on/off.
+2) Provide a clearly labeled “Extras” button for future optional features.
+3) Keep behavior consistent across the entire app (Home, Calendar, Settings).
+
+Implementation details:
+
+1) Dark Mode Toggle
+- Add a toggle switch (or segmented control) labeled:
+  "Dark Mode"
+- Place it at the top of the Settings page, above "My Alerts".
+- The toggle must:
+  - Reflect the current theme state (on = dark, off = light).
+  - Persist user preference using localStorage.
+  - Immediately apply theme changes without reload.
+- Dark mode behavior:
+  - Add/remove a `dark` class on the root element (e.g. <body> or #app).
+  - Use existing dark/light styles where present.
+  - Do NOT alter colors, spacing, or typography beyond theme switching.
+
+2) Extras Button
+- Add a button labeled:
+  "Extras"
+- Place it under the Dark Mode toggle.
+- Style:
+  - Neutral secondary button (not primary CTA).
+  - Same visual language as existing Settings buttons.
+- Behavior:
+  - For now, clicking the button opens a placeholder view or modal
+    with text:
+    "More features will be available here in the future."
+  - No backend logic required.
+  - No feature activation yet.
+
+3) Technical Constraints
+- Use existing state management approach (React state / context if present).
+- No new dependencies.
+- No routing changes.
+- No breaking changes to Settings structure.
+
+4) Validation
+- Dark mode toggle works from Settings and affects all screens.
+- Theme choice persists after refresh.
+- Extras button is visible, clickable, and non-breaking.
+- Settings page remains clean and professional.
+
+Deliverables:
+- Code changes only.
+- No comments, explanations, or documentation output.
+- Ensure build passes and UI remains stable.
+
+End of task.
