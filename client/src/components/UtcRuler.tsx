@@ -187,7 +187,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
           className="absolute z-30"
           style={{ left: `${indicatorPosition}%`, top: '0px', transform: 'translateX(-50%)' }}
         >
-          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black dark:border-t-white" />
+          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black" />
         </div>
         
         <div
@@ -264,12 +264,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
             })}
 
           <div
-            className="absolute top-0 h-full w-1 dark:bg-black/[0.25] z-19 transition-all duration-1000 ease-linear hidden dark:block"
-            style={{ left: `${indicatorPosition}%`, transform: 'translateX(-50%)' }}
-            data-testid="utc-indicator-overlay"
-          />
-          <div
-            className="absolute top-0 h-full w-0.5 bg-black dark:w-[2px] dark:bg-white z-20 transition-all duration-1000 ease-linear"
+            className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
             style={{ left: `${indicatorPosition}%` }}
             data-testid="utc-indicator"
           />

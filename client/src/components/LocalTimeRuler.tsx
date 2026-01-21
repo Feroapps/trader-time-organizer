@@ -199,12 +199,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
             })}
 
           <div
-            className="absolute top-0 h-full w-1 dark:bg-black/[0.25] z-19 transition-all duration-1000 ease-linear hidden dark:block"
-            style={{ left: `${indicatorPosition}%`, transform: 'translateX(-50%)' }}
-            data-testid="local-indicator-overlay"
-          />
-          <div
-            className="absolute top-0 h-full w-0.5 bg-black dark:w-[2px] dark:bg-white z-20 transition-all duration-1000 ease-linear"
+            className="absolute top-0 h-full w-0.5 bg-black dark:bg-white z-20 transition-all duration-1000 ease-linear"
             style={{ left: `${indicatorPosition}%` }}
             data-testid="local-indicator"
           />
