@@ -1,0 +1,37 @@
+Strict task: Improve current-time indicator visibility in dark mode and unify behavior between Local and UTC timelines.
+
+Scope:
+- Files to change: timeline component(s) and global styles.
+- Goal: Indicator must be clearly visible above any colored timeline blocks in dark mode, consistent across Local and UTC timelines. No layout or routing changes. No content changes other than styles and minimal DOM markers if needed.
+
+Implementation steps:
+1) Add CSS in `src/styles.css` (or index.css) to implement:
+   - .current-time-indicator: white vertical line (2px) with transform: translateX(-50%)
+   - .current-time-indicator::before: a micro-overlay behind the white line (rgba(0,0,0,0.22), width ~6px) to guarantee contrast over colored blocks
+   - .current-time-triangle: small white triangle aligned with the line
+   - Apply .light-mode rules to use a black indicator and disable overlay in light mode
+
+2) Ensure indicator DOM exists for both timelines with classes:
+   - <div class="current-time-indicator"></div>
+   - <div class="current-time-triangle"></div>
+   If not present, insert them inside timeline component markup.
+
+3) Ensure the JS that updates the indicator position writes the left coordinate to CSS (either style.left or --indicator-left). Example:
+   indicatorEl.style.left = `${leftPx}px`;
+
+4) Ensure the UTC timeline uses the same styling (no special-case color). If the repo currently has different rules for UTC, remove them so both are unified.
+
+5) Tests:
+   - Preview in dark mode: indicator visible over light and dark colored segments (especially near 23:00).
+   - Preview in light mode: indicator is black, overlay disabled.
+   - Ensure triangle marker color matches the line.
+   - No regression in layout or interactivity.
+
+6) Commit:
+   - Branch: fix/time-indicator-contrast
+   - Commit message: "Fix: unify and improve current-time indicator contrast (dark mode overlay)"
+   - Push and open preview/test.
+
+Deliver only code changes and the commit. Do not change app layout, routing, or other visuals.
+
+End of task.

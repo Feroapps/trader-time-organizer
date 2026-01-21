@@ -285,4 +285,48 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Current time indicator - unified for all timelines */
+  .current-time-indicator {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background-color: #000000;
+    z-index: 20;
+    transform: translateX(-50%);
+    transition: left 1s ease-linear;
+  }
+
+  .current-time-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 100%;
+    background-color: transparent;
+    z-index: -1;
+  }
+
+  .dark .current-time-indicator {
+    background-color: #FFFFFF;
+  }
+
+  .dark .current-time-indicator::before {
+    background-color: rgba(0, 0, 0, 0.22);
+  }
+
+  .current-time-triangle {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 7px solid #000000;
+  }
+
+  .dark .current-time-triangle {
+    border-top-color: #FFFFFF;
+  }
 }
