@@ -318,6 +318,11 @@
     background-color: rgba(0, 0, 0, 0.22);
   }
 
+  /* UTC indicator line: black in dark mode for visibility over light session colors */
+  .dark .current-time-indicator[data-testid="utc-indicator"] {
+    background-color: #000000;
+  }
+
   .current-time-triangle {
     width: 0;
     height: 0;
