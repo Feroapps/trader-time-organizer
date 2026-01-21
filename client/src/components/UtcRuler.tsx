@@ -264,12 +264,12 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
             })}
 
           <div
-            className="absolute top-0 h-full w-1 dark:bg-black/[0.20] z-19 transition-all duration-1000 ease-linear hidden dark:block"
+            className="absolute top-0 h-full w-1 dark:bg-black/[0.25] z-19 transition-all duration-1000 ease-linear hidden dark:block"
             style={{ left: `${indicatorPosition}%`, transform: 'translateX(-50%)' }}
             data-testid="utc-indicator-overlay"
           />
           <div
-            className="absolute top-0 h-full w-0.5 bg-black dark:bg-white dark:shadow-[0_0_6px_2px_rgba(0,255,255,0.6)] z-20 transition-all duration-1000 ease-linear"
+            className="absolute top-0 h-full w-0.5 bg-black dark:w-[2px] dark:bg-white z-20 transition-all duration-1000 ease-linear"
             style={{ left: `${indicatorPosition}%` }}
             data-testid="utc-indicator"
           />

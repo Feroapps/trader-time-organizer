@@ -1,0 +1,46 @@
+STRICT REPLIT AGENT PROMPT
+
+Project: Trader Time Organizer
+
+Problem:
+In dark mode, the current time indicator (the vertical line with the small downward triangle ▼) becomes hard to see, especially on the UTC timeline. The indicator visually blends with light or similar session colors (notably around 22:00–00:00), making it almost invisible. This issue is more noticeable in UTC than in Local Time, causing inconsistent behavior between the two timelines.
+
+Goal:
+Make the current time indicator clearly visible and consistent in BOTH Local Time and UTC timelines when dark mode is enabled.
+
+Required Changes (Dark Mode Only):
+1. Unify the appearance and behavior of the current time indicator between Local Time and UTC.
+2. The indicator line must remain clearly visible on top of ALL timeline colors.
+3. Apply the SAME styling logic to both timelines.
+
+Implementation Rules:
+- Keep layout, spacing, routing, logic, and data unchanged.
+- Do NOT change session colors.
+- Do NOT add animations.
+- Do NOT modify light mode behavior.
+- Only adjust visual styling of the current time indicator in dark mode.
+
+Visual Specification (Dark Mode):
+- Indicator line color: pure white (#FFFFFF)
+- Line width: 2px
+- Add a subtle background overlay behind the line:
+  - Overlay width: 4px
+  - Overlay color: rgba(0, 0, 0, 0.25)
+  - Overlay must be centered behind the indicator line
+- Triangle marker (▼):
+  - Same white color (#FFFFFF)
+  - Must stay aligned with the indicator line
+  - No size or shape change
+
+Behavior:
+- The indicator must visually sit ABOVE all timeline session colors.
+- The indicator must remain readable regardless of background brightness.
+- Local Time and UTC indicators must look and behave identically.
+
+Acceptance Criteria:
+- In dark mode, the current time indicator is immediately visible on both Local and UTC timelines.
+- The indicator does not disappear or fade when crossing light-colored session blocks.
+- No visual regressions in light mode.
+- No other UI elements are affected.
+
+This task is COMPLETE when the current time indicator is equally clear, readable, and consistent in both timelines under dark mode.
