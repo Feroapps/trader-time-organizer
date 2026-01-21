@@ -7,9 +7,11 @@ import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText, Plus, StickyNote } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Plus, StickyNote, Eye } from "lucide-react";
 import { AlertModal } from "@/components/AlertModal";
 import { FixedAlarmModal } from "@/components/FixedAlarmModal";
+import { AdRequiredModal } from "@/components/AdRequiredModal";
+import { showInterstitialAd } from "@/utils/adService";
 import { useToast } from "@/hooks/use-toast";
 import type { Alarm, CreateAlarmInput, CreateNoteInput } from "@/types";
 
@@ -36,11 +38,42 @@ export function Home() {
     return getTradingContext(getUtcHour(), status.isOpen);
   });
   const [isMarketOpen, setIsMarketOpen] = useState(() => getMarketStatus().isOpen);
+  const [adModalOpen, setAdModalOpen] = useState(false);
+  const [pendingAlertData, setPendingAlertData] = useState<CreateAlarmInput | null>(null);
+  const [pairsAdModalOpen, setPairsAdModalOpen] = useState(false);
+  const [pairsUnlocked, setPairsUnlocked] = useState(false);
 
-  async function handleAddAlert(alertData: CreateAlarmInput) {
-    await createAlarm(alertData);
-    const allAlarms = await getAlarms();
-    setAlarms(allAlarms);
+  function handleAlertSaveRequest(alertData: CreateAlarmInput) {
+    setPendingAlertData(alertData);
+    setAdModalOpen(true);
+  }
+
+  function handleAdContinue() {
+    if (!pendingAlertData) return;
+    showInterstitialAd(async () => {
+      await createAlarm(pendingAlertData);
+      const allAlarms = await getAlarms();
+      setAlarms(allAlarms);
+      setPendingAlertData(null);
+      toast({ title: "Alert saved" });
+    });
+  }
+
+  function handleAdCancel() {
+    setPendingAlertData(null);
+  }
+
+  function handleViewPairsRequest() {
+    setPairsAdModalOpen(true);
+  }
+
+  function handlePairsAdContinue() {
+    showInterstitialAd(() => {
+      setPairsUnlocked(true);
+    });
+  }
+
+  function handlePairsAdCancel() {
   }
 
   async function handleAddNote(noteData: CreateNoteInput) {
@@ -215,38 +248,51 @@ export function Home() {
                 <span className="text-muted-foreground">Behavior: </span>
                 <span className="font-medium">{tradingContext.behavior}</span>
               </div>
-              <div className="flex flex-wrap gap-4 text-sm">
-                {tradingContext.majorPairs && (
-                  <div data-testid="context-major-pairs">
-                    <span className="text-muted-foreground">Major pairs: </span>
-                    <span className="font-mono">{tradingContext.majorPairs.join(", ")}</span>
-                  </div>
-                )}
-                {tradingContext.minorPairs && (
-                  <div data-testid="context-minor-pairs">
-                    <span className="text-muted-foreground">Minor pairs: </span>
-                    <span className="font-mono">{tradingContext.minorPairs.join(", ")}</span>
-                  </div>
-                )}
-                {tradingContext.reactivePairs && (
-                  <div data-testid="context-reactive-pairs">
-                    <span className="text-muted-foreground">Most reactive pairs: </span>
-                    <span className="font-mono">{tradingContext.reactivePairs.join(", ")}</span>
-                  </div>
-                )}
-                {tradingContext.liquidPairs && (
-                  <div data-testid="context-liquid-pairs">
-                    <span className="text-muted-foreground">Most liquid pairs: </span>
-                    <span className="font-mono">{tradingContext.liquidPairs.join(", ")}</span>
-                  </div>
-                )}
-                {tradingContext.additionalPairs && (
-                  <div data-testid="context-additional-pairs">
-                    <span className="text-muted-foreground">Additional active pairs: </span>
-                    <span className="font-mono">{tradingContext.additionalPairs.join(", ")}</span>
-                  </div>
-                )}
-              </div>
+              {pairsUnlocked ? (
+                <div className="flex flex-wrap gap-4 text-sm">
+                  {tradingContext.majorPairs && (
+                    <div data-testid="context-major-pairs">
+                      <span className="text-muted-foreground">Major pairs: </span>
+                      <span className="font-mono">{tradingContext.majorPairs.join(", ")}</span>
+                    </div>
+                  )}
+                  {tradingContext.minorPairs && (
+                    <div data-testid="context-minor-pairs">
+                      <span className="text-muted-foreground">Minor pairs: </span>
+                      <span className="font-mono">{tradingContext.minorPairs.join(", ")}</span>
+                    </div>
+                  )}
+                  {tradingContext.reactivePairs && (
+                    <div data-testid="context-reactive-pairs">
+                      <span className="text-muted-foreground">Most reactive pairs: </span>
+                      <span className="font-mono">{tradingContext.reactivePairs.join(", ")}</span>
+                    </div>
+                  )}
+                  {tradingContext.liquidPairs && (
+                    <div data-testid="context-liquid-pairs">
+                      <span className="text-muted-foreground">Most liquid pairs: </span>
+                      <span className="font-mono">{tradingContext.liquidPairs.join(", ")}</span>
+                    </div>
+                  )}
+                  {tradingContext.additionalPairs && (
+                    <div data-testid="context-additional-pairs">
+                      <span className="text-muted-foreground">Additional active pairs: </span>
+                      <span className="font-mono">{tradingContext.additionalPairs.join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleViewPairsRequest}
+                  className="gap-2"
+                  data-testid="button-view-trading-pairs"
+                >
+                  <Eye className="w-4 h-4" />
+                  View Trading Pairs
+                </Button>
+              )}
             </div>
           ) : (
             <div className="text-center py-4" data-testid="context-closed-message">
@@ -261,7 +307,7 @@ export function Home() {
       <AlertModal
         open={addAlertOpen}
         onOpenChange={setAddAlertOpen}
-        onSave={handleAddAlert}
+        onSave={handleAlertSaveRequest}
       />
 
       <NoteModal
@@ -273,6 +319,24 @@ export function Home() {
       <FixedAlarmModal
         open={fixedAlarmModalOpen}
         onOpenChange={setFixedAlarmModalOpen}
+      />
+
+      <AdRequiredModal
+        open={adModalOpen}
+        onOpenChange={setAdModalOpen}
+        title="Ad Required"
+        message="To keep Trader Time Organizer free, a short ad will be shown before saving this alert."
+        onContinue={handleAdContinue}
+        onCancel={handleAdCancel}
+      />
+
+      <AdRequiredModal
+        open={pairsAdModalOpen}
+        onOpenChange={setPairsAdModalOpen}
+        title="Ad Required"
+        message="Viewing session-based trading pairs is supported by a short ad."
+        onContinue={handlePairsAdContinue}
+        onCancel={handlePairsAdCancel}
       />
     </div>
   );

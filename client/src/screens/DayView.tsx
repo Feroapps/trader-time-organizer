@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getNotes, createNote, deleteNote } from "@/storage/notesRepo";
 import { getAlarms, createAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
+import { AdRequiredModal } from "@/components/AdRequiredModal";
+import { showInterstitialAd } from "@/utils/adService";
 import type { Note, Alarm, CreateAlarmInput } from "@/types";
 
 const MONTH_NAMES = [
@@ -167,6 +169,8 @@ export function DayView() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [showAddNote, setShowAddNote] = useState(false);
   const [showAddAlert, setShowAddAlert] = useState(false);
+  const [adModalOpen, setAdModalOpen] = useState(false);
+  const [pendingAlertData, setPendingAlertData] = useState<CreateAlarmInput | null>(null);
 
   const date = useMemo(() => parseRouteDate(params.date || ""), [params.date]);
 
@@ -239,10 +243,23 @@ export function DayView() {
     toast({ title: "Note added" });
   };
 
-  const handleAddAlert = async (data: CreateAlarmInput) => {
-    await createAlarm(data);
-    await loadData();
-    toast({ title: "Alert added" });
+  const handleAlertSaveRequest = (data: CreateAlarmInput) => {
+    setPendingAlertData(data);
+    setAdModalOpen(true);
+  };
+
+  const handleAdContinue = () => {
+    if (!pendingAlertData) return;
+    showInterstitialAd(async () => {
+      await createAlarm(pendingAlertData);
+      await loadData();
+      setPendingAlertData(null);
+      toast({ title: "Alert saved" });
+    });
+  };
+
+  const handleAdCancel = () => {
+    setPendingAlertData(null);
   };
 
   const handleDeleteNote = async (id: string) => {
@@ -400,7 +417,16 @@ export function DayView() {
       <AlertModal
         open={showAddAlert}
         onOpenChange={setShowAddAlert}
-        onSave={handleAddAlert}
+        onSave={handleAlertSaveRequest}
+      />
+
+      <AdRequiredModal
+        open={adModalOpen}
+        onOpenChange={setAdModalOpen}
+        title="Ad Required"
+        message="To keep Trader Time Organizer free, a short ad will be shown before saving this alert."
+        onContinue={handleAdContinue}
+        onCancel={handleAdCancel}
       />
     </div>
   );
