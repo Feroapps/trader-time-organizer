@@ -11,28 +11,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getAlarms, toggleAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, FileText, AlertTriangle, Moon, Sparkles } from "lucide-react";
+import { Pencil, Trash2, ChevronRight, Shield, FileText, AlertTriangle } from "lucide-react";
 import type { Alarm, CreateAlarmInput } from "@/types";
-
-function getInitialDarkMode(): boolean {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('darkMode');
-    if (stored !== null) {
-      return stored === 'true';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  return false;
-}
-
-function applyDarkMode(isDark: boolean) {
-  if (isDark) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-  localStorage.setItem('darkMode', String(isDark));
-}
 
 function formatUtcTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} UTC`;
@@ -147,12 +127,6 @@ export function Settings() {
   const [fixedDialogOpen, setFixedDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alarm | null>(null);
-  const [darkMode, setDarkMode] = useState(getInitialDarkMode);
-  const [extrasDialogOpen, setExtrasDialogOpen] = useState(false);
-
-  useEffect(() => {
-    applyDarkMode(darkMode);
-  }, [darkMode]);
 
   useEffect(() => {
     loadAllAlarms();
@@ -204,43 +178,6 @@ export function Settings() {
       </p>
 
       <div className="mt-8 space-y-8">
-        <section>
-          <h2 className="text-xl font-semibold mb-4" data-testid="text-appearance-title">Appearance</h2>
-          <div
-            className="flex items-center justify-between p-3 bg-muted rounded-md"
-            data-testid="dark-mode-toggle-row"
-          >
-            <div className="flex items-center gap-3">
-              <Moon className="w-5 h-5 text-muted-foreground" />
-              <span className="font-medium">Dark Mode</span>
-            </div>
-            <Switch
-              checked={darkMode}
-              onCheckedChange={setDarkMode}
-              data-testid="switch-dark-mode"
-            />
-          </div>
-        </section>
-
-        <section>
-          <Dialog open={extrasDialogOpen} onOpenChange={setExtrasDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-3" data-testid="button-extras">
-                <Sparkles className="w-5 h-5" />
-                Extras
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Extras</DialogTitle>
-              </DialogHeader>
-              <p className="text-muted-foreground mt-2">
-                More features will be available here in the future.
-              </p>
-            </DialogContent>
-          </Dialog>
-        </section>
-
         <section>
           <h2 className="text-xl font-semibold mb-4" data-testid="text-my-alerts-title">My Alerts</h2>
           {userAlerts.length === 0 ? (
