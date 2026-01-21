@@ -177,7 +177,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
           className="absolute z-30"
           style={{ left: `${indicatorPosition}%`, top: '0px', transform: 'translateX(-50%)' }}
         >
-          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black" />
+          <div className="w-0 h-0 border-l-[3px] border-r-[3px] border-t-[6px] border-l-transparent border-r-transparent border-t-black dark:border-t-white" />
         </div>
         
         <div
@@ -199,7 +199,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
             })}
 
           <div
-            className="absolute top-0 h-full w-0.5 bg-black z-20 transition-all duration-1000 ease-linear"
+            className="absolute top-0 h-full w-0.5 bg-black dark:bg-white z-20 transition-all duration-1000 ease-linear"
             style={{ left: `${indicatorPosition}%` }}
             data-testid="local-indicator"
           />
