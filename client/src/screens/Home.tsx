@@ -7,7 +7,7 @@ import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, FileText, Plus, StickyNote, Moon, Sun } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Plus, StickyNote } from "lucide-react";
 import { AlertModal } from "@/components/AlertModal";
 import { FixedAlarmModal } from "@/components/FixedAlarmModal";
 import { useToast } from "@/hooks/use-toast";
@@ -122,25 +122,9 @@ export function Home() {
   return (
     <div className="max-w-6xl mx-auto p-8">
       <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">
-            Trader Time Organizer
-          </h1>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              const html = document.documentElement;
-              const isDark = html.classList.toggle('dark');
-              console.info("UI: theme toggle used (visual-only)");
-            }}
-            aria-label="Toggle theme: light / dark"
-            data-testid="button-theme-toggle"
-          >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold" data-testid="text-page-title">
+          Trader Time Organizer
+        </h1>
         <p className="text-muted-foreground mt-2" data-testid="text-page-description">
           Manage your trading schedule across global time zones
         </p>
