@@ -298,24 +298,8 @@
     transition: left 1s ease-linear;
   }
 
-  .current-time-indicator::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 100%;
-    background-color: transparent;
-    z-index: -1;
-  }
-
   .dark .current-time-indicator {
     background-color: #FFFFFF;
-  }
-
-  .dark .current-time-indicator::before {
-    background-color: rgba(0, 0, 0, 0.22);
   }
 
   /* UTC indicator line: black in dark mode for visibility over light session colors */
