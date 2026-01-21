@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Home, Calendar, DayView, Settings } from "@/screens";
+import { Home, Calendar, DayView, Settings, PrivacyPolicy, TermsOfUse, Disclaimer } from "@/screens";
 import NotFound from "@/pages/not-found";
 import { Clock, CalendarDays, Cog } from "lucide-react";
 import { preloadAudio, isAudioPreloaded } from "@/utils/soundPlayer";
@@ -62,6 +62,9 @@ function Router() {
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar/day/:date" component={DayView} />
       <Route path="/settings" component={Settings} />
+      <Route path="/settings/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/settings/terms-of-use" component={TermsOfUse} />
+      <Route path="/settings/disclaimer" component={Disclaimer} />
       <Route component={NotFound} />
     </Switch>
   );

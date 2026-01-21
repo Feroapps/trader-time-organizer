@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getAlarms, toggleAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronRight, Shield, FileText, AlertTriangle } from "lucide-react";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -224,6 +225,50 @@ export function Settings() {
               </div>
             </DialogContent>
           </Dialog>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-4" data-testid="text-privacy-use-title">
+            Privacy & Use
+          </h2>
+          <div className="space-y-2">
+            <Link href="/settings/privacy-policy">
+              <div
+                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
+                data-testid="link-privacy-policy"
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">Privacy Policy</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </Link>
+            <Link href="/settings/terms-of-use">
+              <div
+                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
+                data-testid="link-terms-of-use"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">Terms of Use</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </Link>
+            <Link href="/settings/disclaimer">
+              <div
+                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
+                data-testid="link-disclaimer"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">Disclaimer</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </Link>
+          </div>
         </section>
       </div>
 
