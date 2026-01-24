@@ -318,7 +318,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
                 </div>
               );
             } else {
-              // Minor tick only (odd hours) - shorter, no label
+              // Minor tick only (odd hours) - shorter than major, no label
               return (
                 <div
                   key={hour}
@@ -327,8 +327,9 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
                     left: `${leftPosition}%`,
                     transform: "translateX(-50%)",
                   }}
+                  data-testid={`minor-tick-${hour}`}
                 >
-                  <div className="w-px h-1 bg-border/60" />
+                  <div className="w-px h-1.5 bg-muted-foreground/50" />
                 </div>
               );
             }

@@ -253,7 +253,7 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
                 </div>
               );
             } else {
-              // Minor tick only (odd hours) - shorter, no label
+              // Minor tick only (odd hours) - shorter than major, no label
               return (
                 <div
                   key={utcHour}
@@ -262,8 +262,9 @@ export function LocalTimeRuler({ alerts = [] }: LocalTimeRulerProps) {
                     left: `${leftPosition}%`,
                     transform: "translateX(-50%)",
                   }}
+                  data-testid={`local-minor-tick-${utcHour}`}
                 >
-                  <div className="w-px h-1 bg-border/60" />
+                  <div className="w-px h-1.5 bg-muted-foreground/50" />
                 </div>
               );
             }
