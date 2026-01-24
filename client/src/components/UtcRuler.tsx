@@ -289,14 +289,57 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
       <div className="relative h-8 mt-2" data-testid="ruler-labels">
         {hours.map((hour) => {
           const leftPosition = (hour / 24) * 100;
+          const isEvenHour = hour % 2 === 0;
           const showLabel = hour % labelInterval === 0;
+          
+          // On mobile: show labels for even hours, minor ticks for odd hours
+          // On desktop: show labels for all hours
+          if (isMobile) {
+            if (isEvenHour) {
+              // Major tick with label (even hours)
+              const labelIndex = Math.floor(hour / labelInterval);
+              const isOdd = labelIndex % 2 === 1;
+              return (
+                <div
+                  key={hour}
+                  className={`absolute flex flex-col items-center ${isOdd ? 'hour-label-odd' : 'hour-label-even'}`}
+                  style={{
+                    left: `${leftPosition}%`,
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <div className="w-px h-2 bg-border" />
+                  <span
+                    className="text-[9px] text-muted-foreground font-mono mt-0.5"
+                    data-testid={`hour-label-${hour}`}
+                  >
+                    {hour.toString().padStart(2, "0")}
+                  </span>
+                </div>
+              );
+            } else {
+              // Minor tick only (odd hours) - shorter, no label
+              return (
+                <div
+                  key={hour}
+                  className="absolute flex flex-col items-center"
+                  style={{
+                    left: `${leftPosition}%`,
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <div className="w-px h-1 bg-border/60" />
+                </div>
+              );
+            }
+          }
+          
+          // Desktop: show all hours with labels
           if (!showLabel) return null;
-          const labelIndex = Math.floor(hour / labelInterval);
-          const isOdd = labelIndex % 2 === 1;
           return (
             <div
               key={hour}
-              className={`absolute flex flex-col items-center ${isMobile ? (isOdd ? 'hour-label-odd' : 'hour-label-even') : ''}`}
+              className="absolute flex flex-col items-center"
               style={{
                 left: `${leftPosition}%`,
                 transform: "translateX(-50%)",
@@ -304,7 +347,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
             >
               <div className="w-px h-2 bg-border" />
               <span
-                className="text-[9px] md:text-[10px] text-muted-foreground font-mono mt-0.5"
+                className="text-[10px] text-muted-foreground font-mono mt-0.5"
                 data-testid={`hour-label-${hour}`}
               >
                 {hour.toString().padStart(2, "0")}
