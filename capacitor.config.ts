@@ -6,9 +6,9 @@ const config: CapacitorConfig = {
   webDir: "dist/public",
   plugins: {
     StatusBar: {
-      overlaysWebView: false,
-      style: "DARK",
-      backgroundColor: "#121212",
+      overlaysWebView: true,
+      style: "LIGHT",
+      backgroundColor: "#FFFFFF",
     },
     SplashScreen: {
       launchShowDuration: 2000,
