@@ -15,7 +15,6 @@ export async function initCapacitor(): Promise<void> {
       const style = isDark ? Style.Dark : Style.Light;
       
       try {
-        await StatusBar.setOverlaysWebView({ overlay: true });
         await StatusBar.setBackgroundColor({ color: bgColor });
         await StatusBar.setStyle({ style });
       } catch (e) {
