@@ -80,3 +80,21 @@ shared/           # Shared code between client/server
 - **esbuild**: Server bundling
 - **TypeScript**: Type checking across the stack
 - **Tailwind CSS**: Utility-first styling
+
+### Native Mobile (Capacitor)
+- **Capacitor**: Native Android app wrapper
+- **@capacitor/status-bar**: Dynamic status bar theming (adapts to light/dark mode)
+- **@capacitor/splash-screen**: App launch screen
+- **capacitorInit.ts**: Runtime initialization for native features
+
+#### Android Build Commands
+```bash
+npm run build           # Build the web app
+npx cap sync android    # Sync web assets to Android
+npx cap open android    # Open in Android Studio
+```
+
+#### Status Bar Behavior
+- Light mode: White background with dark icons
+- Dark mode: Dark (#121212) background with light icons
+- Automatically updates when theme changes via MutationObserver on document.documentElement

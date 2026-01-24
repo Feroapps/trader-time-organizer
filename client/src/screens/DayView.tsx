@@ -13,9 +13,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { getNotes, createNote, deleteNote } from "@/storage/notesRepo";
-import { getAlarms, createAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
+import { getAlarms, createAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
 import { AdRequiredModal } from "@/components/AdRequiredModal";
 import { showInterstitialAd } from "@/utils/adService";
@@ -220,7 +230,23 @@ export function DayView() {
   };
 
   const dayNotes = notes.filter((n) => n.dateUTC === dateStr);
-  const dayAlarms = alarms.filter((a) => a.isEnabled && a.repeatDays.includes(dayOfWeek));
+  const dayAlarms = alarms.filter((a) => {
+    const [year, month, day] = a.dateUTC.split("-").map(Number);
+    const alarmDate = new Date(Date.UTC(year, month - 1, day));
+    const alarmDow = alarmDate.getUTCDay();
+    const alarmDayOfMonth = day;
+    
+    if (a.repeatWeekly && alarmDow === dayOfWeek) {
+      return true;
+    }
+    if (a.repeatMonthly && alarmDayOfMonth === date.day) {
+      return true;
+    }
+    if (!a.repeatWeekly && !a.repeatMonthly && a.dateUTC === dateStr) {
+      return true;
+    }
+    return false;
+  });
 
   const notesByHour: Record<number, Note[]> = {};
   dayNotes.forEach((note) => {
@@ -268,19 +294,22 @@ export function DayView() {
     toast({ title: "Note deleted" });
   };
 
-  const handleDeleteAlarm = async (alarmId: string) => {
-    const alarm = alarms.find((a) => a.id === alarmId);
-    if (!alarm) return;
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [alarmToDelete, setAlarmToDelete] = useState<string | null>(null);
 
-    const newRepeatDays = alarm.repeatDays.filter((d) => d !== dayOfWeek);
-    if (newRepeatDays.length === 0) {
-      await deleteAlarm(alarmId);
+  const requestDeleteAlarm = (alarmId: string) => {
+    setAlarmToDelete(alarmId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteAlarm = async () => {
+    if (alarmToDelete) {
+      await deleteAlarm(alarmToDelete);
+      await loadData();
       toast({ title: "Alert deleted" });
-    } else {
-      await updateAlarm({ ...alarm, repeatDays: newRepeatDays });
-      toast({ title: "Alert updated", description: `Removed ${DAY_NAMES[dayOfWeek]} from alert.` });
+      setAlarmToDelete(null);
     }
-    await loadData();
+    setDeleteConfirmOpen(false);
   };
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -394,7 +423,7 @@ export function DayView() {
                       size="icon"
                       variant="ghost"
                       className="shrink-0 h-7 w-7"
-                      onClick={() => handleDeleteAlarm(alarm.id)}
+                      onClick={() => requestDeleteAlarm(alarm.id)}
                       data-testid={`button-delete-alarm-${alarm.id}`}
                     >
                       <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -428,6 +457,23 @@ export function DayView() {
         onContinue={handleAdContinue}
         onCancel={handleAdCancel}
       />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this alert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-alarm">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAlarm} data-testid="button-confirm-delete-alarm">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

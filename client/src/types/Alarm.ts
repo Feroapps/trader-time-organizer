@@ -1,12 +1,14 @@
 export interface Alarm {
   id: string;
+  dateUTC: string;
   hourUTC: number;
   minuteUTC: number;
-  repeatDays: number[];
+  repeatWeekly: boolean;
+  repeatMonthly: boolean;
   label: string;
-  isEnabled: boolean;
   isFixed: boolean;
   duration: number;
+  soundId?: string;
 }
 
 export type CreateAlarmInput = Omit<Alarm, 'id'>;

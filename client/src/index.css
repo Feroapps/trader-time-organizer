@@ -318,4 +318,48 @@
   .dark .current-time-triangle {
     border-top-color: #FFFFFF;
   }
+
+  /* Mobile typography - reduce ruler title and time display sizes */
+  @media (max-width: 767px) {
+    .ruler-title {
+      font-size: 0.875rem; /* text-sm equivalent */
+      font-weight: 500;
+    }
+    
+    .ruler-time-display {
+      font-size: 1.125rem; /* text-lg equivalent */
+    }
+    
+    .ruler-session-label {
+      font-size: 0.625rem; /* text-[10px] */
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    /* Staggered hour labels on mobile rulers */
+    .hour-label-even {
+      transform: translateY(0px);
+    }
+    
+    .hour-label-odd {
+      transform: translateY(6px);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .ruler-title {
+      font-size: 1.25rem; /* text-xl equivalent */
+      font-weight: 600;
+    }
+    
+    .ruler-time-display {
+      font-size: 1.5rem; /* text-2xl equivalent */
+    }
+    
+    .ruler-session-label {
+      font-size: 0.875rem; /* text-sm */
+    }
+  }
 }

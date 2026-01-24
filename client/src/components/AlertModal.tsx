@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,10 +8,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 interface AlertModalProps {
@@ -21,54 +26,63 @@ interface AlertModalProps {
   editingAlert?: Alarm | null;
 }
 
-const DAY_LABELS = [
-  { value: 1, label: "Mon" },
-  { value: 2, label: "Tue" },
-  { value: 3, label: "Wed" },
-  { value: 4, label: "Thu" },
-  { value: 5, label: "Fri" },
-  { value: 6, label: "Sat" },
-  { value: 0, label: "Sun" },
-];
+function formatDateUTC(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateUTC(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date;
+}
+
+function formatDisplayDate(date: Date): string {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return `${days[date.getUTCDay()]}, ${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+}
 
 export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertModalProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [hour, setHour] = useState(0);
   const [minute, setMinute] = useState(0);
-  const [repeatDays, setRepeatDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [label, setLabel] = useState("");
-  const [isEnabled, setIsEnabled] = useState(true);
 
   useEffect(() => {
     if (open) {
       if (editingAlert) {
+        setSelectedDate(parseDateUTC(editingAlert.dateUTC));
         setHour(editingAlert.hourUTC);
         setMinute(editingAlert.minuteUTC);
-        setRepeatDays([...editingAlert.repeatDays]);
+        setRepeatWeekly(editingAlert.repeatWeekly);
+        setRepeatMonthly(editingAlert.repeatMonthly);
         setLabel(editingAlert.label);
-        setIsEnabled(editingAlert.isEnabled);
       } else {
-        setHour(0);
-        setMinute(0);
-        setRepeatDays([0, 1, 2, 3, 4, 5, 6]);
+        const now = new Date();
+        setSelectedDate(now);
+        setHour(now.getUTCHours());
+        setMinute(now.getUTCMinutes());
+        setRepeatWeekly(false);
+        setRepeatMonthly(false);
         setLabel("");
-        setIsEnabled(true);
       }
     }
   }, [open, editingAlert]);
 
-  function handleDayToggle(day: number) {
-    setRepeatDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
-    );
-  }
-
   function handleSave() {
+    const dateStr = formatDateUTC(selectedDate);
     const alertData: CreateAlarmInput = {
+      dateUTC: dateStr,
       hourUTC: hour,
       minuteUTC: minute,
-      repeatDays,
+      repeatWeekly,
+      repeatMonthly,
       label: label.trim() || `Alert ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")} UTC`,
-      isEnabled,
       isFixed: false,
       duration: 5,
     };
@@ -94,6 +108,31 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
               placeholder="My Alert"
               data-testid="input-alert-label"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  data-testid="button-date-picker"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDisplayDate(selectedDate)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  data-testid="calendar-picker"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -182,32 +221,26 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Repeat Days</Label>
-            <div className="flex flex-wrap gap-2">
-              {DAY_LABELS.map(({ value, label: dayLabel }) => (
-                <label
-                  key={value}
-                  className="flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={repeatDays.includes(value)}
-                    onCheckedChange={() => handleDayToggle(value)}
-                    data-testid={`checkbox-day-${value}`}
-                  />
-                  <span className="text-sm">{dayLabel}</span>
-                </label>
-              ))}
+          <div className="space-y-3">
+            <Label>Repeat</Label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={repeatWeekly}
+                  onCheckedChange={(checked) => setRepeatWeekly(checked === true)}
+                  data-testid="checkbox-repeat-weekly"
+                />
+                <span className="text-sm">Repeat weekly (every {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][selectedDate.getUTCDay()]})</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={repeatMonthly}
+                  onCheckedChange={(checked) => setRepeatMonthly(checked === true)}
+                  data-testid="checkbox-repeat-monthly"
+                />
+                <span className="text-sm">Repeat monthly (every {selectedDate.getUTCDate()}{getOrdinalSuffix(selectedDate.getUTCDate())})</span>
+              </label>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>Enabled</Label>
-            <Switch
-              checked={isEnabled}
-              onCheckedChange={setIsEnabled}
-              data-testid="switch-alert-enabled"
-            />
           </div>
         </div>
 
@@ -221,7 +254,6 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
           </Button>
           <Button
             onClick={handleSave}
-            disabled={repeatDays.length === 0}
             data-testid="button-save-alert"
           >
             Save
@@ -230,4 +262,10 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
       </DialogContent>
     </Dialog>
   );
+}
+
+function getOrdinalSuffix(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
 }

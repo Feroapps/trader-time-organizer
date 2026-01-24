@@ -1,20 +1,13 @@
-let audioElement: HTMLAudioElement | null = null;
+import { playSound, stopSound, getSelectedSoundId } from './soundLibrary';
+
 let stopTimeout: ReturnType<typeof setTimeout> | null = null;
 let audioPreloaded = false;
+let isCurrentlyPlaying = false;
 
-// Preload audio file without playing - prepares for future playback
 export function preloadAudio(): void {
   if (audioPreloaded) return;
-  
-  try {
-    const audio = new Audio('/alarm.mp3');
-    audio.preload = 'auto';
-    audio.load();
-    audioPreloaded = true;
-    console.log('[SoundPlayer] Audio preloaded (no playback)');
-  } catch (error) {
-    console.warn('[SoundPlayer] Audio preload error:', error);
-  }
+  audioPreloaded = true;
+  console.log('[SoundPlayer] Audio preloaded (no playback)');
 }
 
 export function isAudioPreloaded(): boolean {
@@ -23,13 +16,20 @@ export function isAudioPreloaded(): boolean {
 
 export function playAlarm(durationSeconds: number): void {
   stopAlarm();
+  
+  const soundId = getSelectedSoundId();
+  isCurrentlyPlaying = true;
 
-  audioElement = new Audio('/alarm.mp3');
-  audioElement.loop = true;
-
-  audioElement.play().catch((error) => {
-    console.warn('[SoundPlayer] Failed to play alarm:', error.message);
-  });
+  const playLoop = async () => {
+    while (isCurrentlyPlaying) {
+      await playSound(soundId, false);
+      if (isCurrentlyPlaying) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+  };
+  
+  playLoop();
 
   stopTimeout = setTimeout(() => {
     stopAlarm();
@@ -45,14 +45,11 @@ export function stopAlarm(): void {
     stopTimeout = null;
   }
 
-  if (audioElement) {
-    audioElement.pause();
-    audioElement.currentTime = 0;
-    audioElement = null;
-    console.log('[SoundPlayer] Alarm stopped');
-  }
+  isCurrentlyPlaying = false;
+  stopSound();
+  console.log('[SoundPlayer] Alarm stopped');
 }
 
 export function isPlaying(): boolean {
-  return audioElement !== null && !audioElement.paused;
+  return isCurrentlyPlaying;
 }

@@ -1,0 +1,158 @@
+s"}
+
+You are working on an existing React + TypeScript + Vite + Capacitor project called Trader Time Organizer.  
+This is a single shared codebase.  
+Apply ALL changes exactly as described.  
+Do NOT change any time calculation logic.  
+Do NOT invent new features.
+
+---
+
+## 1. Home Screen – Mobile Typography Fix
+
+- On mobile screens only:
+  - Reduce font size of:
+    - “Local Time” title
+    - “UTC Time” title
+    - The displayed time values
+- Use responsive typography (media queries or clamp).
+- Goal:
+  - Free horizontal space so session names are fully visible.
+- Desktop layout must remain unchanged.
+
+---
+
+## 2. Android App Icon (Capacitor)
+
+- Android app icon must match the PWA icon visually.
+- Do NOT manually edit Android mipmap folders.
+- Use an automated solution (Capacitor assets generator).
+- Use one high-quality square source icon.
+- Regenerate Android adaptive icons and sync the project.
+- Result:
+  - Android launcher icon = PWA icon.
+
+---
+
+## 3. Android Status Bar & Navigation Bar
+
+- Remove black bars at the top and bottom on Android.
+- Status Bar and Navigation Bar must blend with the app UI:
+  - Light mode → white / light background
+  - Dark mode → app dark background
+- No black gaps when swiping or resizing.
+- Use proper Android theme and window configuration.
+
+---
+
+## 4. Alert System – Complete Redesign
+
+### 4.1 General Rules
+- Remove Enabled switch completely.
+- Alerts are always saved when pressing Save.
+- Alerts can be deleted only from:
+  - Calendar
+  - Alerts list / Settings
+- When deleting:
+  - Show confirmation dialog: “Are you sure?”
+  - On confirm:
+    - Delete alert
+    - Cancel the related local notification
+
+---
+
+### 4.2 Alert Model
+- Base alert = Date + Time
+- Optional repeat:
+  - Repeat Weekly → same weekday
+  - Repeat Monthly → same day of month
+- Repeats are indefinite until deleted.
+- No “repeat once”.
+- No separate alert modes.
+
+---
+
+### 4.3 Alert UI (Add / Edit)
+- Fields:
+  1. Date picker
+  2. Time picker
+  3. Repeat options:
+     - ☐ Repeat weekly
+     - ☐ Repeat monthly
+- Repeat day is derived automatically from selected date.
+- No weekday selector.
+- No Enabled toggle.
+
+---
+
+### 4.4 Notifications
+- Use Local Notifications only.
+- No Web Push.
+- Android is the reference platform.
+- On Save:
+  - Schedule next occurrence.
+- On trigger:
+  - If repeating → reschedule next occurrence.
+- On Delete:
+  - Cancel notification immediately.
+- PWA is UI preview only.
+
+---
+
+## 5. Alert Indicators on Time Rulers
+
+### UTC Ruler
+- Alert indicators remain visible.
+- Color is always black in both light and dark mode.
+- Purpose: avoid collision with session colors.
+
+### Local Time Ruler
+- Indicators are shown after converting UTC → local time.
+- Colors:
+  - Light mode → black
+  - Dark mode → white
+- No fluorescent colors.
+
+---
+
+## 6. Alert Sounds
+
+- Add a library of exactly 5 alert sounds.
+- In Settings:
+  - Allow selecting the sound.
+  - Optional in-app preview.
+- Do NOT add volume controls.
+- App uses device / notification channel volume.
+- Android:
+  - Sounds must work with Local Notifications.
+
+---
+
+## 7. Hour Labels on Mobile (Local & UTC Rulers)
+
+- On mobile screens only:
+  - Show hour numbers every 2 hours.
+  - Apply a staggered vertical layout:
+    - One label slightly higher
+    - Next label slightly lower
+    - Alternating pattern
+- Applies to:
+  - Local Time ruler
+  - UTC Time ruler
+- This is visual only:
+  - Do NOT modify time logic.
+- Desktop remains unchanged.
+
+---
+
+## 8. Global Rules
+
+- One shared codebase.
+- Any UI or logic change applies to both PWA and Android.
+- UI can be previewed on PWA.
+- Functional validation (alerts, notifications) is done on Android.
+- Do NOT add extra features.
+
+---
+
+Implement everything above cleanly and professional

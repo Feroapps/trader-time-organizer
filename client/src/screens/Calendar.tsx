@@ -139,19 +139,33 @@ export function Calendar() {
     });
 
     alarms.forEach((alarm) => {
-      if (!alarm.isEnabled) return;
+      const [year, month, day] = alarm.dateUTC.split("-").map(Number);
+      const alarmDate = new Date(Date.UTC(year, month - 1, day));
+      const alarmDow = alarmDate.getUTCDay();
+      const alarmDayOfMonth = day;
       
-      alarm.repeatDays.forEach((dow) => {
+      if (alarm.repeatWeekly) {
         for (let m = 0; m < 12; m++) {
           const daysInMonth = getDaysInMonth(viewYear, m);
           for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(Date.UTC(viewYear, m, d));
-            if (date.getUTCDay() === dow) {
+            if (date.getUTCDay() === alarmDow) {
               dates.add(formatDateUTC({ year: viewYear, month: m, day: d }));
             }
           }
         }
-      });
+      } else if (alarm.repeatMonthly) {
+        for (let m = 0; m < 12; m++) {
+          const daysInMonth = getDaysInMonth(viewYear, m);
+          if (alarmDayOfMonth <= daysInMonth) {
+            dates.add(formatDateUTC({ year: viewYear, month: m, day: alarmDayOfMonth }));
+          }
+        }
+      } else {
+        if (year === viewYear) {
+          dates.add(alarm.dateUTC);
+        }
+      }
     });
 
     return dates;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Trader Time Organizer</string>
+    <string name="title_activity_main">Trader Time Organizer</string>
+    <string name="package_name">com.feroapps.tradertime</string>
+    <string name="custom_url_scheme">com.feroapps.tradertime</string>
+</resources>

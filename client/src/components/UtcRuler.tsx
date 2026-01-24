@@ -3,16 +3,14 @@ import { tradingSessions, timeSegments, type TradingSession, type TimeSegment } 
 import { getMarketStatus } from "@/utils/marketHours";
 
 function useResponsiveLabelInterval(): number {
-  const [interval, setInterval] = useState(() => window.innerWidth >= 768 ? 1 : 3);
+  const [interval, setInterval] = useState(() => window.innerWidth >= 768 ? 1 : 2);
   
   const updateInterval = useCallback(() => {
     const width = window.innerWidth;
     if (width >= 768) {
-      setInterval(1);
-    } else if (width < 400) {
-      setInterval(4);
+      setInterval(1); // Show every hour on desktop
     } else {
-      setInterval(3);
+      setInterval(2); // Show every 2 hours on mobile
     }
   }, []);
   
@@ -23,6 +21,22 @@ function useResponsiveLabelInterval(): number {
   }, [updateInterval]);
   
   return interval;
+}
+
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  
+  const updateIsMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+  
+  useEffect(() => {
+    updateIsMobile();
+    window.addEventListener('resize', updateIsMobile);
+    return () => window.removeEventListener('resize', updateIsMobile);
+  }, [updateIsMobile]);
+  
+  return isMobile;
 }
 
 export interface AlertMarker {
@@ -121,6 +135,7 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
   const [utcTime, setUtcTime] = useState<UtcTime>(getUtcTime);
   const [marketStatus, setMarketStatus] = useState(() => getMarketStatus());
   const labelInterval = useResponsiveLabelInterval();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -144,21 +159,21 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
 
   return (
     <div className="w-full" data-testid="utc-ruler">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-semibold" data-testid="text-utc-title">
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <h2 className="ruler-title" data-testid="text-utc-title">
           UTC Time
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {getSessionLabel() && (
             <span
-              className="text-sm text-muted-foreground"
+              className="ruler-session-label text-muted-foreground"
               data-testid="text-session-label"
             >
               {getSessionLabel()}
             </span>
           )}
           <div
-            className="font-mono text-2xl font-medium tabular-nums"
+            className="font-mono ruler-time-display font-medium tabular-nums"
             data-testid="text-utc-current-time"
           >
             {formatTime(utcTime.hours, utcTime.minutes, utcTime.seconds)} UTC
@@ -255,8 +270,8 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
               return (
                 <div
                   key={alert.id}
-                  className="absolute top-0 h-full w-0.5 z-10"
-                  style={{ left: `${position}%`, backgroundColor: '#2DFF6A' }}
+                  className="absolute top-0 h-full w-0.5 z-10 bg-black"
+                  style={{ left: `${position}%` }}
                   title={`${alert.label} - ${alert.utcHour.toString().padStart(2, "0")}:${alert.utcMinute.toString().padStart(2, "0")} UTC`}
                   data-testid={`alert-marker-${alert.id}`}
                 />
@@ -271,15 +286,17 @@ export function UtcRuler({ alerts = [] }: UtcRulerProps) {
         </div>
       </div>
 
-      <div className="relative h-6 mt-2" data-testid="ruler-labels">
+      <div className="relative h-8 mt-2" data-testid="ruler-labels">
         {hours.map((hour) => {
           const leftPosition = (hour / 24) * 100;
           const showLabel = hour % labelInterval === 0;
           if (!showLabel) return null;
+          const labelIndex = Math.floor(hour / labelInterval);
+          const isOdd = labelIndex % 2 === 1;
           return (
             <div
               key={hour}
-              className="absolute flex flex-col items-center"
+              className={`absolute flex flex-col items-center ${isMobile ? (isOdd ? 'hour-label-odd' : 'hour-label-even') : ''}`}
               style={{
                 left: `${leftPosition}%`,
                 transform: "translateX(-50%)",

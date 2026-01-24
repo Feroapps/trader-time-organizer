@@ -149,7 +149,7 @@ export function Home() {
       label: alarm.label,
       utcHour: alarm.hourUTC,
       utcMinute: alarm.minuteUTC,
-      enabled: alarm.isEnabled,
+      enabled: true,
     }));
 
   return (

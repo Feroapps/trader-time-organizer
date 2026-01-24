@@ -3,17 +3,29 @@ import { playAlarm } from '@/utils/soundPlayer';
 import { shouldAlarmTrigger } from '@/utils/marketHours';
 import type { Alarm } from '@/types/Alarm';
 
-const CHECK_INTERVAL_MS = 10000; // 10 seconds for more reliable alarm detection
+const CHECK_INTERVAL_MS = 10000;
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 let lastTriggeredKey: string | null = null;
 let onFixedAlarmTriggered: (() => void) | null = null;
 
-function getUtcTime(): { hours: number; minutes: number; dayOfWeek: number } {
+interface UtcTime {
+  hours: number;
+  minutes: number;
+  dayOfWeek: number;
+  year: number;
+  month: number;
+  dayOfMonth: number;
+}
+
+function getUtcTime(): UtcTime {
   const now = new Date();
   return {
     hours: now.getUTCHours(),
     minutes: now.getUTCMinutes(),
     dayOfWeek: now.getUTCDay(),
+    year: now.getUTCFullYear(),
+    month: now.getUTCMonth(),
+    dayOfMonth: now.getUTCDate(),
   };
 }
 
@@ -21,21 +33,47 @@ function createTriggerKey(alarmId: string, hours: number, minutes: number): stri
   return `${alarmId}-${hours}-${minutes}`;
 }
 
-function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: { hours: number; minutes: number; dayOfWeek: number }): boolean {
-  if (!alarm.isEnabled) {
-    return false;
-  }
+function parseAlarmDate(dateStr: string): { year: number; month: number; day: number; dayOfWeek: number } {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return {
+    year,
+    month: month - 1,
+    day,
+    dayOfWeek: date.getUTCDay(),
+  };
+}
 
+function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
   if (alarm.hourUTC !== utcTime.hours || alarm.minuteUTC !== utcTime.minutes) {
     return false;
   }
 
-  if (!alarm.repeatDays.includes(utcTime.dayOfWeek)) {
-    return false;
+  const alarmDate = parseAlarmDate(alarm.dateUTC);
+
+  if (alarm.repeatWeekly) {
+    if (alarmDate.dayOfWeek !== utcTime.dayOfWeek) {
+      return false;
+    }
+  } else if (alarm.repeatMonthly) {
+    if (alarmDate.day !== utcTime.dayOfMonth) {
+      return false;
+    }
+  } else {
+    if (
+      alarmDate.year !== utcTime.year ||
+      alarmDate.month !== utcTime.month ||
+      alarmDate.day !== utcTime.dayOfMonth
+    ) {
+      return false;
+    }
   }
 
-  if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
-    return false;
+  if (alarm.isFixed) {
+    const repeatDays = [alarmDate.dayOfWeek];
+    if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
+      return false;
+    }
   }
 
   return true;
@@ -53,7 +91,6 @@ async function checkAlarms(): Promise<void> {
         playAlarm(alarm.duration);
         lastTriggeredKey = triggerKey;
         
-        // Notify callback only for fixed (built-in) alarms
         if (alarm.isFixed && onFixedAlarmTriggered) {
           onFixedAlarmTriggered();
         }

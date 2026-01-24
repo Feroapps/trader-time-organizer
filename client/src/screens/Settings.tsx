@@ -8,10 +8,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { getAlarms, toggleAlarm, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { getAlarms, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, FileText, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square } from "lucide-react";
+import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound } from "@/utils/soundLibrary";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -26,54 +36,54 @@ function formatLocalTime(utcHour: number, utcMinute: number): string {
   return `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')} Local`;
 }
 
-function formatDays(days: number[]): string {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  if (days.length === 7) {
-    return 'Every day';
+function formatRepeat(alarm: Alarm): string {
+  const parts: string[] = [];
+  if (alarm.repeatWeekly) {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const [year, month, day] = alarm.dateUTC.split("-").map(Number);
+    const dow = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    parts.push(`Every ${dayNames[dow]}`);
   }
-  if (days.length === 5 && !days.includes(0) && !days.includes(6)) {
-    return 'Mon-Fri';
+  if (alarm.repeatMonthly) {
+    const day = parseInt(alarm.dateUTC.split("-")[2], 10);
+    parts.push(`Monthly on ${day}${getOrdinalSuffix(day)}`);
   }
-  if (days.length === 2 && days.includes(0) && days.includes(6)) {
-    return 'Weekends';
+  if (parts.length === 0) {
+    return `Once on ${alarm.dateUTC}`;
   }
-  if (days.length === 1 && days[0] === 0) {
-    return 'Sun only';
-  }
-  return days.map(d => dayNames[d]).join(', ');
+  return parts.join(', ');
 }
 
-function FixedAlarmRow({ alarm, onToggle }: { alarm: Alarm; onToggle: (enabled: boolean) => void }) {
+function getOrdinalSuffix(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
+}
+
+function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
   return (
     <div
       className="flex items-center justify-between p-3 bg-muted rounded-md"
       data-testid={`alarm-row-${alarm.id}`}
     >
       <div className="flex-1 min-w-0">
-        <p className={`font-medium truncate ${!alarm.isEnabled ? 'text-muted-foreground' : ''}`}>
+        <p className="font-medium truncate">
           {alarm.label}
         </p>
         <p className="text-sm text-muted-foreground font-mono">
-          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · {formatDays(alarm.repeatDays)}
+          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · Weekly
         </p>
       </div>
-      <Switch
-        checked={alarm.isEnabled}
-        onCheckedChange={onToggle}
-        data-testid={`switch-alarm-${alarm.id}`}
-      />
     </div>
   );
 }
 
 function UserAlertRow({ 
   alarm, 
-  onToggle, 
   onEdit, 
   onDelete 
 }: { 
   alarm: Alarm; 
-  onToggle: (enabled: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -83,7 +93,7 @@ function UserAlertRow({
       data-testid={`user-alert-row-${alarm.id}`}
     >
       <div className="flex-1 min-w-0">
-        <p className={`font-medium truncate ${!alarm.isEnabled ? 'text-muted-foreground' : ''}`}>
+        <p className="font-medium truncate">
           {alarm.label}
         </p>
         <div className="flex flex-wrap gap-x-3 text-sm text-muted-foreground font-mono">
@@ -91,7 +101,7 @@ function UserAlertRow({
           <span className="text-gray-400">{formatLocalTime(alarm.hourUTC, alarm.minuteUTC)}</span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {formatDays(alarm.repeatDays)}
+          {formatRepeat(alarm)}
         </p>
       </div>
       <div className="flex items-center gap-1">
@@ -111,11 +121,6 @@ function UserAlertRow({
         >
           <Trash2 className="w-4 h-4" />
         </Button>
-        <Switch
-          checked={alarm.isEnabled}
-          onCheckedChange={onToggle}
-          data-testid={`switch-user-alert-${alarm.id}`}
-        />
       </div>
     </div>
   );
@@ -127,6 +132,10 @@ export function Settings() {
   const [fixedDialogOpen, setFixedDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alarm | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [alertToDelete, setAlertToDelete] = useState<Alarm | null>(null);
+  const [selectedSound, setSelectedSound] = useState(getSelectedSoundId);
+  const [playingPreview, setPlayingPreview] = useState<string | null>(null);
 
   useEffect(() => {
     loadAllAlarms();
@@ -138,138 +147,156 @@ export function Settings() {
     setUserAlerts(allAlarms.filter(a => !a.isFixed));
   }
 
-  async function handleFixedToggle(alarmId: string, enabled: boolean) {
-    await toggleAlarm(alarmId, enabled);
-    await loadAllAlarms();
-  }
-
-  async function handleUserToggle(alarmId: string, enabled: boolean) {
-    await toggleAlarm(alarmId, enabled);
-    await loadAllAlarms();
-  }
-
-  function handleEditClick(alarm: Alarm) {
+  function openEditModal(alarm: Alarm) {
     setEditingAlert(alarm);
     setEditModalOpen(true);
   }
 
   async function handleEditSave(alertData: CreateAlarmInput) {
     if (editingAlert) {
-      const updatedAlarm: Alarm = {
-        ...editingAlert,
-        ...alertData,
-      };
-      await updateAlarm(updatedAlarm);
+      await updateAlarm({ ...alertData, id: editingAlert.id });
       await loadAllAlarms();
     }
-    setEditingAlert(null);
   }
 
-  async function handleDelete(alarmId: string) {
-    await deleteAlarm(alarmId);
-    await loadAllAlarms();
+  function requestDelete(alarm: Alarm) {
+    setAlertToDelete(alarm);
+    setDeleteConfirmOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (alertToDelete) {
+      await deleteAlarm(alertToDelete.id);
+      await loadAllAlarms();
+      setAlertToDelete(null);
+    }
+    setDeleteConfirmOpen(false);
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold" data-testid="text-page-title">Settings</h1>
-      <p className="text-muted-foreground mt-2" data-testid="text-page-description">
-        Manage your preferences and alerts
-      </p>
+    <div className="max-w-2xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-6" data-testid="text-settings-title">Settings</h1>
 
-      <div className="mt-8 space-y-8">
-        <section>
-          <h2 className="text-xl font-semibold mb-4" data-testid="text-my-alerts-title">My Alerts</h2>
-          {userAlerts.length === 0 ? (
-            <p className="text-muted-foreground text-sm" data-testid="text-no-alerts">
-              No custom alerts yet. Add alerts from the Home screen.
-            </p>
-          ) : (
-            <div className="space-y-2" data-testid="user-alerts-list">
-              {userAlerts.map((alert) => (
-                <UserAlertRow
-                  key={alert.id}
-                  alarm={alert}
-                  onToggle={(enabled) => handleUserToggle(alert.id, enabled)}
-                  onEdit={() => handleEditClick(alert)}
-                  onDelete={() => handleDelete(alert.id)}
+      <div className="space-y-6">
+        <Dialog open={fixedDialogOpen} onOpenChange={setFixedDialogOpen}>
+          <DialogTrigger asChild>
+            <div
+              className="flex items-center justify-between p-4 bg-muted rounded-md cursor-pointer hover-elevate"
+              data-testid="button-fixed-alarms"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Session Alerts</p>
+                  <p className="text-sm text-muted-foreground">
+                    Built-in trading session notifications
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Session Alerts</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-96 overflow-y-auto py-2">
+              {fixedAlarms.map((alarm) => (
+                <FixedAlarmRow
+                  key={alarm.id}
+                  alarm={alarm}
                 />
               ))}
             </div>
-          )}
-        </section>
+          </DialogContent>
+        </Dialog>
 
-        <section>
-          <Dialog open={fixedDialogOpen} onOpenChange={setFixedDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="button-manage-alarms">
-                Manage Fixed Alarms
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Fixed Alarms</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-2 mt-4">
-                {fixedAlarms.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">Loading alarms...</p>
-                ) : (
-                  fixedAlarms.map((alarm) => (
-                    <FixedAlarmRow
-                      key={alarm.id}
-                      alarm={alarm}
-                      onToggle={(enabled) => handleFixedToggle(alarm.id, enabled)}
-                    />
-                  ))
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4" data-testid="text-privacy-use-title">
-            Privacy & Use
-          </h2>
-          <div className="space-y-2">
-            <Link href="/settings/privacy-policy">
-              <div
-                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
-                data-testid="link-privacy-policy"
-              >
-                <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">Privacy Policy</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </Link>
-            <Link href="/settings/terms-of-use">
-              <div
-                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
-                data-testid="link-terms-of-use"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">Terms of Use</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </Link>
-            <Link href="/settings/disclaimer">
-              <div
-                className="flex items-center justify-between p-3 bg-muted rounded-md cursor-pointer hover-elevate"
-                data-testid="link-disclaimer"
-              >
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-muted-foreground" />
-                  <span className="font-medium">Disclaimer</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </Link>
+        <div className="p-4 bg-muted rounded-md">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Your Alerts</p>
+              <p className="text-sm text-muted-foreground">
+                Custom alerts you've created
+              </p>
+            </div>
           </div>
-        </section>
+          <div className="space-y-2">
+            {userAlerts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No custom alerts yet
+              </p>
+            ) : (
+              userAlerts.map((alarm) => (
+                <UserAlertRow
+                  key={alarm.id}
+                  alarm={alarm}
+                  onEdit={() => openEditModal(alarm)}
+                  onDelete={() => requestDelete(alarm)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 bg-muted rounded-md">
+          <div className="flex items-center gap-3 mb-4">
+            <Volume2 className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Alert Sound</p>
+              <p className="text-sm text-muted-foreground">
+                Choose your preferred alert sound
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {alertSounds.map((sound) => (
+              <div
+                key={sound.id}
+                className={`flex items-center justify-between p-3 rounded-md cursor-pointer hover-elevate ${
+                  selectedSound === sound.id ? "bg-primary/10 border border-primary" : "bg-background"
+                }`}
+                onClick={() => {
+                  setSelectedSound(sound.id);
+                  setSelectedSoundId(sound.id);
+                }}
+                data-testid={`sound-option-${sound.id}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{sound.name}</p>
+                  <p className="text-sm text-muted-foreground">{sound.description}</p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (playingPreview === sound.id) {
+                      stopSound();
+                      setPlayingPreview(null);
+                    } else {
+                      setPlayingPreview(sound.id);
+                      playSound(sound.id, true).then(() => setPlayingPreview(null));
+                    }
+                  }}
+                  data-testid={`button-preview-${sound.id}`}
+                >
+                  {playingPreview === sound.id ? (
+                    <Square className="w-4 h-4" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Link href="/">
+          <Button variant="outline" className="w-full" data-testid="button-back-home">
+            Back to Home
+          </Button>
+        </Link>
       </div>
 
       <AlertModal
@@ -278,6 +305,23 @@ export function Settings() {
         onSave={handleEditSave}
         editingAlert={editingAlert}
       />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the alert "{alertToDelete?.label}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
