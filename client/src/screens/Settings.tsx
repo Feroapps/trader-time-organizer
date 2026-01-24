@@ -21,7 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check } from "lucide-react";
+import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById } from "@/utils/soundLibrary";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
@@ -333,6 +333,47 @@ export function Settings() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <div className="p-4 bg-muted rounded-md">
+          <div className="flex items-center gap-3 mb-4">
+            <FileText className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Legal</p>
+              <p className="text-sm text-muted-foreground">
+                Privacy, terms, and disclaimers
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Link href="/settings/privacy-policy">
+              <div
+                className="flex items-center justify-between p-3 bg-background rounded-md cursor-pointer hover-elevate"
+                data-testid="link-privacy-policy"
+              >
+                <span className="font-medium">Privacy Policy</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </Link>
+            <Link href="/settings/terms-of-use">
+              <div
+                className="flex items-center justify-between p-3 bg-background rounded-md cursor-pointer hover-elevate"
+                data-testid="link-terms-of-use"
+              >
+                <span className="font-medium">Terms of Use</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </Link>
+            <Link href="/settings/disclaimer">
+              <div
+                className="flex items-center justify-between p-3 bg-background rounded-md cursor-pointer hover-elevate"
+                data-testid="link-disclaimer"
+              >
+                <span className="font-medium">Disclaimer</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </Link>
+          </div>
+        </div>
 
         <Link href="/">
           <Button variant="outline" className="w-full" data-testid="button-back-home">
