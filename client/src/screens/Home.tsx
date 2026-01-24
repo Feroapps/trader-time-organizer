@@ -15,7 +15,7 @@ import { showInterstitialAd } from "@/utils/adService";
 import { useToast } from "@/hooks/use-toast";
 import type { Alarm, CreateAlarmInput, CreateNoteInput } from "@/types";
 
-const RESEED_VERSION = 3; // Increment this to force reseed
+const RESEED_VERSION = 4; // Increment this to force reseed
 
 function getUtcDayOfWeek(): number {
   return new Date().getUTCDay();
