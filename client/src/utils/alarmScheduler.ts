@@ -29,8 +29,8 @@ function getUtcTime(): UtcTime {
   };
 }
 
-function createTriggerKey(alarmId: string, hours: number, minutes: number): string {
-  return `${alarmId}-${hours}-${minutes}`;
+function createTriggerKey(alarmId: string, hours: number, minutes: number, dayOfMonth: number): string {
+  return `${alarmId}-${hours}-${minutes}-${dayOfMonth}`;
 }
 
 function parseAlarmDate(dateStr: string): { year: number; month: number; day: number; dayOfWeek: number } {
@@ -45,24 +45,35 @@ function parseAlarmDate(dateStr: string): { year: number; month: number; day: nu
 }
 
 function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
+  if (!alarm.isEnabled) {
+    return false;
+  }
+
   if (alarm.hourUTC !== utcTime.hours || alarm.minuteUTC !== utcTime.minutes) {
     return false;
   }
 
-  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
+  // Session Alerts (isFixed=true): use repeatDays array
+  if (alarm.isFixed) {
     if (!alarm.repeatDays.includes(utcTime.dayOfWeek)) {
       return false;
     }
-    
-    if (alarm.isFixed) {
-      if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
-        return false;
-      }
+    if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
+      return false;
     }
-    
     return true;
   }
 
+  // User Alerts (isFixed=false): use dateUTC + repeatWeekly/repeatMonthly OR repeatDays
+  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
+    // User alert with repeatDays
+    if (!alarm.repeatDays.includes(utcTime.dayOfWeek)) {
+      return false;
+    }
+    return true;
+  }
+
+  // User alert with dateUTC-based scheduling
   if (!alarm.dateUTC) {
     return false;
   }
@@ -78,6 +89,7 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
       return false;
     }
   } else {
+    // One-time alarm
     if (
       alarmDate.year !== utcTime.year ||
       alarmDate.month !== utcTime.month ||
@@ -96,7 +108,7 @@ async function checkAlarms(): Promise<void> {
 
   for (const alarm of alarms) {
     if (shouldTriggerAlarmCheck(alarm, utcTime)) {
-      const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes);
+      const triggerKey = createTriggerKey(alarm.id, utcTime.hours, utcTime.minutes, utcTime.dayOfMonth);
       
       if (lastTriggeredKey !== triggerKey) {
         playAlarm(alarm.duration);

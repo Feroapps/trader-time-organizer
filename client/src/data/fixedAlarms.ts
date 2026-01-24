@@ -7,6 +7,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [0],
     label: "Start of Sydney session",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -15,6 +16,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "Overlap of Tokyo + Sydney session",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -23,6 +25,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "End of Sydney session",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -31,6 +34,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "Overlap Tokyo + London + Frankfurt",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -39,6 +43,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "End of Tokyo session",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -47,6 +52,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "Overlap New York + London + Frankfurt",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -55,6 +61,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4, 5],
     label: "End of London + Frankfurt session",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -63,6 +70,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [1, 2, 3, 4],
     label: "New York close / Sydney opens",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
   {
@@ -71,6 +79,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     repeatDays: [5],
     label: "End of week - New York close",
     isFixed: true,
+    isEnabled: true,
     duration: 10,
   },
 ];

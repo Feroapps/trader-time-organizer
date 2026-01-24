@@ -36,14 +36,17 @@ function formatLocalTime(utcHour: number, utcMinute: number): string {
   return `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')} Local`;
 }
 
-function formatRepeatDays(days: number[]): string {
+function formatDays(days: number[]): string {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  if (days.length === 5 && [1, 2, 3, 4, 5].every(d => days.includes(d))) {
+  if (days.length === 7) {
+    return 'Every day';
+  }
+  if (days.length === 5 && !days.includes(0) && !days.includes(6)) {
     return 'Mon–Fri';
   }
-  if (days.length === 7) {
-    return 'Daily';
+  if (days.length === 2 && days.includes(0) && days.includes(6)) {
+    return 'Weekends';
   }
   if (days.length === 1) {
     return `Every ${dayNames[days[0]]}`;
@@ -53,41 +56,7 @@ function formatRepeatDays(days: number[]): string {
   return sortedDays.map(d => dayNames[d]).join(', ');
 }
 
-function formatRepeat(alarm: Alarm): string {
-  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
-    return formatRepeatDays(alarm.repeatDays);
-  }
-  
-  if (!alarm.dateUTC) {
-    return 'No schedule';
-  }
-  
-  const parts: string[] = [];
-  if (alarm.repeatWeekly) {
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const [year, month, day] = alarm.dateUTC.split("-").map(Number);
-    const dow = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-    parts.push(`Every ${dayNames[dow]}`);
-  }
-  if (alarm.repeatMonthly) {
-    const day = parseInt(alarm.dateUTC.split("-")[2], 10);
-    parts.push(`Monthly on ${day}${getOrdinalSuffix(day)}`);
-  }
-  if (parts.length === 0) {
-    return `Once on ${alarm.dateUTC}`;
-  }
-  return parts.join(', ');
-}
-
-function getOrdinalSuffix(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return s[(v - 20) % 10] || s[v] || s[0];
-}
-
 function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
-  const recurrenceLabel = formatRepeat(alarm);
-  
   return (
     <div
       className="flex items-center justify-between p-3 bg-muted rounded-md"
@@ -98,7 +67,7 @@ function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
           {alarm.label}
         </p>
         <p className="text-sm text-muted-foreground font-mono">
-          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · {recurrenceLabel}
+          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · {formatDays(alarm.repeatDays)}
         </p>
       </div>
     </div>
@@ -128,7 +97,7 @@ function UserAlertRow({
           <span className="text-gray-400">{formatLocalTime(alarm.hourUTC, alarm.minuteUTC)}</span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {formatRepeat(alarm)}
+          {formatDays(alarm.repeatDays)}
         </p>
       </div>
       <div className="flex items-center gap-1">

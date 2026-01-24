@@ -56,6 +56,16 @@ export async function updateAlarm(updatedAlarm: Alarm): Promise<Alarm | null> {
   return updatedAlarm;
 }
 
+export async function toggleAlarm(id: string, isEnabled: boolean): Promise<Alarm | null> {
+  const alarms = await getAlarms();
+  const alarm = alarms.find((a) => a.id === id);
+  if (!alarm) {
+    return null;
+  }
+  alarm.isEnabled = isEnabled;
+  await localforage.setItem(ALARMS_KEY, alarms);
+  return alarm;
+}
 
 export async function deleteAlarm(id: string): Promise<boolean> {
   const alarms = await getAlarms();

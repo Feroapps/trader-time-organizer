@@ -56,11 +56,11 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
   useEffect(() => {
     if (open) {
       if (editingAlert) {
-        setSelectedDate(parseDateUTC(editingAlert.dateUTC));
+        setSelectedDate(editingAlert.dateUTC ? parseDateUTC(editingAlert.dateUTC) : new Date());
         setHour(editingAlert.hourUTC);
         setMinute(editingAlert.minuteUTC);
-        setRepeatWeekly(editingAlert.repeatWeekly);
-        setRepeatMonthly(editingAlert.repeatMonthly);
+        setRepeatWeekly(editingAlert.repeatWeekly ?? false);
+        setRepeatMonthly(editingAlert.repeatMonthly ?? false);
         setLabel(editingAlert.label);
       } else {
         const now = new Date();
@@ -82,6 +82,8 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
       minuteUTC: minute,
       repeatWeekly,
       repeatMonthly,
+      repeatDays: [],
+      isEnabled: true,
       label: label.trim() || `Alert ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")} UTC`,
       isFixed: false,
       duration: 5,
