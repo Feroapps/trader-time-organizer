@@ -21,8 +21,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square } from "lucide-react";
-import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound } from "@/utils/soundLibrary";
+import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check } from "lucide-react";
+import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById } from "@/utils/soundLibrary";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -132,12 +132,31 @@ export function Settings() {
   const [fixedAlarms, setFixedAlarms] = useState<Alarm[]>([]);
   const [userAlerts, setUserAlerts] = useState<Alarm[]>([]);
   const [fixedDialogOpen, setFixedDialogOpen] = useState(false);
+  const [soundDialogOpen, setSoundDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alarm | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [alertToDelete, setAlertToDelete] = useState<Alarm | null>(null);
   const [selectedSound, setSelectedSound] = useState(getSelectedSoundId);
   const [playingPreview, setPlayingPreview] = useState<string | null>(null);
+
+  const selectedSoundName = getSoundById(selectedSound)?.name || "Default";
+
+  function handleSoundSelect(soundId: string) {
+    stopSound();
+    setSelectedSound(soundId);
+    setSelectedSoundId(soundId);
+    setPlayingPreview(null);
+    setSoundDialogOpen(false);
+  }
+
+  function handleSoundDialogClose(open: boolean) {
+    if (!open) {
+      stopSound();
+      setPlayingPreview(null);
+    }
+    setSoundDialogOpen(open);
+  }
 
   useEffect(() => {
     loadAllAlarms();
@@ -247,58 +266,73 @@ export function Settings() {
           </div>
         </div>
 
-        <div className="p-4 bg-muted rounded-md">
-          <div className="flex items-center gap-3 mb-4">
-            <Volume2 className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Alert Sound</p>
-              <p className="text-sm text-muted-foreground">
-                Choose your preferred alert sound
-              </p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {alertSounds.map((sound) => (
-              <div
-                key={sound.id}
-                className={`flex items-center justify-between p-3 rounded-md cursor-pointer hover-elevate ${
-                  selectedSound === sound.id ? "bg-primary/10 border border-primary" : "bg-background"
-                }`}
-                onClick={() => {
-                  setSelectedSound(sound.id);
-                  setSelectedSoundId(sound.id);
-                }}
-                data-testid={`sound-option-${sound.id}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">{sound.name}</p>
-                  <p className="text-sm text-muted-foreground">{sound.description}</p>
+        <Dialog open={soundDialogOpen} onOpenChange={handleSoundDialogClose}>
+          <DialogTrigger asChild>
+            <div
+              className="flex items-center justify-between p-4 bg-muted rounded-md cursor-pointer hover-elevate"
+              data-testid="button-alert-sound"
+            >
+              <div className="flex items-center gap-3">
+                <Volume2 className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Alert Sound</p>
+                  <p className="text-sm text-muted-foreground">{selectedSoundName}</p>
                 </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (playingPreview === sound.id) {
-                      stopSound();
-                      setPlayingPreview(null);
-                    } else {
-                      setPlayingPreview(sound.id);
-                      playSound(sound.id).then(() => setPlayingPreview(null));
-                    }
-                  }}
-                  data-testid={`button-preview-${sound.id}`}
-                >
-                  {playingPreview === sound.id ? (
-                    <Square className="w-4 h-4" />
-                  ) : (
-                    <Play className="w-4 h-4" />
-                  )}
-                </Button>
               </div>
-            ))}
-          </div>
-        </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Choose Alert Sound</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              {alertSounds.map((sound) => (
+                <div
+                  key={sound.id}
+                  className={`flex items-center justify-between p-3 rounded-md cursor-pointer hover-elevate ${
+                    selectedSound === sound.id ? "bg-primary/10" : "bg-muted"
+                  }`}
+                  onClick={() => handleSoundSelect(sound.id)}
+                  data-testid={`sound-option-${sound.id}`}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {selectedSound === sound.id ? (
+                      <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                    ) : (
+                      <div className="w-5 h-5 flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-medium">{sound.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{sound.description}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (playingPreview === sound.id) {
+                        stopSound();
+                        setPlayingPreview(null);
+                      } else {
+                        setPlayingPreview(sound.id);
+                        playSound(sound.id).then(() => setPlayingPreview(null));
+                      }
+                    }}
+                    data-testid={`button-preview-${sound.id}`}
+                  >
+                    {playingPreview === sound.id ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Link href="/">
           <Button variant="outline" className="w-full" data-testid="button-back-home">

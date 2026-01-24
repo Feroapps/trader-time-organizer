@@ -8,32 +8,32 @@ export interface AlertSound {
 export const alertSounds: AlertSound[] = [
   {
     id: "alert-01",
-    name: "Alert 1",
-    description: "Short notification tone",
+    name: "Default",
+    description: "Standard notification tone",
     file: "/sounds/alert-01.wav",
   },
   {
     id: "alert-02",
-    name: "Alert 2",
-    description: "Extended alert tone",
+    name: "Chime",
+    description: "Extended melodic chime",
     file: "/sounds/alert-02.wav",
   },
   {
     id: "alert-03",
-    name: "Alert 3",
-    description: "Medium alert chime",
+    name: "Bell",
+    description: "Crisp bell sound",
     file: "/sounds/alert-03.wav",
   },
   {
     id: "alert-04",
-    name: "Alert 4",
-    description: "Quick notification",
+    name: "Ping",
+    description: "Quick ping notification",
     file: "/sounds/alert-04.wav",
   },
   {
     id: "alert-05",
-    name: "Alert 5",
-    description: "Classic alert sound",
+    name: "Tone",
+    description: "Classic alert tone",
     file: "/sounds/alert-05.wav",
   },
 ];
