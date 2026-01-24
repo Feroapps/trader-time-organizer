@@ -18,7 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getAlarms, updateAlarm, deleteAlarm } from "@/storage/alarmsRepo";
+import { Switch } from "@/components/ui/switch";
+import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
 import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound } from "@/utils/soundLibrary";
@@ -56,20 +57,25 @@ function formatDays(days: number[]): string {
   return sortedDays.map(d => dayNames[d]).join(', ');
 }
 
-function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
+function FixedAlarmRow({ alarm, onToggle }: { alarm: Alarm; onToggle: (enabled: boolean) => void }) {
   return (
     <div
       className="flex items-center justify-between p-3 bg-muted rounded-md"
       data-testid={`alarm-row-${alarm.id}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">
+        <p className={`font-medium truncate ${!alarm.isEnabled ? 'text-muted-foreground' : ''}`}>
           {alarm.label}
         </p>
         <p className="text-sm text-muted-foreground font-mono">
           {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · {formatDays(alarm.repeatDays)}
         </p>
       </div>
+      <Switch
+        checked={alarm.isEnabled}
+        onCheckedChange={onToggle}
+        data-testid={`switch-alarm-${alarm.id}`}
+      />
     </div>
   );
 }
@@ -143,6 +149,11 @@ export function Settings() {
     setUserAlerts(allAlarms.filter(a => !a.isFixed));
   }
 
+  async function handleFixedToggle(alarmId: string, enabled: boolean) {
+    await toggleAlarm(alarmId, enabled);
+    await loadAllAlarms();
+  }
+
   function openEditModal(alarm: Alarm) {
     setEditingAlert(alarm);
     setEditModalOpen(true);
@@ -201,6 +212,7 @@ export function Settings() {
                 <FixedAlarmRow
                   key={alarm.id}
                   alarm={alarm}
+                  onToggle={(enabled) => handleFixedToggle(alarm.id, enabled)}
                 />
               ))}
             </div>
