@@ -49,6 +49,24 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
     return false;
   }
 
+  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
+    if (!alarm.repeatDays.includes(utcTime.dayOfWeek)) {
+      return false;
+    }
+    
+    if (alarm.isFixed) {
+      if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, alarm.repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  if (!alarm.dateUTC) {
+    return false;
+  }
+
   const alarmDate = parseAlarmDate(alarm.dateUTC);
 
   if (alarm.repeatWeekly) {
@@ -65,13 +83,6 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
       alarmDate.month !== utcTime.month ||
       alarmDate.day !== utcTime.dayOfMonth
     ) {
-      return false;
-    }
-  }
-
-  if (alarm.isFixed) {
-    const repeatDays = [alarmDate.dayOfWeek];
-    if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
       return false;
     }
   }

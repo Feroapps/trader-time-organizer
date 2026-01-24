@@ -36,7 +36,32 @@ function formatLocalTime(utcHour: number, utcMinute: number): string {
   return `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')} Local`;
 }
 
+function formatRepeatDays(days: number[]): string {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  if (days.length === 5 && [1, 2, 3, 4, 5].every(d => days.includes(d))) {
+    return 'Mon–Fri';
+  }
+  if (days.length === 7) {
+    return 'Daily';
+  }
+  if (days.length === 1) {
+    return `Every ${dayNames[days[0]]}`;
+  }
+  
+  const sortedDays = [...days].sort((a, b) => a - b);
+  return sortedDays.map(d => dayNames[d]).join(', ');
+}
+
 function formatRepeat(alarm: Alarm): string {
+  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
+    return formatRepeatDays(alarm.repeatDays);
+  }
+  
+  if (!alarm.dateUTC) {
+    return 'No schedule';
+  }
+  
   const parts: string[] = [];
   if (alarm.repeatWeekly) {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -61,6 +86,8 @@ function getOrdinalSuffix(n: number): string {
 }
 
 function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
+  const recurrenceLabel = formatRepeat(alarm);
+  
   return (
     <div
       className="flex items-center justify-between p-3 bg-muted rounded-md"
@@ -71,7 +98,7 @@ function FixedAlarmRow({ alarm }: { alarm: Alarm }) {
           {alarm.label}
         </p>
         <p className="text-sm text-muted-foreground font-mono">
-          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · Weekly
+          {formatUtcTime(alarm.hourUTC, alarm.minuteUTC)} · {recurrenceLabel}
         </p>
       </div>
     </div>
