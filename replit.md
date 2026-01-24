@@ -110,3 +110,29 @@ npx cap open android    # Open in Android Studio
 - @capacitor/local-notifications plugin configured
 - Sound files copied to Android res/raw folder for native notifications
 - Notification icons use app launcher icon
+
+## Alert System Architecture
+
+### Session Alerts (IMMUTABLE - DO NOT MODIFY)
+**The Session Alerts logic is FINAL and must NEVER be changed in future refactors.**
+
+Session Alerts are predefined system alerts with fixed rules:
+- **Data Model**: Uses `repeatDays: number[]` array (0=Sun, 1=Mon, ..., 6=Sat)
+- **Scheduling**: Fires on ALL days specified in `repeatDays` array (daily recurrence)
+- **Examples**:
+  - `repeatDays: [1, 2, 3, 4, 5]` = fires daily Mon–Fri
+  - `repeatDays: [0]` = fires every Sunday
+  - `repeatDays: [5]` = fires every Friday
+- **Enable/Disable**: Users can toggle `isEnabled` per alert, persisted to storage
+- **Cannot be deleted**: Session Alerts are pinned/fixed (`isFixed: true`)
+- **Source**: Defined in `client/src/data/fixedAlarms.ts`
+- **Scheduling Logic**: `client/src/utils/alarmScheduler.ts` checks `repeatDays.includes(currentDayOfWeek)`
+
+**Any future changes to the alert system must apply ONLY to user-created alerts.**
+
+### User-Created Alerts
+User alerts use a different scheduling model:
+- **Data Model**: Uses `dateUTC` + `repeatWeekly`/`repeatMonthly` flags
+- **Scheduling**: Date-based with optional weekly/monthly recurrence
+- **Can be edited and deleted**: Users have full control
+- **Source**: Created via AlertModal, stored in localforage
