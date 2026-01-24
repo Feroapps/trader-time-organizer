@@ -137,6 +137,20 @@ export function PrivacyPolicy() {
         <a href="mailto:tradertimeorganizer@feroapps.com">tradertimeorganizer@feroapps.com</a>
       </p>
 
+      <h2>12. Notification channels and local notifications</h2>
+      <p>
+        To provide alert and reminder functionality, the App may create one or more notification channels on the user's device, in accordance with the operating system's notification framework (for example, on Android devices).
+      </p>
+      <p>
+        These notification channels are created locally on the device and are used solely to deliver local alerts scheduled by the user or by the App's built-in session alerts.
+      </p>
+      <p>No personal data is transmitted through notification channels.</p>
+      <p>No notification data is sent to external servers.</p>
+      <p>All notification scheduling and delivery occurs locally on the user's device.</p>
+      <p>
+        Users can manage notification permissions and notification channel settings directly through their device's system settings.
+      </p>
+
       <h2>Additional Clauses</h2>
 
       <h3>A. Controller identification and contact details</h3>
@@ -167,8 +181,9 @@ export function PrivacyPolicy() {
       <p>Refunds and billing are subject to the policies of Google Play and Apple App Store.</p>
 
       <h3>D. Minimum age</h3>
-      <p>Users must meet the minimum age required by applicable law.</p>
-      <p>Parents or guardians are responsible for minors.</p>
+      <p>The App is intended for users aged 13 years and older.</p>
+      <p>Users must meet the minimum age requirements applicable in their jurisdiction.</p>
+      <p>Parents or legal guardians are responsible for supervising minors.</p>
 
       <h3>E. Data retention</h3>
       <p>All data is stored locally.</p>
