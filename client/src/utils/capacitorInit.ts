@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 export async function initCapacitor(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
@@ -13,32 +14,61 @@ export async function initCapacitor(): Promise<void> {
       const bgColor = isDark ? '#121212' : '#FFFFFF';
       const style = isDark ? Style.Dark : Style.Light;
       
-      await StatusBar.setBackgroundColor({ color: bgColor });
-      await StatusBar.setStyle({ style });
-      await StatusBar.setOverlaysWebView({ overlay: true });
+      try {
+        await StatusBar.setOverlaysWebView({ overlay: true });
+        await StatusBar.setBackgroundColor({ color: bgColor });
+        await StatusBar.setStyle({ style });
+      } catch (e) {
+        console.warn('[Capacitor] StatusBar update failed:', e);
+      }
       
-      await NavigationBar.setColor({ color: bgColor, darkButtons: !isDark });
+      try {
+        await NavigationBar.setColor({ color: bgColor, darkButtons: !isDark });
+      } catch (e) {
+        console.warn('[Capacitor] NavigationBar update failed:', e);
+      }
     };
 
-    const isDark = document.documentElement.classList.contains('dark');
-    await updateSystemBars(isDark);
+    const applyCurrentTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      updateSystemBars(isDark);
+    };
+
+    applyCurrentTheme();
 
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
         if (mutation.attributeName === 'class') {
-          const isDark = document.documentElement.classList.contains('dark');
-          updateSystemBars(isDark);
+          applyCurrentTheme();
+          break;
         }
-      });
+      }
     });
 
     observer.observe(document.documentElement, { attributes: true });
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        const isDark = document.documentElement.classList.contains('dark');
-        updateSystemBars(isDark);
+        applyCurrentTheme();
       }
+    });
+
+    App.addListener('appStateChange', (state: { isActive: boolean }) => {
+      if (state.isActive) {
+        applyCurrentTheme();
+      }
+    });
+
+    App.addListener('resume', () => {
+      applyCurrentTheme();
+    });
+
+    window.addEventListener('focus', () => {
+      applyCurrentTheme();
+    });
+
+    window.addEventListener('pageshow', () => {
+      applyCurrentTheme();
     });
 
   } catch (error) {
