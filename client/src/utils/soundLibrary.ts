@@ -7,8 +7,14 @@ export interface AlertSound {
 
 export const alertSounds: AlertSound[] = [
   {
+    id: "original",
+    name: "Original",
+    description: "Original app alert sound",
+    file: "/alarm.mp3",
+  },
+  {
     id: "alert-01",
-    name: "Default",
+    name: "Classic",
     description: "Standard notification tone",
     file: "/sounds/alert-01.wav",
   },
@@ -38,7 +44,7 @@ export const alertSounds: AlertSound[] = [
   },
 ];
 
-export const DEFAULT_SOUND_ID = "alert-01";
+export const DEFAULT_SOUND_ID = "original";
 
 const SOUND_STORAGE_KEY = "selectedAlertSound";
 
