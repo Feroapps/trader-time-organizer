@@ -276,7 +276,7 @@ export function Settings() {
                       setPlayingPreview(null);
                     } else {
                       setPlayingPreview(sound.id);
-                      playSound(sound.id, true).then(() => setPlayingPreview(null));
+                      playSound(sound.id).then(() => setPlayingPreview(null));
                     }
                   }}
                   data-testid={`button-preview-${sound.id}`}

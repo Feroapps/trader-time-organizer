@@ -22,7 +22,7 @@ export function playAlarm(durationSeconds: number): void {
 
   const playLoop = async () => {
     while (isCurrentlyPlaying) {
-      await playSound(soundId, false);
+      await playSound(soundId);
       if (isCurrentlyPlaying) {
         await new Promise(r => setTimeout(r, 500));
       }

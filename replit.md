@@ -98,3 +98,15 @@ npx cap open android    # Open in Android Studio
 - Light mode: White background with dark icons
 - Dark mode: Dark (#121212) background with light icons
 - Automatically updates when theme changes via MutationObserver on document.documentElement
+
+#### Alert Sound Library
+- 5 fixed WAV sound files in `client/public/sounds/`
+- Sound selection persisted to localStorage
+- Settings screen allows preview and selection
+- Android raw resources in `android/app/src/main/res/raw/`
+- Uses device/notification channel volume (no in-app volume control)
+
+#### Local Notifications (Android)
+- @capacitor/local-notifications plugin configured
+- Sound files copied to Android res/raw folder for native notifications
+- Notification icons use app launcher icon
