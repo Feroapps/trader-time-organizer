@@ -5,6 +5,7 @@ export interface Alarm {
   minuteUTC: number;
   repeatWeekly: boolean;
   repeatMonthly: boolean;
+  repeatDays?: number[];
   label: string;
   isFixed: boolean;
   duration: number;

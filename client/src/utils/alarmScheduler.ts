@@ -51,7 +51,11 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
 
   const alarmDate = parseAlarmDate(alarm.dateUTC);
 
-  if (alarm.repeatWeekly) {
+  if (alarm.repeatDays && alarm.repeatDays.length > 0) {
+    if (!alarm.repeatDays.includes(utcTime.dayOfWeek)) {
+      return false;
+    }
+  } else if (alarm.repeatWeekly) {
     if (alarmDate.dayOfWeek !== utcTime.dayOfWeek) {
       return false;
     }
@@ -70,8 +74,8 @@ function shouldTriggerAlarmCheck(alarm: Alarm, utcTime: UtcTime): boolean {
   }
 
   if (alarm.isFixed) {
-    const repeatDays = [alarmDate.dayOfWeek];
-    if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, repeatDays, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
+    const repeatDaysForMarket = alarm.repeatDays || [alarmDate.dayOfWeek];
+    if (!shouldAlarmTrigger(alarm.label, alarm.hourUTC, repeatDaysForMarket, utcTime.dayOfWeek, utcTime.hours, alarm.isFixed)) {
       return false;
     }
   }
