@@ -1,0 +1,95 @@
+You are working on my existing React + Vite + TypeScript + Capacitor app (trader-time-organizer). 
+Goal: Fix overlapping preview sounds inside the app AND implement Android notification channels per sound (plus a Custom channel) without deleting or resetting any user data (alerts/notes). 
+DO NOT change capacitor appId, Android applicationId/packageName, or clear IndexedDB/localStorage. 
+DO NOT delete existing notifications, alerts, notes, or migrate by wiping data.
+
+A) Fix overlapping preview sounds (in-app sound picker)
+1) Locate the “Choose Alert Sound” modal/component (Settings -> Alert Sound selection). It shows:
+   - Original, Classic, Chime, Bell, Ping, Tone
+   each row has a play icon to preview.
+2) Implement a SINGLETON preview audio player so only one preview can play at a time.
+   - When user taps play on any item:
+     - stop any currently playing preview audio (pause + currentTime=0)
+     - swap src to the new sound and play
+   - When modal closes/unmounts, STOP preview audio.
+   - Ensure “Original” does NOT keep playing when switching to another sound.
+3) Use HTMLAudioElement (web) with robust stop/start. If already in Capacitor Android, this still works in WebView.
+4) Save selected sound id to app settings (existing storage pattern). Keep current settings key if present; do not break existing installs.
+
+Use this mapping for sound IDs (must match UI names):
+- original
+- classic
+- chime
+- bell
+- ping
+- tone
+- custom
+
+B) Implement Android Notification Channels per sound + Custom channel
+Important Android rule: channel sound is immutable once created. Therefore:
+- Create one channel per sound: alerts_original, alerts_classic, alerts_chime, alerts_bell, alerts_ping, alerts_tone
+- Create a separate “alerts_custom” channel.
+Do NOT delete channels if they already exist. Only create if missing. Never attempt to “update sound” of an existing channel.
+
+1) Add raw sound files to Android resources:
+   Place files in: android/app/src/main/res/raw/
+   Use these exact filenames (lowercase, underscores; no spaces):
+   - alert_original.mp3
+   - alert_classic.mp3
+   - alert_chime.mp3
+   - alert_bell.mp3
+   - alert_ping.mp3
+   - alert_tone.mp3
+If files already exist in the repo, reuse them; otherwise create placeholders and add a TODO comment indicating where to replace with real audio assets (but do not block build).
+
+2) On Android app startup (after LocalNotifications.requestPermissions), create channels using @capacitor/local-notifications:
+   - Channel IDs and names:
+     * alerts_original  (name: "Alerts - Original")
+     * alerts_classic   (name: "Alerts - Classic")
+     * alerts_chime     (name: "Alerts - Chime")
+     * alerts_bell      (name: "Alerts - Bell")
+     * alerts_ping      (name: "Alerts - Ping")
+     * alerts_tone      (name: "Alerts - Tone")
+     * alerts_custom    (name: "Alerts - Custom")
+   - For the 6 built-in sound channels: set sound to the corresponding raw resource (no extension), e.g. "alert_original"
+   - For alerts_custom: do NOT set a custom sound. Leave it default so the user can choose a sound from Android system settings.
+
+3) Scheduling / displaying notifications:
+   Wherever we schedule local notifications for alerts, set channelId dynamically based on selected sound:
+   - original -> alerts_original
+   - classic  -> alerts_classic
+   - chime    -> alerts_chime
+   - bell     -> alerts_bell
+   - ping     -> alerts_ping
+   - tone     -> alerts_tone
+   - custom   -> alerts_custom
+Ensure this is applied consistently for all alert types (weekly repeating + custom date/time) and existing scheduling logic.
+Do not change alert logic beyond channel assignment.
+
+4) Add UI support for Custom sound (system-managed):
+   In the sound picker list, add “Custom” item (if not already present) with a short description:
+   “Choose in Android notification settings”.
+   Add a button/link in Settings:
+   “Open Android Notification Settings (Custom)”
+   - On Android only: deep link to app notification settings or channel settings for alerts_custom if possible.
+   - If direct channel deep-link is not possible with current plugins, open the general app notification settings page.
+   The goal: user can set a custom sound in Android settings for the Custom channel.
+
+C) Guardrails / Data Safety
+- Do not change storage schema in a breaking way.
+- Do not change capacitor config appId.
+- Do not change Android packageName/applicationId.
+- Do not delete local notifications or wipe data.
+- Keep all existing alerts/notes as-is. Only add “soundId” if missing, default to “original” for existing users.
+
+D) Deliverables
+1) Code changes implementing singleton preview audio with no overlapping.
+2) Android raw resources for built-in sounds + channel creation code.
+3) ChannelId mapping applied to all notification schedules.
+4) Settings UI: add Custom option + open notification settings shortcut (Android only).
+5) Provide a short summary of changed files and how to test:
+   - Preview sound: switch between items rapidly; confirm no overlap.
+   - Android: schedule a test notification for each sound; confirm correct sound per channel.
+   - Custom: set sound from Android settings and verify it plays for alerts using Custom channel.
+
+Proceed now and implement directly in the repo.

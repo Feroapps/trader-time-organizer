@@ -13,34 +13,40 @@ export const alertSounds: AlertSound[] = [
     file: "/alarm.mp3",
   },
   {
-    id: "alert-01",
+    id: "classic",
     name: "Classic",
     description: "Standard notification tone",
     file: "/sounds/alert-01.wav",
   },
   {
-    id: "alert-02",
+    id: "chime",
     name: "Chime",
     description: "Extended melodic chime",
     file: "/sounds/alert-02.wav",
   },
   {
-    id: "alert-03",
+    id: "bell",
     name: "Bell",
     description: "Crisp bell sound",
     file: "/sounds/alert-03.wav",
   },
   {
-    id: "alert-04",
+    id: "ping",
     name: "Ping",
     description: "Quick ping notification",
     file: "/sounds/alert-04.wav",
   },
   {
-    id: "alert-05",
+    id: "tone",
     name: "Tone",
     description: "Classic alert tone",
     file: "/sounds/alert-05.wav",
+  },
+  {
+    id: "custom",
+    name: "Custom",
+    description: "Choose in Android notification settings",
+    file: "",
   },
 ];
 
@@ -48,15 +54,33 @@ export const DEFAULT_SOUND_ID = "original";
 
 const SOUND_STORAGE_KEY = "selectedAlertSound";
 
+const LEGACY_SOUND_ID_MAP: Record<string, string> = {
+  'alert-01': 'classic',
+  'alert-02': 'chime',
+  'alert-03': 'bell',
+  'alert-04': 'ping',
+  'alert-05': 'tone',
+};
+
+export function migrateSoundId(soundId: string | undefined): string {
+  if (!soundId) return DEFAULT_SOUND_ID;
+  if (LEGACY_SOUND_ID_MAP[soundId]) {
+    return LEGACY_SOUND_ID_MAP[soundId];
+  }
+  return soundId;
+}
+
 let currentAudio: HTMLAudioElement | null = null;
 
 export function getSoundById(id: string): AlertSound | undefined {
-  return alertSounds.find((sound) => sound.id === id);
+  const migratedId = migrateSoundId(id);
+  return alertSounds.find((sound) => sound.id === migratedId);
 }
 
 export function getSelectedSoundId(): string {
   if (typeof localStorage === "undefined") return DEFAULT_SOUND_ID;
-  return localStorage.getItem(SOUND_STORAGE_KEY) || DEFAULT_SOUND_ID;
+  const stored = localStorage.getItem(SOUND_STORAGE_KEY) || DEFAULT_SOUND_ID;
+  return migrateSoundId(stored);
 }
 
 export function setSelectedSoundId(id: string): void {
@@ -68,8 +92,13 @@ export function playSound(soundId: string): Promise<void> {
   return new Promise((resolve) => {
     stopSound();
     
+    if (soundId === 'custom') {
+      resolve();
+      return;
+    }
+    
     const sound = getSoundById(soundId);
-    if (!sound) {
+    if (!sound || !sound.file) {
       resolve();
       return;
     }
@@ -96,8 +125,12 @@ export function playSound(soundId: string): Promise<void> {
 export function previewSound(soundId: string): void {
   stopSound();
   
+  if (soundId === 'custom') {
+    return;
+  }
+  
   const sound = getSoundById(soundId);
-  if (!sound) return;
+  if (!sound || !sound.file) return;
 
   currentAudio = new Audio(sound.file);
   currentAudio.play().catch((error) => {

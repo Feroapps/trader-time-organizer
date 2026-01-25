@@ -21,8 +21,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText } from "lucide-react";
+import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById } from "@/utils/soundLibrary";
+import { isAndroidPlatform, openAndroidNotificationSettings } from "@/utils/nativeNotifications";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -307,29 +308,42 @@ export function Settings() {
                       <p className="text-sm text-muted-foreground truncate">{sound.description}</p>
                     </div>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (playingPreview === sound.id) {
-                        stopSound();
-                        setPlayingPreview(null);
-                      } else {
-                        setPlayingPreview(sound.id);
-                        playSound(sound.id).then(() => setPlayingPreview(null));
-                      }
-                    }}
-                    data-testid={`button-preview-${sound.id}`}
-                  >
-                    {playingPreview === sound.id ? (
-                      <Square className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </Button>
+                  {sound.id !== 'custom' && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (playingPreview === sound.id) {
+                          stopSound();
+                          setPlayingPreview(null);
+                        } else {
+                          setPlayingPreview(sound.id);
+                          playSound(sound.id).then(() => setPlayingPreview(null));
+                        }
+                      }}
+                      data-testid={`button-preview-${sound.id}`}
+                    >
+                      {playingPreview === sound.id ? (
+                        <Square className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
                 </div>
               ))}
+              {isAndroidPlatform() && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-4"
+                  onClick={() => openAndroidNotificationSettings()}
+                  data-testid="button-open-android-settings"
+                >
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Open Android Notification Settings
+                </Button>
+              )}
             </div>
           </DialogContent>
         </Dialog>

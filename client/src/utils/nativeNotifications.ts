@@ -1,9 +1,23 @@
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import type { Alarm } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
+import { migrateSoundId } from '@/utils/soundLibrary';
 
-const NOTIFICATION_CHANNEL_ID = 'trader_alerts';
+const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
+  original: { channelId: 'alerts_original', name: 'Alerts - Original', sound: 'alert_original' },
+  classic: { channelId: 'alerts_classic', name: 'Alerts - Classic', sound: 'alert_classic' },
+  chime: { channelId: 'alerts_chime', name: 'Alerts - Chime', sound: 'alert_chime' },
+  bell: { channelId: 'alerts_bell', name: 'Alerts - Bell', sound: 'alert_bell' },
+  ping: { channelId: 'alerts_ping', name: 'Alerts - Ping', sound: 'alert_ping' },
+  tone: { channelId: 'alerts_tone', name: 'Alerts - Tone', sound: 'alert_tone' },
+  custom: { channelId: 'alerts_custom', name: 'Alerts - Custom', sound: '' },
+};
+
+function getChannelIdForSound(soundId: string): string {
+  return SOUND_CHANNEL_MAP[soundId]?.channelId || SOUND_CHANNEL_MAP.original.channelId;
+}
 
 function getNextOccurrence(alarm: Alarm): Date | null {
   const now = new Date();
@@ -119,13 +133,8 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
     // Ignore cancel errors
   }
   
-  const soundId = alarm.soundId || 'original';
-  let soundFile: string;
-  if (soundId === 'original') {
-    soundFile = 'original.mp3';
-  } else {
-    soundFile = soundId.replace(/-/g, '_') + '.wav';
-  }
+  const soundId = migrateSoundId(alarm.soundId);
+  const channelId = getChannelIdForSound(soundId);
   
   const scheduleOptions: ScheduleOptions = {
     notifications: [
@@ -137,8 +146,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
           at: nextOccurrence,
           allowWhileIdle: true,
         },
-        sound: soundFile,
-        channelId: NOTIFICATION_CHANNEL_ID,
+        channelId: channelId,
         extra: {
           alarmId: alarm.id,
         },
@@ -200,25 +208,39 @@ export async function rescheduleAllAlarms(): Promise<void> {
   console.log(`[Notifications] Rescheduled ${alarms.filter(a => a.isEnabled).length} alarms`);
 }
 
-export async function createNotificationChannel(): Promise<void> {
+export async function createNotificationChannels(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     return;
   }
   
-  try {
-    await LocalNotifications.createChannel({
-      id: NOTIFICATION_CHANNEL_ID,
-      name: 'Trader Alerts',
-      description: 'Trading session and custom alerts',
-      importance: 5,
-      visibility: 1,
-      sound: 'original.mp3',
-      vibration: true,
-      lights: true,
-    });
-    console.log('[Notifications] Channel created');
-  } catch (e) {
-    console.error('[Notifications] Failed to create channel:', e);
+  for (const [soundId, config] of Object.entries(SOUND_CHANNEL_MAP)) {
+    try {
+      if (config.sound) {
+        await LocalNotifications.createChannel({
+          id: config.channelId,
+          name: config.name,
+          description: `Trading alerts with ${soundId} sound`,
+          importance: 5 as const,
+          visibility: 1 as const,
+          vibration: true,
+          lights: true,
+          sound: config.sound,
+        });
+      } else {
+        await LocalNotifications.createChannel({
+          id: config.channelId,
+          name: config.name,
+          description: `Trading alerts - choose sound in Android settings`,
+          importance: 5 as const,
+          visibility: 1 as const,
+          vibration: true,
+          lights: true,
+        });
+      }
+      console.log(`[Notifications] Channel created: ${config.channelId}`);
+    } catch (e) {
+      console.log(`[Notifications] Channel ${config.channelId} may already exist`);
+    }
   }
 }
 
@@ -227,7 +249,7 @@ export async function initializeNotifications(): Promise<void> {
     return;
   }
   
-  await createNotificationChannel();
+  await createNotificationChannels();
   await rescheduleAllAlarms();
   
   LocalNotifications.addListener('localNotificationReceived', async (notification) => {
@@ -241,4 +263,34 @@ export async function initializeNotifications(): Promise<void> {
       }
     }
   });
+}
+
+export async function openAndroidNotificationSettings(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+  
+  try {
+    const appInfo = await App.getInfo();
+    const packageName = appInfo.id;
+    
+    const intentUrl = `android.settings.APP_NOTIFICATION_SETTINGS`;
+    
+    await (window as { Android?: { openNotificationSettings?: () => void } }).Android?.openNotificationSettings?.();
+    
+    if ('plugins' in window && (window as { plugins?: { intentShim?: { startActivity: (opts: { action: string; extras: Record<string, string> }) => void } } }).plugins?.intentShim) {
+      (window as { plugins: { intentShim: { startActivity: (opts: { action: string; extras: Record<string, string> }) => void } } }).plugins.intentShim.startActivity({
+        action: intentUrl,
+        extras: {
+          'android.provider.extra.APP_PACKAGE': packageName
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('[Notifications] Could not open settings:', e);
+  }
+}
+
+export function isAndroidPlatform(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 }
