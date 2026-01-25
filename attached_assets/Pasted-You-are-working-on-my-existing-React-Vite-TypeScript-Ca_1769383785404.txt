@@ -1,0 +1,92 @@
+You are working on my existing React + Vite + TypeScript + Capacitor Android app (trader-time-organizer).
+
+NON-NEGOTIABLE GUARDRAILS (must comply exactly):
+- DO NOT change capacitor appId, Android applicationId/packageName, or any Android namespace/package identifiers.
+- DO NOT clear, reset, migrate-by-wiping, or otherwise touch IndexedDB/localStorage user data.
+- DO NOT delete, recreate, or “rebuild” user alerts, notes, or existing stored records.
+- DO NOT change the alert scheduling logic, repeat logic, UTC/local conversion, or any business logic.
+- ONLY make the minimum changes required for: (1) sound assets replacement, (2) correct channelId usage per sound, (3) stop preview overlap, (4) open Android notification settings for Custom sound.
+- If any change is not strictly necessary for the sound issues, DO NOT do it.
+
+CURRENT STATUS / BUGS (not solved):
+1) In-app preview sounds still overlap (singleton preview not working).
+2) On Android, changing the alert sound inside the app does NOT change the notification sound. The notification sound remains the same, and notification audio is consistently delayed.
+3) “Custom” sound option is broken: the user cannot add/select any custom sound. Pressing the Custom option does NOT open any Android/system UI where the user can choose a sound. There must be a working way to open Android notification settings so the user can set the Custom channel sound from the system.
+
+A) Audio assets — delete ALL except “original”, then replace with my uploads
+1) In the repo, delete ALL built-in alert sound files EXCEPT the “original” sound asset.
+   - This includes:
+     - Any web assets under public/ (e.g., public/sounds/*) and duplicates under src/assets or elsewhere.
+     - Any Android raw resources under android/app/src/main/res/raw/ (delete classic/chime/bell/ping/tone files).
+2) Keep only the “original” sound file as baseline.
+3) I will upload the replacement sound files to you. Once uploaded, you MUST:
+   - Add them to BOTH:
+     - Web preview assets path (e.g., public/sounds/) used by the sound picker.
+     - Android raw resources: android/app/src/main/res/raw/
+   - Use these exact Android filenames (lowercase, underscores, no spaces):
+     - alert_original.mp3
+     - alert_classic.mp3
+     - alert_chime.mp3
+     - alert_bell.mp3
+     - alert_ping.mp3
+     - alert_tone.mp3
+   - Ensure the web preview filenames/paths match the soundId mapping used by the UI.
+
+B) Android notification channels — sound must actually change for existing installs + fix delay
+Critical Android rule: Notification channel sound is IMMUTABLE once the channel exists.
+Therefore, if channels were created previously with wrong sounds, changing sound “in-app” will not affect them unless we schedule notifications into NEW channels.
+
+Implement this exact approach:
+1) Do NOT attempt to modify sound on an existing channel.
+2) Create one channel per sound + one Custom channel:
+   - alerts_original  ("Alerts - Original") sound: "alert_original"
+   - alerts_classic   ("Alerts - Classic")  sound: "alert_classic"
+   - alerts_chime     ("Alerts - Chime")    sound: "alert_chime"
+   - alerts_bell      ("Alerts - Bell")     sound: "alert_bell"
+   - alerts_ping      ("Alerts - Ping")     sound: "alert_ping"
+   - alerts_tone      ("Alerts - Tone")     sound: "alert_tone"
+   - alerts_custom    ("Alerts - Custom")   NO custom sound set (system-managed)
+3) If ANY of the above channels already exist on user devices and are “stuck” with wrong sound, you MUST NOT delete them.
+   Instead, create VERSIONED replacement channels and use them for all NEW schedules:
+   - alerts_original_v2, alerts_classic_v2, alerts_chime_v2, alerts_bell_v2, alerts_ping_v2, alerts_tone_v2, alerts_custom_v2
+   Then schedule notifications using these v2 channelIds based on selected sound.
+   - IMPORTANT: Do NOT migrate, delete, or rewrite existing stored alerts. Only alter channelId at schedule-time.
+4) Ensure EVERY scheduled local notification (weekly repeating + custom date/time) includes channelId dynamically based on selected sound:
+   - original -> alerts_original_v2
+   - classic  -> alerts_classic_v2
+   - chime    -> alerts_chime_v2
+   - bell     -> alerts_bell_v2
+   - ping     -> alerts_ping_v2
+   - tone     -> alerts_tone_v2
+   - custom   -> alerts_custom_v2
+5) Investigate and fix the notification sound delay WITHOUT changing app logic:
+   - Confirm raw resources exist and names match exactly (sound: "alert_xxx" without extension).
+   - Confirm the scheduled notification uses the expected channelId.
+   - Keep notification importance/visibility sane and consistent (do not introduce new behaviors).
+
+C) Fix overlapping in-app preview (singleton, mandatory)
+1) Sound picker preview must use a SINGLETON HTMLAudioElement:
+   - On play: stop any currently playing preview (pause + currentTime=0), set src, play.
+   - On modal close/unmount: stop preview immediately.
+2) Ensure “Original” does NOT keep playing when switching to another sound.
+
+D) Fix “Custom” sound UX (must open Android settings)
+1) The Custom option must NOT pretend it can “upload” a sound inside the app.
+   - The correct behavior: user sets the Custom channel sound from Android system notification settings.
+2) Add a Settings button/link:
+   “Open Android Notification Settings (Custom)”
+   - Android only.
+   - It must open system settings for app notifications. If possible, deep-link to the Custom channel (alerts_custom_v2). If channel deep-link is not possible, open general app notification settings.
+3) After the user sets a sound in Android settings for the Custom channel, notifications scheduled with Custom must use that sound.
+
+E) Deliverables (required)
+1) Asset cleanup + replace with my uploaded audio files (web + android raw).
+2) Correct channel creation + versioned channels (_v2) and scheduling uses the _v2 mapping so sounds actually change on existing installs.
+3) Singleton preview fix.
+4) Working Android settings opening for Custom.
+5) Provide a concise report:
+   - List of files deleted/added/changed
+   - Exact Android test steps:
+     - Change sound in app -> schedule -> confirm sound changes immediately and no delay
+     - Custom -> open settings -> set sound -> schedule -> confirm it uses the system-selected sound
+     - Rapid preview switching -> confirm no overlap

@@ -1,18 +1,17 @@
 import { Capacitor } from '@capacitor/core';
-import { App } from '@capacitor/app';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import type { Alarm } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
 
 const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
-  original: { channelId: 'alerts_original', name: 'Alerts - Original', sound: 'alert_original' },
-  classic: { channelId: 'alerts_classic', name: 'Alerts - Classic', sound: 'alert_classic' },
-  chime: { channelId: 'alerts_chime', name: 'Alerts - Chime', sound: 'alert_chime' },
-  bell: { channelId: 'alerts_bell', name: 'Alerts - Bell', sound: 'alert_bell' },
-  ping: { channelId: 'alerts_ping', name: 'Alerts - Ping', sound: 'alert_ping' },
-  tone: { channelId: 'alerts_tone', name: 'Alerts - Tone', sound: 'alert_tone' },
-  custom: { channelId: 'alerts_custom', name: 'Alerts - Custom', sound: '' },
+  original: { channelId: 'alerts_original_v2', name: 'Alerts - Original', sound: 'alert_original' },
+  classic: { channelId: 'alerts_classic_v2', name: 'Alerts - Classic', sound: 'alert_classic' },
+  chime: { channelId: 'alerts_chime_v2', name: 'Alerts - Chime', sound: 'alert_chime' },
+  bell: { channelId: 'alerts_bell_v2', name: 'Alerts - Bell', sound: 'alert_bell' },
+  ping: { channelId: 'alerts_ping_v2', name: 'Alerts - Ping', sound: 'alert_ping' },
+  tone: { channelId: 'alerts_tone_v2', name: 'Alerts - Tone', sound: 'alert_tone' },
+  custom: { channelId: 'alerts_custom_v2', name: 'Alerts - Custom', sound: '' },
 };
 
 function getChannelIdForSound(soundId: string): string {
@@ -156,7 +155,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   
   try {
     await LocalNotifications.schedule(scheduleOptions);
-    console.log(`[Notifications] Scheduled: ${alarm.label} at ${nextOccurrence.toISOString()}`);
+    console.log(`[Notifications] Scheduled: ${alarm.label} at ${nextOccurrence.toISOString()} on channel ${channelId}`);
   } catch (e) {
     console.error(`[Notifications] Failed to schedule ${alarm.label}:`, e);
   }
@@ -266,28 +265,20 @@ export async function initializeNotifications(): Promise<void> {
 }
 
 export async function openAndroidNotificationSettings(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
     return;
   }
   
   try {
+    const { App } = await import('@capacitor/app');
     const appInfo = await App.getInfo();
     const packageName = appInfo.id;
     
-    const intentUrl = `android.settings.APP_NOTIFICATION_SETTINGS`;
+    const intentUrl = `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
     
-    await (window as { Android?: { openNotificationSettings?: () => void } }).Android?.openNotificationSettings?.();
-    
-    if ('plugins' in window && (window as { plugins?: { intentShim?: { startActivity: (opts: { action: string; extras: Record<string, string> }) => void } } }).plugins?.intentShim) {
-      (window as { plugins: { intentShim: { startActivity: (opts: { action: string; extras: Record<string, string> }) => void } } }).plugins.intentShim.startActivity({
-        action: intentUrl,
-        extras: {
-          'android.provider.extra.APP_PACKAGE': packageName
-        }
-      });
-    }
+    window.location.href = intentUrl;
   } catch (e) {
-    console.warn('[Notifications] Could not open settings:', e);
+    console.warn('[Notifications] Could not open Android notification settings:', e);
   }
 }
 
