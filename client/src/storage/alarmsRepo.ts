@@ -1,6 +1,7 @@
 import localforage from 'localforage';
 import type { Alarm, CreateAlarmInput } from '@/types/Alarm';
 import { fixedAlarms } from '@/data/fixedAlarms';
+import { scheduleAlarmNotification, cancelAlarmNotification } from '@/utils/nativeNotifications';
 
 const ALARMS_KEY = 'alarms';
 
@@ -42,6 +43,11 @@ export async function createAlarm(input: CreateAlarmInput): Promise<Alarm> {
   };
   alarms.push(newAlarm);
   await localforage.setItem(ALARMS_KEY, alarms);
+  
+  if (newAlarm.isEnabled) {
+    scheduleAlarmNotification(newAlarm);
+  }
+  
   return newAlarm;
 }
 
@@ -53,6 +59,13 @@ export async function updateAlarm(updatedAlarm: Alarm): Promise<Alarm | null> {
   }
   alarms[index] = updatedAlarm;
   await localforage.setItem(ALARMS_KEY, alarms);
+  
+  if (updatedAlarm.isEnabled) {
+    scheduleAlarmNotification(updatedAlarm);
+  } else {
+    cancelAlarmNotification(updatedAlarm.id);
+  }
+  
   return updatedAlarm;
 }
 
@@ -64,6 +77,13 @@ export async function toggleAlarm(id: string, isEnabled: boolean): Promise<Alarm
   }
   alarm.isEnabled = isEnabled;
   await localforage.setItem(ALARMS_KEY, alarms);
+  
+  if (isEnabled) {
+    scheduleAlarmNotification(alarm);
+  } else {
+    cancelAlarmNotification(alarm.id);
+  }
+  
   return alarm;
 }
 
@@ -78,6 +98,8 @@ export async function deleteAlarm(id: string): Promise<boolean> {
   if (alarm.isFixed) {
     return false;
   }
+  
+  cancelAlarmNotification(id);
   
   const filtered = alarms.filter((a) => a.id !== id);
   await localforage.setItem(ALARMS_KEY, filtered);

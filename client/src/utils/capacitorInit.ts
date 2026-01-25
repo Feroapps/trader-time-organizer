@@ -1,10 +1,13 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { initializeNotifications, rescheduleAllAlarms } from '@/utils/nativeNotifications';
 
 export async function initCapacitor(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     return;
   }
+
+  initializeNotifications();
 
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
@@ -55,11 +58,13 @@ export async function initCapacitor(): Promise<void> {
     App.addListener('appStateChange', (state: { isActive: boolean }) => {
       if (state.isActive) {
         applyCurrentTheme();
+        rescheduleAllAlarms();
       }
     });
 
     App.addListener('resume', () => {
       applyCurrentTheme();
+      rescheduleAllAlarms();
     });
 
     window.addEventListener('focus', () => {
