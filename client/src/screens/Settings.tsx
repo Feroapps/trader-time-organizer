@@ -23,7 +23,7 @@ import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alar
 import { AlertModal } from "@/components/AlertModal";
 import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundDescription } from "@/utils/soundLibrary";
-import { isAndroidPlatform, openAndroidNotificationSettings } from "@/utils/nativeNotifications";
+import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings } from "@/utils/nativeNotifications";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -346,8 +346,17 @@ export function Settings() {
                     <Settings2 className="w-4 h-4 mr-2" />
                     Open Android Notification Settings
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => openAndroidBatteryOptimizationSettings()}
+                    data-testid="button-open-battery-settings"
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Open Battery Optimization Settings
+                  </Button>
                   <p className="text-xs text-muted-foreground text-center mt-2">
-                    If notifications are delayed, disable Battery Optimization for this app.
+                    Set Battery usage to Unrestricted / Not optimized to prevent delays.
                   </p>
                 </>
               )}

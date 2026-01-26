@@ -307,6 +307,41 @@ export async function openAndroidNotificationSettings(): Promise<void> {
   }
 }
 
+export async function openAndroidBatteryOptimizationSettings(): Promise<void> {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+
+  const tryIntent = (intentUrl: string): boolean => {
+    try {
+      window.location.href = intentUrl;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  try {
+    const { App } = await import('@capacitor/app');
+    const appInfo = await App.getInfo();
+    const pkg = appInfo.id;
+
+    const intents = [
+      `intent:#Intent;action=android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;data=package:${pkg};end`,
+      `intent:#Intent;action=android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS;end`,
+      `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${pkg};end`,
+      `intent:#Intent;action=android.settings.BATTERY_SAVER_SETTINGS;end`,
+      `intent:#Intent;action=android.settings.SETTINGS;end`,
+    ];
+
+    for (const url of intents) {
+      if (tryIntent(url)) return;
+    }
+  } catch (e) {
+    console.warn('[Notifications] Could not open battery optimization settings:', e);
+  }
+}
+
 export function isAndroidPlatform(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 }
