@@ -89,7 +89,7 @@ export async function createAlarm(input: CreateAlarmInput): Promise<Alarm> {
   await localforage.setItem(ALARMS_KEY, alarms);
   
   if (newAlarm.isEnabled) {
-    scheduleAlarmNotification(newAlarm);
+    await scheduleAlarmNotification(newAlarm);
   }
   
   return newAlarm;
