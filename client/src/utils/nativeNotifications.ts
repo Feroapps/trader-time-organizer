@@ -326,31 +326,19 @@ export async function rescheduleAllAlarms(): Promise<void> {
     return;
   }
   
-  try {
-    const pending = await LocalNotifications.getPending();
-    if (pending.notifications.length > 0) {
-      await LocalNotifications.cancel({ notifications: pending.notifications });
-    }
-  } catch (e) {
-    console.warn('[Notifications] Failed to clear pending notifications:', e);
-  }
-  
   const alarms = await getAlarms();
-  let sessionCount = 0;
-  let userCount = 0;
   
-  for (const alarm of alarms) {
-    if (alarm.isEnabled) {
-      await scheduleAlarmNotification(alarm);
-      if (alarm.isFixed) {
-        sessionCount++;
-      } else {
-        userCount++;
-      }
-    }
+  // IMPORTANT: Only reschedule user-created alerts (isFixed === false)
+  // Session Alerts (isFixed === true) are EXCLUDED from this rescheduling path
+  // per contract requirement - they must remain managed by their existing,
+  // unchanged scheduling logic in scheduleAlarmNotification when first enabled
+  const userAlarms = alarms.filter(a => !a.isFixed && a.isEnabled);
+  
+  for (const alarm of userAlarms) {
+    await scheduleAlarmNotification(alarm);
   }
   
-  console.log(`[Notifications] Rescheduled ${sessionCount} session alerts and ${userCount} user alarms`);
+  console.log(`[Notifications] Rescheduled ${userAlarms.length} user-created alarms (Session Alerts excluded per contract)`);
 }
 
 export async function checkExactAlarmPermission(): Promise<{ granted: boolean; needsUserAction: boolean }> {

@@ -157,7 +157,8 @@ User alerts use a different scheduling model:
   - App initialization (`initializeNotifications()`)
   - App state change (resume from background)
   - App resume event
-- All enabled user alarms and session alerts are rescheduled on app startup
+- **IMPORTANT**: Only user-created alerts (isFixed === false) are rescheduled
+- Session Alerts (isFixed === true) are EXCLUDED from rescheduleAllAlarms() per contract
 
 #### Android Exact Alarms Permission (Android 12+)
 - **Permission Required**: `SCHEDULE_EXACT_ALARM` and `USE_EXACT_ALARM` declared in AndroidManifest.xml
