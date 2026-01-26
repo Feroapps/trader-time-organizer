@@ -73,14 +73,29 @@ function getNextOccurrence(alarm: Alarm): Date | null {
   return null;
 }
 
+const SESSION_ALERT_ID_BASE = 900000;
+const SESSION_ALERT_ID_MAX = 900100;
+
 function alarmIdToNotificationId(alarmId: string): number {
+  const sessionMatch = alarmId.match(/^session_alert_(\d+)$/);
+  if (sessionMatch) {
+    const offset = parseInt(sessionMatch[1], 10);
+    return SESSION_ALERT_ID_BASE + offset;
+  }
+  
   let hash = 0;
   for (let i = 0; i < alarmId.length; i++) {
     const char = alarmId.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return Math.abs(hash) % 2147483647;
+  let result = Math.abs(hash) % 2147483647;
+  
+  if (result >= SESSION_ALERT_ID_BASE && result <= SESSION_ALERT_ID_MAX) {
+    result = result + SESSION_ALERT_ID_MAX + 1;
+  }
+  
+  return result;
 }
 
 export async function requestNotificationPermissions(): Promise<boolean> {

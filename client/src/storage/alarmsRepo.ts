@@ -9,24 +9,68 @@ function generateId(): string {
   return `alarm_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
+function getSessionAlertId(index: number): string {
+  return `session_alert_${index + 1}`;
+}
+
 export async function getAlarms(): Promise<Alarm[]> {
   const alarms = await localforage.getItem<Alarm[]>(ALARMS_KEY);
   return alarms || [];
+}
+
+async function migrateToStableIds(existingAlarms: Alarm[]): Promise<Alarm[]> {
+  let needsSave = false;
+  const migratedAlarms = [...existingAlarms];
+  
+  for (let i = 0; i < fixedAlarms.length; i++) {
+    const stableId = getSessionAlertId(i);
+    const fixedAlarmData = fixedAlarms[i];
+    
+    const existingByStableId = migratedAlarms.find(a => a.id === stableId);
+    if (existingByStableId) {
+      continue;
+    }
+    
+    const existingByLabel = migratedAlarms.find(
+      a => a.isFixed && a.label === fixedAlarmData.label
+    );
+    
+    if (existingByLabel && existingByLabel.id !== stableId) {
+      const oldId = existingByLabel.id;
+      existingByLabel.id = stableId;
+      needsSave = true;
+      console.log(`[Alarms] Migrated session alert "${fixedAlarmData.label}" from ${oldId} to ${stableId}`);
+    } else if (!existingByLabel) {
+      const newAlarm: Alarm = {
+        ...fixedAlarmData,
+        id: stableId,
+      };
+      migratedAlarms.push(newAlarm);
+      needsSave = true;
+      console.log(`[Alarms] Added missing session alert "${fixedAlarmData.label}" with ${stableId}`);
+    }
+  }
+  
+  if (needsSave) {
+    await localforage.setItem(ALARMS_KEY, migratedAlarms);
+  }
+  
+  return migratedAlarms;
 }
 
 export async function seedFixedAlarms(): Promise<Alarm[]> {
   const existingAlarms = await getAlarms();
   
   if (existingAlarms.length > 0) {
-    return existingAlarms;
+    return await migrateToStableIds(existingAlarms);
   }
   
   const seededAlarms: Alarm[] = [];
   
-  for (const fixedAlarm of fixedAlarms) {
+  for (let i = 0; i < fixedAlarms.length; i++) {
     const alarm: Alarm = {
-      ...fixedAlarm,
-      id: generateId(),
+      ...fixedAlarms[i],
+      id: getSessionAlertId(i),
     };
     seededAlarms.push(alarm);
   }
