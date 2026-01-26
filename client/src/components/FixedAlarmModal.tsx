@@ -13,7 +13,19 @@ interface FixedAlarmModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function isNativeAndroid(): boolean {
+  if (typeof window !== 'undefined' && 'Capacitor' in window) {
+    const Capacitor = (window as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+    return Capacitor?.isNativePlatform?.() === true && Capacitor?.getPlatform?.() === 'android';
+  }
+  return false;
+}
+
 export function FixedAlarmModal({ open, onOpenChange }: FixedAlarmModalProps) {
+  if (isNativeAndroid()) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" data-testid="fixed-alarm-modal">
