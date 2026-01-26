@@ -48,11 +48,11 @@ const BOOT_RECEIVER_BLOCK = `
         </receiver>`;
 
 function log(msg) {
-  console.log(`[android-restore-native] ${msg}`);
+  console.log('[android-restore-native] ' + msg);
 }
 
 function error(msg) {
-  console.error(`[android-restore-native] ERROR: ${msg}`);
+  console.error('[android-restore-native] ERROR: ' + msg);
   process.exit(1);
 }
 
@@ -60,7 +60,7 @@ function verifySourceFiles() {
   for (const file of JAVA_FILES) {
     const filePath = path.join(SOURCE_DIR, file);
     if (!fs.existsSync(filePath)) {
-      error(`Source file missing: ${filePath}`);
+      error('Source file missing: ' + filePath);
     }
   }
   log('All source files verified.');
@@ -76,7 +76,7 @@ function verifyAndroidExists() {
 function ensureTargetDir() {
   if (!fs.existsSync(TARGET_DIR)) {
     fs.mkdirSync(TARGET_DIR, { recursive: true });
-    log(`Created target directory: ${TARGET_DIR}`);
+    log('Created target directory: ' + TARGET_DIR);
   }
 }
 
@@ -85,38 +85,40 @@ function copyJavaFiles() {
     const src = path.join(SOURCE_DIR, file);
     const dest = path.join(TARGET_DIR, file);
     fs.copyFileSync(src, dest);
-    log(`Copied: ${file}`);
+    log('Copied: ' + file);
   }
 }
 
 function patchManifest() {
   if (!fs.existsSync(MANIFEST_PATH)) {
-    error(`AndroidManifest.xml not found at: ${MANIFEST_PATH}`);
+    error('AndroidManifest.xml not found at: ' + MANIFEST_PATH);
   }
 
   let manifest = fs.readFileSync(MANIFEST_PATH, 'utf8');
   let changed = false;
 
-  // Add permissions immediately after opening <manifest ...> tag
+  // Find the opening <manifest ...> tag
   const manifestTagMatch = manifest.match(/<manifest[^>]*>/);
   if (!manifestTagMatch) {
     error('Could not find <manifest> tag in AndroidManifest.xml');
   }
-  
-  const manifestTagEnd = manifest.indexOf(manifestTagMatch[0]) + manifestTagMatch[0].length;
-  let permissionsToAdd = [];
-  
+
+  const manifestTagEndIndex = manifest.indexOf(manifestTagMatch[0]) + manifestTagMatch[0].length;
+
+  // Collect permissions that need to be added
+  const permissionsToAdd = [];
   for (const perm of REQUIRED_PERMISSIONS) {
     if (!manifest.includes(perm)) {
-      permissionsToAdd.push(`    <uses-permission android:name="${perm}" />`);
-      log(`Will add permission: ${perm}`);
+      permissionsToAdd.push('    <uses-permission android:name="' + perm + '" />');
+      log('Will add permission: ' + perm);
       changed = true;
     }
   }
-  
+
+  // Insert permissions immediately after <manifest ...>
   if (permissionsToAdd.length > 0) {
     const permBlock = '\n' + permissionsToAdd.join('\n');
-    manifest = manifest.slice(0, manifestTagEnd) + permBlock + manifest.slice(manifestTagEnd);
+    manifest = manifest.slice(0, manifestTagEndIndex) + permBlock + manifest.slice(manifestTagEndIndex);
   }
 
   // Add AlarmReceiver if missing
@@ -133,6 +135,9 @@ function patchManifest() {
   // Add AlarmSoundService if missing
   if (!manifest.includes('android:name=".AlarmSoundService"')) {
     const appClosePos = manifest.lastIndexOf('</application>');
+    if (appClosePos === -1) {
+      error('Could not find </application> tag in AndroidManifest.xml');
+    }
     manifest = manifest.slice(0, appClosePos) + ALARM_SERVICE_BLOCK + '\n    ' + manifest.slice(appClosePos);
     log('Added AlarmSoundService to manifest.');
     changed = true;
@@ -141,6 +146,9 @@ function patchManifest() {
   // Add BootReceiver if missing
   if (!manifest.includes('android:name=".BootReceiver"')) {
     const appClosePos = manifest.lastIndexOf('</application>');
+    if (appClosePos === -1) {
+      error('Could not find </application> tag in AndroidManifest.xml');
+    }
     manifest = manifest.slice(0, appClosePos) + BOOT_RECEIVER_BLOCK + '\n    ' + manifest.slice(appClosePos);
     log('Added BootReceiver to manifest.');
     changed = true;
@@ -156,12 +164,10 @@ function patchManifest() {
 
 function patchMainActivity() {
   if (!fs.existsSync(MAIN_ACTIVITY_PATH)) {
-    error(`MainActivity.java not found at: ${MAIN_ACTIVITY_PATH}`);
+    error('MainActivity.java not found at: ' + MAIN_ACTIVITY_PATH);
   }
 
   let content = fs.readFileSync(MAIN_ACTIVITY_PATH, 'utf8');
-  let changed = false;
-
   const registerLine = 'registerPlugin(UserAlarmPlugin.class);';
 
   // Check if registerPlugin is already present
@@ -172,7 +178,7 @@ function patchMainActivity() {
 
   // Check if onCreate exists
   const onCreateMatch = content.match(/public\s+void\s+onCreate\s*\([^)]*\)\s*\{/);
-  
+
   if (onCreateMatch) {
     // onCreate exists, find super.onCreate and insert after it
     const superOnCreateMatch = content.match(/super\.onCreate\([^)]*\);/);
@@ -180,7 +186,6 @@ function patchMainActivity() {
       const insertPos = content.indexOf(superOnCreateMatch[0]) + superOnCreateMatch[0].length;
       content = content.slice(0, insertPos) + '\n        ' + registerLine + content.slice(insertPos);
       log('Added registerPlugin(UserAlarmPlugin.class) after super.onCreate()');
-      changed = true;
     } else {
       error('onCreate exists but super.onCreate() not found');
     }
@@ -191,24 +196,14 @@ function patchMainActivity() {
       error('Could not find MainActivity class declaration');
     }
     const classBodyStart = content.indexOf(classMatch[0]) + classMatch[0].length;
-    
-    const onCreateMethod = `
 
-    @Override
-    public void onCreate(android.os.Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ${registerLine}
-    }
-`;
+    const onCreateMethod = '\n\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        ' + registerLine + '\n    }\n';
     content = content.slice(0, classBodyStart) + onCreateMethod + content.slice(classBodyStart);
     log('Added onCreate method with registerPlugin to MainActivity.java');
-    changed = true;
   }
 
-  if (changed) {
-    fs.writeFileSync(MAIN_ACTIVITY_PATH, content, 'utf8');
-    log('MainActivity.java patched.');
-  }
+  fs.writeFileSync(MAIN_ACTIVITY_PATH, content, 'utf8');
+  log('MainActivity.java patched.');
 }
 
 function main() {
