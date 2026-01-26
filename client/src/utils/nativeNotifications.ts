@@ -4,7 +4,7 @@ import type { Alarm } from '@/types/Alarm';
 import { DEFAULT_SNOOZE_MINUTES } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
-import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative } from '@/utils/userAlarmPlugin';
+import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative, canScheduleExactAlarmsNative } from '@/utils/userAlarmPlugin';
 
 const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
   original: { channelId: 'alerts_original_v2', name: 'Alerts - Original', sound: 'alert_original' },
@@ -336,14 +336,59 @@ export async function rescheduleAllAlarms(): Promise<void> {
   }
   
   const alarms = await getAlarms();
+  let sessionCount = 0;
+  let userCount = 0;
   
   for (const alarm of alarms) {
     if (alarm.isEnabled) {
       await scheduleAlarmNotification(alarm);
+      if (alarm.isFixed) {
+        sessionCount++;
+      } else {
+        userCount++;
+      }
     }
   }
   
-  console.log(`[Notifications] Rescheduled ${alarms.filter(a => a.isEnabled).length} alarms`);
+  console.log(`[Notifications] Rescheduled ${sessionCount} session alerts and ${userCount} user alarms`);
+}
+
+export async function checkExactAlarmPermission(): Promise<{ granted: boolean; needsUserAction: boolean }> {
+  if (!isAndroidNative()) {
+    return { granted: true, needsUserAction: false };
+  }
+  
+  const canSchedule = await canScheduleExactAlarmsNative();
+  
+  if (!canSchedule) {
+    console.warn('[Notifications] Exact alarm permission not granted');
+    return { granted: false, needsUserAction: true };
+  }
+  
+  return { granted: true, needsUserAction: false };
+}
+
+export async function openExactAlarmSettings(): Promise<void> {
+  if (!isAndroidNative()) {
+    return;
+  }
+  
+  try {
+    const { App } = await import('@capacitor/app');
+    const appInfo = await App.getInfo();
+    const packageName = appInfo.id;
+    
+    const exactAlarmUrl = `intent:#Intent;action=android.settings.REQUEST_SCHEDULE_EXACT_ALARM;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
+    window.location.href = exactAlarmUrl;
+  } catch (e) {
+    console.error('[Notifications] Failed to open exact alarm settings:', e);
+    
+    try {
+      window.location.href = 'intent:#Intent;action=android.settings.REQUEST_SCHEDULE_EXACT_ALARM;end';
+    } catch (e2) {
+      console.error('[Notifications] Fallback also failed:', e2);
+    }
+  }
 }
 
 export async function createNotificationChannels(): Promise<void> {
@@ -405,9 +450,25 @@ export async function initializeNotifications(): Promise<void> {
   LocalNotifications.addListener('localNotificationActionPerformed', async (action) => {
     console.log('[Notifications] Action performed:', action);
     
-    const deepLink = action.notification.extra?.deepLink;
-    if (deepLink && action.notification.extra?.isUserAlarm) {
-      window.location.href = deepLink;
+    const alarmId = action.notification.extra?.alarmId;
+    const isUserAlarm = action.notification.extra?.isUserAlarm;
+    
+    if (alarmId && isUserAlarm) {
+      const alarmPath = `/alarm?alarmId=${alarmId}`;
+      
+      if (isIOSNative()) {
+        window.location.hash = alarmPath;
+        setTimeout(() => {
+          if (!window.location.hash.includes('alarm')) {
+            window.location.href = window.location.origin + '/#' + alarmPath;
+          }
+        }, 100);
+      } else {
+        const deepLink = action.notification.extra?.deepLink;
+        if (deepLink) {
+          window.location.href = deepLink;
+        }
+      }
     }
   });
 }

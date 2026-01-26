@@ -23,7 +23,7 @@ import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alar
 import { AlertModal } from "@/components/AlertModal";
 import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundDescription } from "@/utils/soundLibrary";
-import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings } from "@/utils/nativeNotifications";
+import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings, checkExactAlarmPermission, openExactAlarmSettings } from "@/utils/nativeNotifications";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -56,6 +56,67 @@ function formatDays(days: number[]): string {
   
   const sortedDays = [...days].sort((a, b) => a - b);
   return sortedDays.map(d => dayNames[d]).join(', ');
+}
+
+function ExactAlarmPermissionButton() {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    checkExactAlarmPermission().then(result => {
+      setHasPermission(result.granted);
+    });
+  }, []);
+  
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkExactAlarmPermission().then(result => {
+          setHasPermission(result.granted);
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+  
+  if (hasPermission === null) {
+    return null;
+  }
+  
+  if (hasPermission) {
+    return (
+      <div className="flex items-center gap-2 mt-4 p-3 bg-green-100 dark:bg-green-900/30 rounded-md">
+        <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+        <span className="text-sm text-green-700 dark:text-green-300">
+          Exact alarm permission granted
+        </span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-md">
+      <div className="flex items-center gap-2 mb-2">
+        <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+          Exact alarm permission required
+        </span>
+      </div>
+      <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
+        Android 12+ requires this permission for user-created alarms to fire at exact times. Without it, alarms may be delayed.
+      </p>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => openExactAlarmSettings()}
+        data-testid="button-open-exact-alarm-settings"
+      >
+        <Settings2 className="w-4 h-4 mr-2" />
+        Grant Exact Alarm Permission
+      </Button>
+    </div>
+  );
 }
 
 function FixedAlarmRow({ alarm, onToggle }: { alarm: Alarm; onToggle: (enabled: boolean) => void }) {
@@ -358,6 +419,7 @@ export function Settings() {
                   <p className="text-xs text-muted-foreground text-center mt-2">
                     Set Battery usage to Unrestricted / Not optimized to prevent delays.
                   </p>
+                  <ExactAlarmPermissionButton />
                 </>
               )}
             </div>

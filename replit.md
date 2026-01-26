@@ -141,13 +141,29 @@ User alerts use a different scheduling model:
 - **Android**: Uses AlarmManager + Foreground Service for continuous ringing
   - AlarmReceiver triggers AlarmService which plays sound continuously
   - Deep link (tradertime://) opens AlarmRinging screen
-  - 120-second auto-timeout if no user action
+  - **120-second auto-timeout fail-safe**: Alarm auto-stops if no user action (ALARM_TIMEOUT_MS in AlarmService.java)
   - Key files: AlarmReceiver.java, AlarmService.java, UserAlarmPlugin.java
 - **iOS**: Uses repeated LocalNotifications at 0/30/60/90 seconds
-  - Notification tap triggers deep link to AlarmRinging screen
-  - localNotificationActionPerformed listener handles navigation
+  - Notification tap navigates to AlarmRinging screen via localNotificationActionPerformed listener
+  - Fallback uses hash-based routing when deep link unavailable
 - **Snooze**: 60/120/180 minute options (default: 60)
   - Uses separate `_snooze` suffix ID to avoid overwriting repeat schedules
   - Original repeat schedule is preserved and rescheduled
 - **AlarmRinging Screen**: Stop/Snooze buttons only - no auto-stop on mount
-- **iOS URL Scheme**: Requires native iOS configuration (outside current scope)
+
+#### Alarm Rescheduling After Reboot
+- **Android BOOT_COMPLETED**: BootReceiver registered in AndroidManifest.xml
+- **App Resume/Startup**: `rescheduleAllAlarms()` called via capacitorInit.ts on:
+  - App initialization (`initializeNotifications()`)
+  - App state change (resume from background)
+  - App resume event
+- All enabled user alarms and session alerts are rescheduled on app startup
+
+#### Android Exact Alarms Permission (Android 12+)
+- **Permission Required**: `SCHEDULE_EXACT_ALARM` and `USE_EXACT_ALARM` declared in AndroidManifest.xml
+- **Permission Check**: `checkExactAlarmPermission()` function checks if exact alarms can be scheduled
+- **User Guidance**: Settings screen shows permission status with clear guidance:
+  - Green indicator when permission granted
+  - Amber warning with explanation and button to grant permission when missing
+- **No Silent Downgrade**: Code explicitly warns in logs when falling back to inexact alarms
+- **Open Settings**: `openExactAlarmSettings()` opens Android's exact alarm permission screen
