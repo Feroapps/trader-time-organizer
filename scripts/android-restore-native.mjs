@@ -108,7 +108,7 @@ function patchManifest() {
   // Collect permissions that need to be added
   const permissionsToAdd = [];
   for (const perm of REQUIRED_PERMISSIONS) {
-    if (!manifest.includes(perm)) {
+    if (!manifest.includes(`android:name="${perm}"`)) {
       permissionsToAdd.push('    <uses-permission android:name="' + perm + '" />');
       log('Will add permission: ' + perm);
       changed = true;
@@ -117,7 +117,7 @@ function patchManifest() {
 
   // Insert permissions immediately after <manifest ...>
   if (permissionsToAdd.length > 0) {
-    const permBlock = '\n' + permissionsToAdd.join('\n');
+    const permBlock = '\n' + permissionsToAdd.join('\n') + '\n';
     manifest = manifest.slice(0, manifestTagEndIndex) + permBlock + manifest.slice(manifestTagEndIndex);
   }
 
