@@ -23,7 +23,6 @@ public class UserAlarmPlugin extends Plugin {
         String alarmId = call.getString("alarmId");
         String label = call.getString("label");
         Long triggerTimeMs = call.getLong("triggerTimeMs");
-        Integer snoozeMinutes = call.getInt("snoozeMinutes", 60);
         String soundId = call.getString("soundId", "original");
 
         if (alarmId == null || triggerTimeMs == null) {

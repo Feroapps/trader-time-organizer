@@ -1,0 +1,77 @@
+REMOVE SNOOZE COMPLETELY AND FIX SESSION ALERTS SCHEDULING.
+
+STRICT RULES:
+- Do NOT refactor unrelated code.
+- Do NOT change file paths.
+- Do NOT change package name.
+- Do NOT add new features.
+- Only remove snooze everywhere and ensure session (fixed) alerts are scheduled too.
+- Output the FULL updated content of every file you modify.
+
+========================================================
+A) REMOVE SNOOZE FROM THE APP (END-TO-END)
+
+1) Update Type(s):
+FILE: client/src/types/Alarm.ts
+- Remove snoozeMinutes from Alarm and any related types/interfaces (CreateAlarmInput if present).
+- Ensure the app compiles after removal.
+
+2) Remove snooze from UI:
+FILE: client/src/components/AlertModal.tsx
+- Remove any snooze UI (60/120/180, 5/10/15, etc) completely.
+- Do NOT render snooze controls.
+- Do NOT store snoozeMinutes in the created alarm input.
+- Keep all other fields unchanged.
+
+3) Remove snooze from storage:
+FILE: client/src/storage/alarmsRepo.ts
+- Ensure createAlarm no longer expects/handles snoozeMinutes.
+- Keep: await scheduleAlarmNotification(newAlarm); (already present)
+
+4) Remove snooze from scheduling layer:
+FILE: client/src/utils/nativeNotifications.ts
+- Remove any DEFAULT_SNOOZE_MINUTES usage.
+- When calling scheduleUserAlarmNative(...) on Android, pass a constant 0 for snoozeMinutes (or remove parameter if you also update the wrapper).
+- Make sure the code compiles.
+
+5) Remove snooze from Android plugin bridge (TypeScript):
+FILE: client/src/utils/userAlarmPlugin.ts
+- Remove snoozeMinutes from the UserAlarmPlugin TypeScript interface and from scheduleUserAlarmNative() signature.
+- scheduleUserAlarmNative should call UserAlarm.scheduleAlarm with:
+  { alarmId, label, triggerTimeMs, soundId }
+- Update cancel/stop methods unchanged.
+- Make sure compilation passes.
+
+6) Adjust Android plugin to accept no snooze:
+FILE: android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+- In scheduleAlarm(...), treat snoozeMinutes as optional and IGNORE it (or remove reading it).
+- The method must still schedule exactly one alarm via AlarmManager.
+- cancelAlarm should remain for alarmId only.
+- Keep explicit { success: true/false } responses and logging.
+
+========================================================
+B) USER-CREATED ALARMS RING FOR 120s UNLESS USER STOPS (NO SNOOZE)
+FILE: android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+- Ensure it rings up to 120 seconds (ALARM_TIMEOUT_MS=120000) OR until STOP is pressed.
+- Do NOT implement any snooze behavior.
+(If already correct, do not change it.)
+
+========================================================
+C) FIX SESSION/FIXED ALERTS (THEY ALSO WERE NOT WORKING)
+CURRENT ISSUE: rescheduleAllAlarms excludes fixed alarms.
+We must reschedule ALL enabled alarms on native resume/init, including fixed session alerts.
+
+FILE: client/src/utils/nativeNotifications.ts
+- Update rescheduleAllAlarms() so it schedules ALL alarms that are enabled, INCLUDING isFixed=true.
+- It must iterate alarms.filter(a => a.isEnabled) (no isFixed exclusion).
+- For each alarm: await scheduleAlarmNotification(alarm)
+
+FILE: client/src/utils/capacitorInit.ts (or wherever rescheduleAllAlarms is called)
+- Ensure rescheduleAllAlarms() is called on app resume/active (already) AND also once on initial native app start (if not already).
+- Do NOT add new files; only adjust existing initialization minimally.
+
+========================================================
+OUTPUT REQUIREMENTS:
+- Print the FULL final content of each modified file.
+- Do not explain.
+- Do not add TODOs.

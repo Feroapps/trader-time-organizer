@@ -5,7 +5,6 @@ interface UserAlarmPlugin {
     alarmId: string;
     label: string;
     triggerTimeMs: number;
-    snoozeMinutes: number;
     soundId: string;
   }): Promise<{ success: boolean; alarmId: string }>;
   
@@ -22,7 +21,6 @@ export async function scheduleUserAlarmNative(
   alarmId: string,
   label: string,
   triggerTime: Date,
-  snoozeMinutes: number,
   soundId: string
 ): Promise<boolean> {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
@@ -34,7 +32,6 @@ export async function scheduleUserAlarmNative(
       alarmId,
       label,
       triggerTimeMs: triggerTime.getTime(),
-      snoozeMinutes,
       soundId,
     });
     console.log(`[UserAlarm] Scheduled: ${alarmId} at ${triggerTime.toISOString()}`);

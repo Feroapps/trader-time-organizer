@@ -3,11 +3,9 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Bell, Clock, X } from "lucide-react";
 import { getAlarms } from "@/storage/alarmsRepo";
-import { stopCurrentAlarmNative, isAndroidNative, scheduleUserAlarmNative } from "@/utils/userAlarmPlugin";
-import { scheduleAlarmNotification, cancelAlarmNotification } from "@/utils/nativeNotifications";
-import { migrateSoundId } from "@/utils/soundLibrary";
+import { stopCurrentAlarmNative } from "@/utils/userAlarmPlugin";
+import { scheduleAlarmNotification } from "@/utils/nativeNotifications";
 import type { Alarm } from "@/types/Alarm";
-import { DEFAULT_SNOOZE_MINUTES } from "@/types/Alarm";
 
 export function AlarmRinging() {
   const [, setLocation] = useLocation();
@@ -45,49 +43,6 @@ export function AlarmRinging() {
     setLocation("/");
   }
 
-  async function handleSnooze() {
-    if (!alarmId || !alarm) {
-      setLocation("/");
-      return;
-    }
-
-    await stopCurrentAlarmNative();
-
-    const snoozeMs = (alarm.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES) * 60 * 1000;
-    const nextTrigger = new Date(Date.now() + snoozeMs);
-    const snoozeId = `${alarm.id}_snooze`;
-
-    if (isAndroidNative()) {
-      const soundId = migrateSoundId(alarm.soundId);
-      await scheduleUserAlarmNative(
-        snoozeId,
-        alarm.label + " (Snoozed)",
-        nextTrigger,
-        alarm.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES,
-        soundId
-      );
-    } else {
-      const snoozeAlarm: Alarm = {
-        ...alarm,
-        id: snoozeId,
-        dateUTC: nextTrigger.toISOString().split("T")[0],
-        hourUTC: nextTrigger.getUTCHours(),
-        minuteUTC: nextTrigger.getUTCMinutes(),
-        repeatWeekly: false,
-        repeatMonthly: false,
-      };
-      await scheduleAlarmNotification(snoozeAlarm);
-    }
-    
-    if (alarm.repeatWeekly || alarm.repeatMonthly) {
-      await scheduleAlarmNotification(alarm);
-    }
-    
-    setLocation("/");
-  }
-
-  const snoozeMinutes = alarm?.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES;
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6">
       <div className="flex flex-col items-center gap-8 max-w-sm w-full">
@@ -117,17 +72,6 @@ export function AlarmRinging() {
           >
             <X className="w-5 h-5 mr-2" />
             Stop
-          </Button>
-          
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full text-lg"
-            onClick={handleSnooze}
-            data-testid="button-snooze-alarm"
-          >
-            <Clock className="w-5 h-5 mr-2" />
-            Snooze ({snoozeMinutes} min)
           </Button>
         </div>
       </div>

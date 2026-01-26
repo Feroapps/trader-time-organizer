@@ -1,7 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import type { Alarm } from '@/types/Alarm';
-import { DEFAULT_SNOOZE_MINUTES } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
 import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative, canScheduleExactAlarmsNative } from '@/utils/userAlarmPlugin';
@@ -148,7 +147,6 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
       alarm.id,
       alarm.label,
       nextOccurrence,
-      alarm.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES,
       soundId
     );
     console.log(`[Notifications] User alarm scheduled via AlarmManager: ${alarm.label} at ${nextOccurrence.toISOString()}`);
@@ -328,17 +326,13 @@ export async function rescheduleAllAlarms(): Promise<void> {
   
   const alarms = await getAlarms();
   
-  // IMPORTANT: Only reschedule user-created alerts (isFixed === false)
-  // Session Alerts (isFixed === true) are EXCLUDED from this rescheduling path
-  // per contract requirement - they must remain managed by their existing,
-  // unchanged scheduling logic in scheduleAlarmNotification when first enabled
-  const userAlarms = alarms.filter(a => !a.isFixed && a.isEnabled);
+  const enabledAlarms = alarms.filter(a => a.isEnabled);
   
-  for (const alarm of userAlarms) {
+  for (const alarm of enabledAlarms) {
     await scheduleAlarmNotification(alarm);
   }
   
-  console.log(`[Notifications] Rescheduled ${userAlarms.length} user-created alarms (Session Alerts excluded per contract)`);
+  console.log(`[Notifications] Rescheduled ${enabledAlarms.length} alarms (all enabled alarms including session alerts)`);
 }
 
 export async function checkExactAlarmPermission(): Promise<{ granted: boolean; needsUserAction: boolean }> {
@@ -471,7 +465,6 @@ export async function openAndroidNotificationSettings(): Promise<void> {
     const appInfo = await App.getInfo();
     const packageName = appInfo.id;
     
-    // Attempt 1: APP_NOTIFICATION_SETTINGS with package extras
     const notificationSettingsUrl = `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
     
     try {
@@ -481,7 +474,6 @@ export async function openAndroidNotificationSettings(): Promise<void> {
       console.warn('[Notifications] APP_NOTIFICATION_SETTINGS failed:', e1);
     }
     
-    // Attempt 2: APPLICATION_DETAILS_SETTINGS (app details page)
     try {
       const appDetailsUrl = `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${packageName};end`;
       window.location.href = appDetailsUrl;
@@ -490,7 +482,6 @@ export async function openAndroidNotificationSettings(): Promise<void> {
       console.warn('[Notifications] APPLICATION_DETAILS_SETTINGS failed:', e2);
     }
     
-    // Attempt 3: General settings fallback
     try {
       const generalSettingsUrl = `intent:#Intent;action=android.settings.SETTINGS;end`;
       window.location.href = generalSettingsUrl;
@@ -510,7 +501,6 @@ export async function openAndroidAlarmSoundSettings(): Promise<void> {
   }
   
   try {
-    // Open the alarm ringtone picker
     const alarmSoundUrl = `intent:#Intent;action=android.intent.action.RINGTONE_PICKER;i.android.intent.extra.ringtone.TYPE=4;end`;
     window.location.href = alarmSoundUrl;
   } catch (e) {
