@@ -1,0 +1,115 @@
+Implement the Android alarm system by inserting the following code and changes literally into each specified file.
+
+DO NOT refactor.
+DO NOT change file paths.
+DO NOT suggest alternatives.
+DO NOT omit anything.
+DO NOT create any NEW files beyond the ones listed below.
+DO NOT modify any other files.
+
+================================================================
+
+FILE: android/app/src/main/AndroidManifest.xml
+
+Add the following permissions inside the <manifest> tag:
+
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+Add the following declarations inside the <application> tag:
+
+<receiver
+    android:name=".AlarmReceiver"
+    android:exported="false" />
+
+<service
+    android:name=".AlarmSoundService"
+    android:exported="false"
+    android:foregroundServiceType="mediaPlayback" />
+
+<receiver
+    android:name=".BootReceiver"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+    </intent-filter>
+</receiver>
+
+================================================================
+
+FILE: android/app/src/main/java/com/feroapps/tradertime/MainActivity.java
+
+Add this import at the top of the file:
+
+import com.feroapps.tradertime.UserAlarmPlugin;
+
+Register the plugin inside the activity initialization:
+
+registerPlugin(UserAlarmPlugin.class);
+
+================================================================
+
+FILE: android/app/src/main/java/com/feroapps/tradertime/AlarmReceiver.java
+
+Implement logic to:
+- Receive the AlarmManager broadcast
+- Start AlarmSoundService immediately using ContextCompat.startForegroundService(...)
+- Pass alarmId, label, and soundId to the service via intent extras
+
+================================================================
+
+FILE: android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+
+Implement:
+- Foreground Service (mediaPlayback)
+- Create a Notification Channel used by this foreground service
+- Call startForeground(...) immediately with an ongoing notification
+- Continuous alarm sound playback in a loop using MediaPlayer
+- Resolve a sound from res/raw by soundId; if missing, fall back to a default raw sound
+- Keep ringing for 120 seconds or until user presses STOP
+- STOP must be implemented WITHOUT creating new files:
+  - Add a Notification Action that sends an intent back to AlarmSoundService (ACTION_STOP)
+  - On ACTION_STOP: stop audio and stopSelf() immediately
+- Auto-stop after 120 seconds if user does not press STOP
+
+================================================================
+
+FILE: android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+
+Implement Capacitor plugin methods to:
+- scheduleAlarm({ alarmId, label, triggerTimeMs, snoozeMinutes, soundId })
+  - Use AlarmManager with a stable PendingIntent keyed by alarmId
+  - Use setExactAndAllowWhileIdle for precise timing
+  - Return { success: true/false } explicitly (no silent failures)
+- cancelAlarm({ alarmId })
+  - Cancel the exact PendingIntent
+  - Return { success: true/false } explicitly
+
+Also:
+- Log errors clearly so failures are visible in Logcat
+
+================================================================
+
+FILE: android/app/src/main/java/com/feroapps/tradertime/BootReceiver.java
+
+Implement logic to:
+- Listen for BOOT_COMPLETED
+- For now, DO NOT attempt to read alarms from IndexedDB/localforage in Java.
+- Instead, implement only a minimal reliable behavior:
+  - Log that BOOT_COMPLETED was received
+  - Optionally start a minimal background-safe intent to MainActivity so that when the app is opened, JS rescheduling can run
+- Do not invent complex storage bridging.
+
+================================================================
+
+ASSUMPTIONS:
+- Alarm sound files already exist in android/app/src/main/res/raw/
+- Package name is com.feroapps.tradertime
+
+OUTPUT REQUIREMENTS:
+- Show the full final source code of every modified file
+- Do not leave TODOs
+- Do not explain anything
+- Do not modify any other files
