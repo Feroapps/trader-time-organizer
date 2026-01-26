@@ -18,6 +18,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Alarm, CreateAlarmInput } from "@/types";
+import { SNOOZE_OPTIONS, DEFAULT_SNOOZE_MINUTES } from "@/types/Alarm";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AlertModalProps {
   open: boolean;
@@ -52,6 +60,7 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [label, setLabel] = useState("");
+  const [snoozeMinutes, setSnoozeMinutes] = useState<number>(DEFAULT_SNOOZE_MINUTES);
 
   useEffect(() => {
     if (open) {
@@ -62,6 +71,7 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
         setRepeatWeekly(editingAlert.repeatWeekly ?? false);
         setRepeatMonthly(editingAlert.repeatMonthly ?? false);
         setLabel(editingAlert.label);
+        setSnoozeMinutes(editingAlert.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES);
       } else {
         const now = new Date();
         setSelectedDate(now);
@@ -70,6 +80,7 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
         setRepeatWeekly(false);
         setRepeatMonthly(false);
         setLabel("");
+        setSnoozeMinutes(DEFAULT_SNOOZE_MINUTES);
       }
     }
   }, [open, editingAlert]);
@@ -87,6 +98,7 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
       label: label.trim() || `Alert ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")} UTC`,
       isFixed: false,
       duration: 5,
+      snoozeMinutes,
     };
     onSave(alertData);
     onOpenChange(false);
@@ -243,6 +255,25 @@ export function AlertModal({ open, onOpenChange, onSave, editingAlert }: AlertMo
                 <span className="text-sm">Repeat monthly (every {selectedDate.getUTCDate()}{getOrdinalSuffix(selectedDate.getUTCDate())})</span>
               </label>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Snooze</Label>
+            <Select
+              value={snoozeMinutes.toString()}
+              onValueChange={(value) => setSnoozeMinutes(parseInt(value, 10))}
+            >
+              <SelectTrigger data-testid="select-snooze">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SNOOZE_OPTIONS.map((mins) => (
+                  <SelectItem key={mins} value={mins.toString()} data-testid={`select-snooze-${mins}`}>
+                    {mins} minutes
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
