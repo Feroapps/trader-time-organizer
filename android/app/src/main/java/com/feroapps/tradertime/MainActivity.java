@@ -51,16 +51,17 @@ public class MainActivity extends BridgeActivity {
         
         WindowCompat.setDecorFitsSystemWindows(window, false);
         
+        // Use transparent system bars - app background will show through
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        
+        // Set icon contrast based on theme
         int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightMode == Configuration.UI_MODE_NIGHT_YES;
         
-        int bgColor = isDarkMode ? Color.parseColor("#121212") : Color.parseColor("#FFFFFF");
-        
-        window.setStatusBarColor(bgColor);
-        window.setNavigationBarColor(bgColor);
-        
         WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, decorView);
         if (insetsController != null) {
+            // Light theme: dark icons, Dark theme: light icons
             insetsController.setAppearanceLightStatusBars(!isDarkMode);
             insetsController.setAppearanceLightNavigationBars(!isDarkMode);
         }

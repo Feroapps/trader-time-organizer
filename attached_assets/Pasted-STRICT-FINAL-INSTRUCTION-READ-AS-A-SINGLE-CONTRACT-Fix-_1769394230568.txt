@@ -1,0 +1,15 @@
+STRICT & FINAL INSTRUCTION — READ AS A SINGLE CONTRACT
+
+Fix the Android top and bottom black bars / clipped content issue caused by incorrect edge-to-edge and safe-area handling. This task is a UI and system window configuration fix ONLY. DO NOT change any internal application logic under any circumstance. This includes (but is not limited to) alerts, alarms, session alerts, user alerts, scheduling, storage, repositories, routing behavior, native alarm implementation, or business logic. No refactoring and no feature changes.
+
+The required behavior is that in Light theme the top and bottom areas visually appear white, and in Dark theme they visually appear dark, fully matching the app background. There must be no black system bars, no visual gaps, and no clipped or hidden UI under the status bar or navigation bar. The behavior must be consistent on Android 12, 13, and 14.
+
+On Android (Capacitor), edge-to-edge must be enabled correctly by calling WindowCompat.setDecorFitsSystemWindows(getWindow(), false) in MainActivity.onCreate. The Android theme must use transparent system bars so the app background fills them, and icon contrast must follow the active theme: status bar and navigation bar colors must be transparent, with light icons in dark theme and dark icons in light theme. Do not hardcode black or white system bar colors.
+
+In React, safe-area compensation must be handled once and only once at the root container level, not per screen. The root wrapper in App.tsx must use min-h-screen, bg-background, and safe-area insets via env(safe-area-inset-top) and env(safe-area-inset-bottom) so content is pushed below the status bar and above the navigation bar correctly on all devices, including those with notches or gesture navigation. Do not use fixed padding values, do not use h-screen, do not hide overflow on html or body, and do not add padding in individual screens.
+
+Do NOT add or modify Capacitor plugins or configuration in a way that changes runtime behavior; only system window flags and root-level safe-area padding are allowed.
+
+No visual redesign is allowed. No layout restructuring is allowed. This fix must not alter how the application behaves, only how it is drawn relative to the system UI. After the fix, there must be no black bars, no clipped UI, and the top and bottom areas must seamlessly blend with the app background in both light and dark themes.
+
+Apply this exactly as described and report only the files modified for this fix.
