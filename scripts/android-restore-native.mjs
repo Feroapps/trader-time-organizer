@@ -97,19 +97,26 @@ function patchManifest() {
   let manifest = fs.readFileSync(MANIFEST_PATH, 'utf8');
   let changed = false;
 
-  // Add permissions
+  // Add permissions immediately after opening <manifest ...> tag
+  const manifestTagMatch = manifest.match(/<manifest[^>]*>/);
+  if (!manifestTagMatch) {
+    error('Could not find <manifest> tag in AndroidManifest.xml');
+  }
+  
+  const manifestTagEnd = manifest.indexOf(manifestTagMatch[0]) + manifestTagMatch[0].length;
+  let permissionsToAdd = [];
+  
   for (const perm of REQUIRED_PERMISSIONS) {
-    const permLine = `<uses-permission android:name="${perm}" />`;
     if (!manifest.includes(perm)) {
-      // Insert after opening <manifest ...> tag before <application
-      const insertPos = manifest.indexOf('<application');
-      if (insertPos === -1) {
-        error('Could not find <application> tag in AndroidManifest.xml');
-      }
-      manifest = manifest.slice(0, insertPos) + `    ${permLine}\n\n    ` + manifest.slice(insertPos);
-      log(`Added permission: ${perm}`);
+      permissionsToAdd.push(`    <uses-permission android:name="${perm}" />`);
+      log(`Will add permission: ${perm}`);
       changed = true;
     }
+  }
+  
+  if (permissionsToAdd.length > 0) {
+    const permBlock = '\n' + permissionsToAdd.join('\n');
+    manifest = manifest.slice(0, manifestTagEnd) + permBlock + manifest.slice(manifestTagEnd);
   }
 
   // Add AlarmReceiver if missing
@@ -155,56 +162,52 @@ function patchMainActivity() {
   let content = fs.readFileSync(MAIN_ACTIVITY_PATH, 'utf8');
   let changed = false;
 
-  // Add import if missing
-  const importLine = 'import com.feroapps.tradertime.UserAlarmPlugin;';
-  if (!content.includes(importLine)) {
-    // Insert after package line
-    const packageEnd = content.indexOf(';');
-    if (packageEnd === -1) {
-      error('Could not find package declaration in MainActivity.java');
-    }
-    content = content.slice(0, packageEnd + 1) + '\n\n' + importLine + content.slice(packageEnd + 1);
-    log('Added UserAlarmPlugin import to MainActivity.java');
-    changed = true;
+  const registerLine = 'registerPlugin(UserAlarmPlugin.class);';
+
+  // Check if registerPlugin is already present
+  if (content.includes(registerLine)) {
+    log('MainActivity.java already has registerPlugin(UserAlarmPlugin.class).');
+    return;
   }
 
-  // Add registerPlugin if missing
-  const registerLine = 'registerPlugin(UserAlarmPlugin.class);';
-  if (!content.includes(registerLine)) {
-    // Check if onCreate exists
-    if (content.includes('onCreate')) {
-      // Insert registerPlugin after super.onCreate
-      const superOnCreateMatch = content.match(/super\.onCreate\([^)]*\);/);
-      if (superOnCreateMatch) {
-        const insertPos = content.indexOf(superOnCreateMatch[0]) + superOnCreateMatch[0].length;
-        content = content.slice(0, insertPos) + '\n        ' + registerLine + content.slice(insertPos);
-        log('Added registerPlugin(UserAlarmPlugin.class) after super.onCreate()');
-        changed = true;
-      }
+  // Check if onCreate exists
+  const onCreateMatch = content.match(/public\s+void\s+onCreate\s*\([^)]*\)\s*\{/);
+  
+  if (onCreateMatch) {
+    // onCreate exists, find super.onCreate and insert after it
+    const superOnCreateMatch = content.match(/super\.onCreate\([^)]*\);/);
+    if (superOnCreateMatch) {
+      const insertPos = content.indexOf(superOnCreateMatch[0]) + superOnCreateMatch[0].length;
+      content = content.slice(0, insertPos) + '\n        ' + registerLine + content.slice(insertPos);
+      log('Added registerPlugin(UserAlarmPlugin.class) after super.onCreate()');
+      changed = true;
     } else {
-      // Need to add onCreate method
-      const classBodyStart = content.indexOf('{', content.indexOf('class MainActivity'));
-      if (classBodyStart === -1) {
-        error('Could not find class body in MainActivity.java');
-      }
-      const onCreateMethod = `
+      error('onCreate exists but super.onCreate() not found');
+    }
+  } else {
+    // Need to add onCreate method
+    const classMatch = content.match(/class\s+MainActivity\s+extends\s+[^\{]+\{/);
+    if (!classMatch) {
+      error('Could not find MainActivity class declaration');
+    }
+    const classBodyStart = content.indexOf(classMatch[0]) + classMatch[0].length;
+    
+    const onCreateMethod = `
+
     @Override
     public void onCreate(android.os.Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ${registerLine}
     }
 `;
-      content = content.slice(0, classBodyStart + 1) + onCreateMethod + content.slice(classBodyStart + 1);
-      log('Added onCreate method with registerPlugin to MainActivity.java');
-      changed = true;
-    }
+    content = content.slice(0, classBodyStart) + onCreateMethod + content.slice(classBodyStart);
+    log('Added onCreate method with registerPlugin to MainActivity.java');
+    changed = true;
   }
 
   if (changed) {
     fs.writeFileSync(MAIN_ACTIVITY_PATH, content, 'utf8');
     log('MainActivity.java patched.');
-  } else {
-    log('MainActivity.java already has all required entries.');
   }
 }
 
