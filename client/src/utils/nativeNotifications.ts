@@ -504,6 +504,20 @@ export async function openAndroidNotificationSettings(): Promise<void> {
   }
 }
 
+export async function openAndroidAlarmSoundSettings(): Promise<void> {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+  
+  try {
+    // Open the alarm ringtone picker
+    const alarmSoundUrl = `intent:#Intent;action=android.intent.action.RINGTONE_PICKER;i.android.intent.extra.ringtone.TYPE=4;end`;
+    window.location.href = alarmSoundUrl;
+  } catch (e) {
+    console.warn('[Notifications] Could not open Android alarm sound settings:', e);
+  }
+}
+
 export async function openAndroidBatteryOptimizationSettings(): Promise<void> {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
     return;

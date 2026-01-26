@@ -22,8 +22,8 @@ import { Switch } from "@/components/ui/switch";
 import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
 import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
-import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundDescription } from "@/utils/soundLibrary";
-import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings, checkExactAlarmPermission, openExactAlarmSettings } from "@/utils/nativeNotifications";
+import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundName, getCustomSoundDescription } from "@/utils/soundLibrary";
+import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings, checkExactAlarmPermission, openExactAlarmSettings, openAndroidAlarmSoundSettings } from "@/utils/nativeNotifications";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
@@ -365,7 +365,7 @@ export function Settings() {
                       <div className="w-5 h-5 flex-shrink-0" />
                     )}
                     <div className="min-w-0">
-                      <p className="font-medium">{sound.name}</p>
+                      <p className="font-medium">{sound.id === 'custom' ? getCustomSoundName() : sound.name}</p>
                       <p className="text-sm text-muted-foreground truncate">
                         {sound.id === 'custom' ? getCustomSoundDescription() : sound.description}
                       </p>
@@ -401,11 +401,11 @@ export function Settings() {
                   <Button
                     variant="outline"
                     className="w-full mt-4"
-                    onClick={() => openAndroidNotificationSettings()}
+                    onClick={() => openAndroidAlarmSoundSettings()}
                     data-testid="button-open-android-settings"
                   >
                     <Settings2 className="w-4 h-4 mr-2" />
-                    Open Android Notification Settings
+                    Open Android Alarm Sound Settings
                   </Button>
                   <Button
                     variant="outline"

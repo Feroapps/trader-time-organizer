@@ -44,11 +44,27 @@ export const alertSounds: AlertSound[] = [
   },
   {
     id: "custom",
-    name: "Custom",
+    name: "System Alarm Sound",
     description: "System-managed sound",
     file: "",
   },
 ];
+
+export function getCustomSoundName(): string {
+  if (typeof window !== 'undefined' && 'Capacitor' in window) {
+    const Capacitor = (window as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+    if (Capacitor?.isNativePlatform?.()) {
+      const platform = Capacitor.getPlatform?.();
+      if (platform === 'android') {
+        return 'System Alarm Sound';
+      }
+      if (platform === 'ios') {
+        return 'System Sound';
+      }
+    }
+  }
+  return 'System Sound';
+}
 
 export function getCustomSoundDescription(): string {
   if (typeof window !== 'undefined' && 'Capacitor' in window) {
@@ -56,14 +72,14 @@ export function getCustomSoundDescription(): string {
     if (Capacitor?.isNativePlatform?.()) {
       const platform = Capacitor.getPlatform?.();
       if (platform === 'android') {
-        return 'Choose in Android notification settings';
+        return 'Uses device alarm ringtone';
       }
       if (platform === 'ios') {
-        return 'Sound is managed by iOS system settings';
+        return 'Uses system-managed sound';
       }
     }
   }
-  return 'Sound is managed by your browser/system';
+  return 'Uses system-managed sound';
 }
 
 export const DEFAULT_SOUND_ID = "original";
