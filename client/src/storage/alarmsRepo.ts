@@ -107,7 +107,7 @@ export async function updateAlarm(updatedAlarm: Alarm): Promise<Alarm | null> {
   if (updatedAlarm.isEnabled) {
     scheduleAlarmNotification(updatedAlarm);
   } else {
-    cancelAlarmNotification(updatedAlarm.id);
+    cancelAlarmNotification(updatedAlarm.id, !updatedAlarm.isFixed);
   }
   
   return updatedAlarm;
@@ -125,7 +125,7 @@ export async function toggleAlarm(id: string, isEnabled: boolean): Promise<Alarm
   if (isEnabled) {
     scheduleAlarmNotification(alarm);
   } else {
-    cancelAlarmNotification(alarm.id);
+    cancelAlarmNotification(alarm.id, !alarm.isFixed);
   }
   
   return alarm;
@@ -143,7 +143,7 @@ export async function deleteAlarm(id: string): Promise<boolean> {
     return false;
   }
   
-  cancelAlarmNotification(id);
+  cancelAlarmNotification(id, true);
   
   const filtered = alarms.filter((a) => a.id !== id);
   await localforage.setItem(ALARMS_KEY, filtered);

@@ -1,8 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import type { Alarm } from '@/types/Alarm';
+import { DEFAULT_SNOOZE_MINUTES } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
+import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative } from '@/utils/userAlarmPlugin';
 
 const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
   original: { channelId: 'alerts_original_v2', name: 'Alerts - Original', sound: 'alert_original' },
@@ -139,6 +141,25 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
     return;
   }
   
+  const soundId = migrateSoundId(alarm.soundId);
+  
+  if (!alarm.isFixed && isAndroidNative()) {
+    await scheduleUserAlarmNative(
+      alarm.id,
+      alarm.label,
+      nextOccurrence,
+      alarm.snoozeMinutes ?? DEFAULT_SNOOZE_MINUTES,
+      soundId
+    );
+    console.log(`[Notifications] User alarm scheduled via AlarmManager: ${alarm.label} at ${nextOccurrence.toISOString()}`);
+    return;
+  }
+  
+  if (!alarm.isFixed && isIOSNative()) {
+    await scheduleIOSUserAlarm(alarm, nextOccurrence, soundId);
+    return;
+  }
+  
   const notificationId = alarmIdToNotificationId(alarm.id);
   
   try {
@@ -147,7 +168,6 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
     // Ignore cancel errors
   }
   
-  const soundId = migrateSoundId(alarm.soundId);
   const channelId = getChannelIdForSound(soundId);
   
   const scheduleOptions: ScheduleOptions = {
@@ -176,9 +196,113 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
 }
 
-export async function cancelAlarmNotification(alarmId: string): Promise<void> {
+async function scheduleIOSUserAlarm(alarm: Alarm, triggerTime: Date, soundId: string): Promise<void> {
+  const baseId = alarmIdToNotificationId(alarm.id);
+  
+  try {
+    await LocalNotifications.cancel({ 
+      notifications: [
+        { id: baseId },
+        { id: baseId + 1 },
+        { id: baseId + 2 },
+        { id: baseId + 3 },
+      ] 
+    });
+  } catch (e) {
+    // Ignore cancel errors
+  }
+  
+  const channelId = getChannelIdForSound(soundId);
+  
+  const actionTypeId = 'USER_ALARM_ACTIONS';
+  const deepLinkUrl = `tradertime://alarm?alarmId=${alarm.id}`;
+  
+  const notifications = [
+    {
+      id: baseId,
+      title: 'Trader Time Alert',
+      body: alarm.label,
+      schedule: {
+        at: triggerTime,
+        allowWhileIdle: true,
+      },
+      channelId: channelId,
+      actionTypeId: actionTypeId,
+      extra: {
+        alarmId: alarm.id,
+        isUserAlarm: true,
+        reminderIndex: 0,
+        deepLink: deepLinkUrl,
+      },
+    },
+    {
+      id: baseId + 1,
+      title: 'Trader Time Alert - Reminder',
+      body: alarm.label,
+      schedule: {
+        at: new Date(triggerTime.getTime() + 30000),
+        allowWhileIdle: true,
+      },
+      channelId: channelId,
+      actionTypeId: actionTypeId,
+      extra: {
+        alarmId: alarm.id,
+        isUserAlarm: true,
+        reminderIndex: 1,
+        deepLink: deepLinkUrl,
+      },
+    },
+    {
+      id: baseId + 2,
+      title: 'Trader Time Alert - Reminder',
+      body: alarm.label,
+      schedule: {
+        at: new Date(triggerTime.getTime() + 60000),
+        allowWhileIdle: true,
+      },
+      channelId: channelId,
+      actionTypeId: actionTypeId,
+      extra: {
+        alarmId: alarm.id,
+        isUserAlarm: true,
+        reminderIndex: 2,
+        deepLink: deepLinkUrl,
+      },
+    },
+    {
+      id: baseId + 3,
+      title: 'Trader Time Alert - Final Reminder',
+      body: alarm.label,
+      schedule: {
+        at: new Date(triggerTime.getTime() + 90000),
+        allowWhileIdle: true,
+      },
+      channelId: channelId,
+      actionTypeId: actionTypeId,
+      extra: {
+        alarmId: alarm.id,
+        isUserAlarm: true,
+        reminderIndex: 3,
+        deepLink: deepLinkUrl,
+      },
+    },
+  ];
+  
+  try {
+    await LocalNotifications.schedule({ notifications });
+    console.log(`[Notifications] iOS user alarm scheduled with reminders: ${alarm.label}`);
+  } catch (e) {
+    console.error(`[Notifications] Failed to schedule iOS user alarm ${alarm.label}:`, e);
+  }
+}
+
+export async function cancelAlarmNotification(alarmId: string, isUserAlarm: boolean = false): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     return;
+  }
+  
+  if (isUserAlarm && isAndroidNative()) {
+    await cancelUserAlarmNative(alarmId);
   }
   
   const notificationId = alarmIdToNotificationId(alarmId);
@@ -269,12 +393,21 @@ export async function initializeNotifications(): Promise<void> {
   LocalNotifications.addListener('localNotificationReceived', async (notification) => {
     console.log('[Notifications] Received:', notification);
     
-    if (notification.extra?.alarmId) {
+    if (notification.extra?.alarmId && !notification.extra?.isUserAlarm) {
       const alarms = await getAlarms();
       const alarm = alarms.find(a => a.id === notification.extra.alarmId);
-      if (alarm && alarm.isEnabled) {
+      if (alarm && alarm.isEnabled && alarm.isFixed) {
         setTimeout(() => scheduleAlarmNotification(alarm), 1000);
       }
+    }
+  });
+  
+  LocalNotifications.addListener('localNotificationActionPerformed', async (action) => {
+    console.log('[Notifications] Action performed:', action);
+    
+    const deepLink = action.notification.extra?.deepLink;
+    if (deepLink && action.notification.extra?.isUserAlarm) {
+      window.location.href = deepLink;
     }
   });
 }

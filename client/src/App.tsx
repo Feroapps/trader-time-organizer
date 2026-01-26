@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
+import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Home, Calendar, DayView, Settings, PrivacyPolicy, TermsOfUse, Disclaimer } from "@/screens";
+import { AlarmRinging } from "@/screens/AlarmRinging";
 import NotFound from "@/pages/not-found";
 import { Clock, CalendarDays, Cog, Sun, Moon } from "lucide-react";
 import { preloadAudio, isAudioPreloaded } from "@/utils/soundPlayer";
@@ -80,12 +83,52 @@ function Router() {
       <Route path="/settings/privacy-policy" component={PrivacyPolicy} />
       <Route path="/settings/terms-of-use" component={TermsOfUse} />
       <Route path="/settings/disclaimer" component={Disclaimer} />
+      <Route path="/alarm" component={AlarmRinging} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
+  const [, setLocation] = useLocation();
+  
+  const handleAlarmIntent = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) return;
+    
+    try {
+      const launchUrl = await CapApp.getLaunchUrl();
+      if (launchUrl?.url) {
+        const url = new URL(launchUrl.url);
+        if (url.pathname === '/alarm' || url.searchParams.has('alarmId')) {
+          const alarmId = url.searchParams.get('alarmId');
+          if (alarmId) {
+            setLocation(`/alarm?alarmId=${alarmId}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.log('[App] No launch URL');
+    }
+    
+    CapApp.addListener('appUrlOpen', (event) => {
+      try {
+        const url = new URL(event.url);
+        if (url.pathname === '/alarm' || url.searchParams.has('alarmId')) {
+          const alarmId = url.searchParams.get('alarmId');
+          if (alarmId) {
+            setLocation(`/alarm?alarmId=${alarmId}`);
+          }
+        }
+      } catch (e) {
+        console.error('[App] Failed to parse URL:', e);
+      }
+    });
+  }, [setLocation]);
+  
+  useEffect(() => {
+    handleAlarmIntent();
+  }, [handleAlarmIntent]);
+
   useEffect(() => {
     const handleFirstInteraction = () => {
       if (!isAudioPreloaded()) {
