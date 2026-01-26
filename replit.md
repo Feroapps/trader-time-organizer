@@ -132,7 +132,22 @@ Session Alerts are predefined system alerts with fixed rules:
 
 ### User-Created Alerts
 User alerts use a different scheduling model:
-- **Data Model**: Uses `dateUTC` + `repeatWeekly`/`repeatMonthly` flags
+- **Data Model**: Uses `dateUTC` + `repeatWeekly`/`repeatMonthly` flags + `snoozeMinutes`
 - **Scheduling**: Date-based with optional weekly/monthly recurrence
 - **Can be edited and deleted**: Users have full control
 - **Source**: Created via AlertModal, stored in localforage
+
+#### Alarm-Like Behavior (User Alerts Only)
+- **Android**: Uses AlarmManager + Foreground Service for continuous ringing
+  - AlarmReceiver triggers AlarmService which plays sound continuously
+  - Deep link (tradertime://) opens AlarmRinging screen
+  - 120-second auto-timeout if no user action
+  - Key files: AlarmReceiver.java, AlarmService.java, UserAlarmPlugin.java
+- **iOS**: Uses repeated LocalNotifications at 0/30/60/90 seconds
+  - Notification tap triggers deep link to AlarmRinging screen
+  - localNotificationActionPerformed listener handles navigation
+- **Snooze**: 60/120/180 minute options (default: 60)
+  - Uses separate `_snooze` suffix ID to avoid overwriting repeat schedules
+  - Original repeat schedule is preserved and rescheduled
+- **AlarmRinging Screen**: Stop/Snooze buttons only - no auto-stop on mount
+- **iOS URL Scheme**: Requires native iOS configuration (outside current scope)
