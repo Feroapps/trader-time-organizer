@@ -116,21 +116,6 @@ public class UserAlarmPlugin extends Plugin {
                 Log.w(TAG, "No pending intent found for alarm: " + alarmId);
             }
 
-            String snoozeAlarmId = alarmId + "_snooze";
-            int snoozeRequestCode = snoozeAlarmId.hashCode();
-            PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(
-                context,
-                snoozeRequestCode,
-                intent,
-                PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            if (snoozePendingIntent != null) {
-                alarmManager.cancel(snoozePendingIntent);
-                snoozePendingIntent.cancel();
-                Log.i(TAG, "Cancelled snooze alarm: " + snoozeAlarmId);
-            }
-
             JSObject result = new JSObject();
             result.put("success", true);
             result.put("alarmId", alarmId);
