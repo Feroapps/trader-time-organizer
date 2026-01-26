@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
 import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
-import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById } from "@/utils/soundLibrary";
+import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundDescription } from "@/utils/soundLibrary";
 import { isAndroidPlatform, openAndroidNotificationSettings } from "@/utils/nativeNotifications";
 import type { Alarm, CreateAlarmInput } from "@/types";
 
@@ -305,7 +305,9 @@ export function Settings() {
                     )}
                     <div className="min-w-0">
                       <p className="font-medium">{sound.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">{sound.description}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {sound.id === 'custom' ? getCustomSoundDescription() : sound.description}
+                      </p>
                     </div>
                   </div>
                   {sound.id !== 'custom' && (

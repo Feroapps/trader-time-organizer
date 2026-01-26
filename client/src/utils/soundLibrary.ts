@@ -45,10 +45,26 @@ export const alertSounds: AlertSound[] = [
   {
     id: "custom",
     name: "Custom",
-    description: "Choose in Android notification settings",
+    description: "System-managed sound",
     file: "",
   },
 ];
+
+export function getCustomSoundDescription(): string {
+  if (typeof window !== 'undefined' && 'Capacitor' in window) {
+    const Capacitor = (window as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+    if (Capacitor?.isNativePlatform?.()) {
+      const platform = Capacitor.getPlatform?.();
+      if (platform === 'android') {
+        return 'Choose in Android notification settings';
+      }
+      if (platform === 'ios') {
+        return 'Sound is managed by iOS system settings';
+      }
+    }
+  }
+  return 'Sound is managed by your browser/system';
+}
 
 export const DEFAULT_SOUND_ID = "original";
 

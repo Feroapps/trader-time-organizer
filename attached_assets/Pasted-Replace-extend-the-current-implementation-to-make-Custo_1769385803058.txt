@@ -1,0 +1,60 @@
+Replace/extend the current implementation to make Custom work consistently across Android + PWA + iOS with the same meaning: system-managed notification sound. Follow these instructions EXACTLY.
+
+NON-NEGOTIABLE GUARDRAILS
+	•	DO NOT change capacitor appId, Android applicationId/packageName, or any native identifiers.
+	•	DO NOT clear, reset, migrate-by-wiping, or otherwise modify user data in IndexedDB/localStorage.
+	•	DO NOT delete/recreate user alerts/notes/notifications data structures.
+	•	DO NOT refactor or change ANY alert logic (repeat logic, scheduling rules, UTC/local conversion, enabling/disabling, etc.).
+	•	ONLY implement the platform-specific behavior for soundId="custom" + the minimal UI text/buttons described below.
+	•	Keep existing soundId mapping: original|classic|chime|bell|ping|tone|custom.
+
+GOAL
+
+custom must remain selectable and visible in the sound picker on all platforms (Android, iOS, PWA).
+Custom does NOT mean “upload/choose a file inside the app.”
+It means: use the system-managed notification sound.
+
+A) UI REQUIREMENTS (All platforms)
+	1.	In the sound picker list, keep Custom as a normal selectable option (NOT disabled, NOT hidden) on Android + iOS + PWA.
+	2.	For the Custom row:
+	•	NO preview/play button.
+	•	Show a short description text:
+	•	Android: Choose in Android notification settings.
+	•	iOS: Sound is managed by iOS system settings.
+	•	PWA: Sound is managed by your browser/system.
+	3.	Selecting Custom must save soundId="custom" using the existing storage mechanism/key (do not change schema; if missing, default remains original).
+
+B) ANDROID BEHAVIOR (Required)
+	1.	Notifications scheduled with soundId="custom" must use the Custom notification channel (keep your existing versioned channel approach):
+	•	channelId: alerts_custom_v2 (or your current custom channel ID if already implemented as v2).
+	•	The Custom channel must have NO sound set in code (system-managed).
+	2.	Add a Settings button visible ONLY on Android:
+	•	Label: Open Android Notification Settings (Custom)
+	•	Action: open the app’s Android notification settings screen (best effort deep-link to the app notifications; channel deep-link is optional).
+	•	If channel deep-link is not available, open general app notification settings.
+	3.	IMPORTANT: Do not change any other scheduling logic. Only ensure channelId mapping is applied consistently when scheduling.
+
+C) PWA BEHAVIOR (Required)
+	1.	Keep Custom selectable and saved as soundId="custom".
+	2.	Do NOT attempt any channel logic or custom audio for notifications (web limitations).
+	3.	Do NOT show any “Open settings” button. Only show the descriptive text in the picker.
+	4.	Do NOT change any notification logic beyond keeping custom as a supported value.
+
+D) iOS BEHAVIOR (Required)
+	1.	Keep Custom selectable and saved as soundId="custom".
+	2.	Do NOT attempt to upload/select a file. Do NOT add new native plugins.
+	3.	Do NOT show any “Open settings” button. Only show the descriptive text in the picker.
+	4.	Notifications for custom should behave as “system default sound” (no special sound handling).
+
+E) DATA SAFETY
+	•	Do not modify stored alerts/notes records. Do not rewrite existing objects.
+	•	If any existing alert lacks soundId, treat it as original at runtime (do not backfill by rewriting all records).
+
+F) DELIVERABLES
+	1.	List the exact files changed and why.
+	2.	Provide test steps:
+	•	Android: select Custom → open settings button → set channel sound → schedule alert → verify sound follows system selection.
+	•	PWA: select Custom → schedule alert → verify it uses browser/system sound (no preview).
+	•	iOS: select Custom → schedule alert → verify it uses iOS-managed/default sound (no preview).
+
+REMINDER: Any change outside the scope above is a failure. Do not refactor unrelated code.
