@@ -1,0 +1,83 @@
+Implement an automatic Android-native restore workflow so our custom alarm Java files and required AndroidManifest/MainActivity changes are restored automatically whenever the Android project is regenerated.
+
+STRICT RULES:
+- Do not refactor or modify existing TypeScript/React logic.
+- Do not change package name (com.feroapps.tradertime).
+- Do not change the behavior/content of the existing Java alarm implementation files, except where required to make restore possible.
+- Do not modify any other Android files beyond what is explicitly listed.
+- Output the final content of every created/modified file.
+
+GOAL:
+After running:
+rm -rf android
+npx cap add android
+npm run android:restore-native
+npx cap sync android
+…the alarm Java files and required manifest/plugin registration MUST be restored identically every time.
+
+================================================================
+STEP 1) Create a source-of-truth folder outside android/
+Create this folder and copy the current working versions of the files into it:
+
+A) Create:
+native/android-src/com/feroapps/tradertime/
+
+B) Copy (verbatim) from the current android folder into native/android-src:
+- android/app/src/main/java/com/feroapps/tradertime/AlarmReceiver.java
+- android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+- android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+- android/app/src/main/java/com/feroapps/tradertime/BootReceiver.java
+
+So we will have:
+native/android-src/com/feroapps/tradertime/AlarmReceiver.java
+native/android-src/com/feroapps/tradertime/AlarmSoundService.java
+native/android-src/com/feroapps/tradertime/UserAlarmPlugin.java
+native/android-src/com/feroapps/tradertime/BootReceiver.java
+
+================================================================
+STEP 2) Create a restore script that copies files back into android/
+Create:
+scripts/android-restore-native.mjs
+
+This script must:
+1) Verify the source files exist under native/android-src/...
+2) Verify android/ exists (error if missing)
+3) Ensure target folder exists:
+   android/app/src/main/java/com/feroapps/tradertime/
+4) Copy the 4 Java files from native/android-src/... into the target folder, overwriting if needed.
+5) Patch AndroidManifest.xml by inserting (if missing):
+   - permissions:
+     android.permission.RECEIVE_BOOT_COMPLETED
+     android.permission.FOREGROUND_SERVICE
+     android.permission.POST_NOTIFICATIONS
+     android.permission.SCHEDULE_EXACT_ALARM
+   - inside <application>:
+     receiver .AlarmReceiver
+     service .AlarmSoundService with foregroundServiceType="mediaPlayback"
+     receiver .BootReceiver with BOOT_COMPLETED intent-filter
+   The script must be idempotent (safe to run multiple times; no duplicate entries).
+6) Patch MainActivity.java by inserting (if missing):
+   - import com.feroapps.tradertime.UserAlarmPlugin;
+   - plugin registration line: registerPlugin(UserAlarmPlugin.class);
+   Must be idempotent and MUST NOT break compilation.
+7) Print a clear summary of what it changed.
+
+================================================================
+STEP 3) Add npm scripts
+Update package.json to add:
+
+"android:restore-native": "node scripts/android-restore-native.mjs"
+
+Do not change other scripts except adding this new one.
+
+================================================================
+STEP 4) Show final outputs
+After implementing, output:
+- The full content of scripts/android-restore-native.mjs
+- The exact added package.json script snippet
+- A short tree listing of native/android-src/... showing the 4 files exist
+
+DO NOT:
+- Add new receivers/services beyond those listed
+- Add new npm dependencies unless absolutely required (prefer Node fs)
+- Modify any existing business logic files
