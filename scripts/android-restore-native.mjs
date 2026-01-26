@@ -10,6 +10,8 @@ const ROOT = path.resolve(__dirname, '..');
 
 const SOURCE_DIR = path.join(ROOT, 'native/android-src/com/feroapps/tradertime');
 const TARGET_DIR = path.join(ROOT, 'android/app/src/main/java/com/feroapps/tradertime');
+const RES_SOURCE_DIR = path.join(ROOT, 'native/android-src/res');
+const RES_TARGET_DIR = path.join(ROOT, 'android/app/src/main/res');
 const MANIFEST_PATH = path.join(ROOT, 'android/app/src/main/AndroidManifest.xml');
 const MAIN_ACTIVITY_PATH = path.join(ROOT, 'android/app/src/main/java/com/feroapps/tradertime/MainActivity.java');
 
@@ -86,6 +88,61 @@ function copyJavaFiles() {
     const dest = path.join(TARGET_DIR, file);
     fs.copyFileSync(src, dest);
     log('Copied: ' + file);
+  }
+}
+
+function copyDirRecursive(src, dest) {
+  if (!fs.existsSync(src)) {
+    return 0;
+  }
+  
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  
+  let count = 0;
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    if (entry.isDirectory()) {
+      count += copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+function copyResFiles() {
+  if (!fs.existsSync(RES_SOURCE_DIR)) {
+    log('No res/ source directory found at: ' + RES_SOURCE_DIR);
+    return;
+  }
+  
+  const entries = fs.readdirSync(RES_SOURCE_DIR, { withFileTypes: true });
+  let totalCopied = 0;
+  
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const srcDir = path.join(RES_SOURCE_DIR, entry.name);
+      const destDir = path.join(RES_TARGET_DIR, entry.name);
+      const copied = copyDirRecursive(srcDir, destDir);
+      if (copied > 0) {
+        log('Copied res/' + entry.name + '/ (' + copied + ' files)');
+        totalCopied += copied;
+      }
+    }
+  }
+  
+  if (totalCopied > 0) {
+    log('Total res files copied: ' + totalCopied);
+  } else {
+    log('No res files to copy.');
   }
 }
 
@@ -215,6 +272,7 @@ function main() {
   verifyAndroidExists();
   ensureTargetDir();
   copyJavaFiles();
+  copyResFiles();
   patchManifest();
   patchMainActivity();
 
