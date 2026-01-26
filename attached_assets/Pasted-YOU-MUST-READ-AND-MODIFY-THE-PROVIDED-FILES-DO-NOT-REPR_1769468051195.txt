@@ -1,0 +1,108 @@
+YOU MUST READ AND MODIFY THE PROVIDED FILES. 
+DO NOT REPRINT FILES UNLESS THEY ACTUALLY CHANGE.
+
+========================================
+OBJECTIVE (NON-NEGOTIABLE)
+
+1) REMOVE SNOOZE COMPLETELY FROM THE APP.
+2) USER-CREATED ALARMS MUST RING FOR 120 SECONDS UNLESS USER STOPS THEM.
+3) SESSION / FIXED ALERTS MUST BE VERIFIED AS SCHEDULED CORRECTLY.
+
+========================================
+ABSOLUTE RULES (HARD FAIL IF BROKEN)
+
+- DO NOT refactor unrelated code.
+- DO NOT change file paths.
+- DO NOT change package name.
+- DO NOT add new features.
+- DO NOT invent logic that is not present.
+- DO NOT say “already correct” without PROVING IT.
+- DO NOT reprint unchanged files.
+- If a file does NOT change → DO NOT output it.
+- If you output a file → it MUST contain a REAL, NECESSARY change.
+
+========================================
+STEP A — SNOOZE REMOVAL (END-TO-END)
+
+You must PROVE snooze is gone by code inspection, not claims.
+
+FILES TO CHECK AND MODIFY ONLY IF NEEDED:
+
+1) client/src/types/Alarm.ts
+- If ANY snooze field exists → remove it.
+- If no snooze exists → DO NOT OUTPUT THIS FILE.
+
+2) client/src/components/AlertModal.tsx
+- Verify NO snooze UI exists.
+- Verify snooze is NOT written into CreateAlarmInput.
+- If already clean → DO NOT OUTPUT THIS FILE.
+
+3) client/src/storage/alarmsRepo.ts
+- Verify create/save logic does NOT expect snooze.
+- If unchanged → DO NOT OUTPUT THIS FILE.
+
+4) client/src/utils/userAlarmPlugin.ts (TypeScript)
+- scheduleUserAlarmNative MUST NOT accept or forward snooze.
+- If signature already clean → DO NOT OUTPUT THIS FILE.
+
+5) android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+- scheduleAlarm MUST ignore snooze entirely.
+- Only ONE alarm via AlarmManager.
+- If no snooze handling exists → DO NOT OUTPUT THIS FILE.
+
+========================================
+STEP B — 120s RING GUARANTEE (ANDROID ONLY)
+
+FILE:
+android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+
+REQUIREMENT:
+- Alarm rings MAX 120000 ms OR until STOP is pressed.
+- NO snooze. NO re-trigger loop.
+
+- If ALARM_TIMEOUT_MS = 120000 and stop logic is correct → DO NOT OUTPUT FILE.
+- If not → FIX IT and OUTPUT FULL FILE.
+
+========================================
+STEP C — SESSION / FIXED ALERTS VERIFICATION
+
+FILE:
+client/src/utils/nativeNotifications.ts
+
+TASK:
+- ANALYZE rescheduleAllAlarms().
+- ANSWER BY CODE, NOT WORDS:
+  - Are isFixed === true alarms scheduled?
+- If YES → DO NOT CHANGE LOGIC.
+- If NO → FIX IT so ALL enabled alarms are scheduled.
+
+RULE:
+- If logic already correct → DO NOT OUTPUT FILE.
+- If you change ONE line → OUTPUT FULL FILE.
+
+========================================
+OUTPUT FORMAT (STRICT)
+
+For EACH MODIFIED FILE ONLY:
+
+--- FILE: <exact path> ---
+<full updated content>
+
+NO EXPLANATIONS.
+NO SUMMARIES.
+NO DUPLICATE FILES.
+NO UNCHANGED FILES.
+
+If you output zero files, that means the system was already correct.
+If you output a file, it MUST contain a meaningful change.
+
+========================================
+FAIL CONDITIONS (AUTOMATIC FAILURE)
+
+- You output unchanged files.
+- You claim correctness without code proof.
+- You modify unrelated logic.
+- You add comments instead of fixes.
+- You respond with partial files.
+
+BEGIN.
