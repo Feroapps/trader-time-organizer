@@ -274,9 +274,34 @@ export async function openAndroidNotificationSettings(): Promise<void> {
     const appInfo = await App.getInfo();
     const packageName = appInfo.id;
     
-    const intentUrl = `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
+    // Attempt 1: APP_NOTIFICATION_SETTINGS with package extras
+    const notificationSettingsUrl = `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
     
-    window.location.href = intentUrl;
+    try {
+      window.location.href = notificationSettingsUrl;
+      return;
+    } catch (e1) {
+      console.warn('[Notifications] APP_NOTIFICATION_SETTINGS failed:', e1);
+    }
+    
+    // Attempt 2: APPLICATION_DETAILS_SETTINGS (app details page)
+    try {
+      const appDetailsUrl = `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${packageName};end`;
+      window.location.href = appDetailsUrl;
+      return;
+    } catch (e2) {
+      console.warn('[Notifications] APPLICATION_DETAILS_SETTINGS failed:', e2);
+    }
+    
+    // Attempt 3: General settings fallback
+    try {
+      const generalSettingsUrl = `intent:#Intent;action=android.settings.SETTINGS;end`;
+      window.location.href = generalSettingsUrl;
+      return;
+    } catch (e3) {
+      console.warn('[Notifications] General settings fallback failed:', e3);
+    }
+    
   } catch (e) {
     console.warn('[Notifications] Could not open Android notification settings:', e);
   }

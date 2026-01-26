@@ -336,15 +336,20 @@ export function Settings() {
                 </div>
               ))}
               {isAndroidPlatform() && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-4"
-                  onClick={() => openAndroidNotificationSettings()}
-                  data-testid="button-open-android-settings"
-                >
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Open Android Notification Settings
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => openAndroidNotificationSettings()}
+                    data-testid="button-open-android-settings"
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Open Android Notification Settings
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    If notifications are delayed, disable Battery Optimization for this app.
+                  </p>
+                </>
               )}
             </div>
           </DialogContent>
