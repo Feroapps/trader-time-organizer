@@ -17,6 +17,8 @@ interface UserAlarmPlugin {
 
 const UserAlarm = registerPlugin<UserAlarmPlugin>('UserAlarm');
 
+const PAST_TOLERANCE_MS = 3000;
+
 export async function scheduleUserAlarmNative(
   alarmId: string,
   label: string,
@@ -43,8 +45,9 @@ export async function scheduleUserAlarmNative(
     return false;
   }
   
-  if (triggerTimeMs <= now) {
-    console.error(`[UserAlarm] ERROR: Trigger time is in the PAST!`);
+  const deltaMs = triggerTimeMs - now;
+  if (deltaMs <= -PAST_TOLERANCE_MS) {
+    console.error(`[UserAlarm] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms tolerance=${PAST_TOLERANCE_MS}ms`);
     return false;
   }
   
