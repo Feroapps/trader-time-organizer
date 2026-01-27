@@ -19,12 +19,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import { getAlarms, updateAlarm, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
-import { AlertModal } from "@/components/AlertModal";
-import { Pencil, Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
+import { getAlarms, deleteAlarm, toggleAlarm } from "@/storage/alarmsRepo";
+import { Trash2, ChevronRight, Shield, AlertTriangle, Volume2, Play, Square, Check, FileText, Settings2 } from "lucide-react";
 import { alertSounds, getSelectedSoundId, setSelectedSoundId, playSound, stopSound, getSoundById, getCustomSoundName, getCustomSoundDescription } from "@/utils/soundLibrary";
 import { isAndroidPlatform, openAndroidNotificationSettings, openAndroidBatteryOptimizationSettings, checkExactAlarmPermission, openExactAlarmSettings, openAndroidAlarmSoundSettings } from "@/utils/nativeNotifications";
-import type { Alarm, CreateAlarmInput } from "@/types";
+import type { Alarm } from "@/types";
 
 function formatUtcTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} UTC`;
@@ -144,11 +143,9 @@ function FixedAlarmRow({ alarm, onToggle }: { alarm: Alarm; onToggle: (enabled: 
 
 function UserAlertRow({ 
   alarm, 
-  onEdit, 
   onDelete 
 }: { 
   alarm: Alarm; 
-  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -168,24 +165,14 @@ function UserAlertRow({
           {formatDays(alarm.repeatDays)}
         </p>
       </div>
-      <div className="flex items-center gap-1">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onEdit}
-          data-testid={`button-edit-alert-${alarm.id}`}
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onDelete}
-          data-testid={`button-delete-alert-${alarm.id}`}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={onDelete}
+        data-testid={`button-delete-alert-${alarm.id}`}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 }
@@ -195,8 +182,6 @@ export function Settings() {
   const [userAlerts, setUserAlerts] = useState<Alarm[]>([]);
   const [fixedDialogOpen, setFixedDialogOpen] = useState(false);
   const [soundDialogOpen, setSoundDialogOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingAlert, setEditingAlert] = useState<Alarm | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [alertToDelete, setAlertToDelete] = useState<Alarm | null>(null);
   const [selectedSound, setSelectedSound] = useState(getSelectedSoundId);
@@ -233,18 +218,6 @@ export function Settings() {
   async function handleFixedToggle(alarmId: string, enabled: boolean) {
     await toggleAlarm(alarmId, enabled);
     await loadAllAlarms();
-  }
-
-  function openEditModal(alarm: Alarm) {
-    setEditingAlert(alarm);
-    setEditModalOpen(true);
-  }
-
-  async function handleEditSave(alertData: CreateAlarmInput) {
-    if (editingAlert) {
-      await updateAlarm({ ...alertData, id: editingAlert.id });
-      await loadAllAlarms();
-    }
   }
 
   function requestDelete(alarm: Alarm) {
@@ -320,7 +293,6 @@ export function Settings() {
                 <UserAlertRow
                   key={alarm.id}
                   alarm={alarm}
-                  onEdit={() => openEditModal(alarm)}
                   onDelete={() => requestDelete(alarm)}
                 />
               ))
@@ -473,13 +445,6 @@ export function Settings() {
           </Button>
         </Link>
       </div>
-
-      <AlertModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        onSave={handleEditSave}
-        editingAlert={editingAlert}
-      />
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
