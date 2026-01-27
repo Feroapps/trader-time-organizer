@@ -26,6 +26,7 @@ public class UserAlarmPlugin extends Plugin {
     private static final String TAG = "UserAlarmPlugin";
     private static final String PREFS_NAME = "TraderTimeAlarms";
     private static final String ALARMS_KEY = "scheduled_alarms";
+    private static final long PAST_TOLERANCE_MS = 3000L;
 
     @PluginMethod
     public void scheduleAlarm(PluginCall call) {
@@ -55,11 +56,12 @@ public class UserAlarmPlugin extends Plugin {
             return;
         }
         
-        if (triggerTimeMs <= now) {
-            Log.e(TAG, "ERROR: triggerTimeMs is in the PAST! Not scheduling.");
+        long deltaMs = triggerTimeMs - now;
+        if (deltaMs <= -PAST_TOLERANCE_MS) {
+            Log.e(TAG, "ERROR: triggerTimeMs is in the PAST beyond tolerance! delta=" + deltaMs + "ms tolerance=" + PAST_TOLERANCE_MS + "ms");
             JSObject result = new JSObject();
             result.put("success", false);
-            result.put("error", "Trigger time is in the past");
+            result.put("error", "Trigger time is in the past beyond tolerance");
             call.resolve(result);
             return;
         }
