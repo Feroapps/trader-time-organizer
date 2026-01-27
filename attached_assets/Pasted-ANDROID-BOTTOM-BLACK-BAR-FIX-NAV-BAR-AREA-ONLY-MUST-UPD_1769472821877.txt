@@ -1,0 +1,62 @@
+ANDROID BOTTOM BLACK BAR FIX (NAV BAR AREA ONLY) + MUST UPDATE RESTORE SOURCES (STRICT)
+
+GOAL (ONLY THIS):
+Fix the BLACK BAR at the BOTTOM of the Android app (navigation bar/system UI background).
+Top is already OK → DO NOT change anything related to the status bar/top.
+
+STRICT RULES:
+- Do NOT refactor unrelated code
+- Do NOT change package name
+- Do NOT change file paths
+- Do NOT touch React/TS code
+- Android resources + restore sources ONLY
+- BEFORE applying: show EXACT files + EXACT diff (what lines you will add/change)
+- AFTER applying: print FULL FINAL CONTENT of every modified file (no truncation)
+
+WHY THIS MUST BE DONE THIS WAY:
+We regenerate Android frequently using:
+rm -rf android
+npx cap add android
+So ANY fix must be preserved in restore sources AND restored automatically.
+
+EXACT CHANGES TO APPLY:
+
+A) ANDROID APP THEME FILES
+1) FILE: android/app/src/main/res/values/styles.xml
+Modify ONLY: <style name="AppTheme.NoActionBar" ...>
+ADD these 4 items (do not remove existing items):
+- <item name="android:windowBackground">#FFFFFF</item>
+- <item name="android:navigationBarColor">#FFFFFF</item>
+- <item name="android:enforceNavigationBarContrast">false</item>
+- <item name="android:windowLightNavigationBar">true</item>
+
+2) FILE: android/app/src/main/res/values-night/styles.xml
+IF values-night folder/file does not exist → CREATE IT.
+Define ONLY the night override for the SAME style name AppTheme.NoActionBar with:
+- <item name="android:windowBackground">#121212</item>
+- <item name="android:navigationBarColor">#121212</item>
+- <item name="android:enforceNavigationBarContrast">false</item>
+- <item name="android:windowLightNavigationBar">false</item>
+
+B) RESTORE SOURCES (MANDATORY – MUST MATCH ANDROID)
+3) FILE: native/android-src/res/values/styles.xml
+Apply the SAME 4 items to AppTheme.NoActionBar (light).
+
+4) FILE: native/android-src/res/values-night/styles.xml
+Ensure it exists and matches the SAME night items above.
+
+C) RESTORE SCRIPT GUARANTEE (ONLY IF NEEDED)
+5) FILE: scripts/android-restore-native.mjs
+Ensure it copies native/android-src/res/** into android/app/src/main/res/** on every run.
+If it already does → do NOT change it.
+
+OUTPUT REQUIREMENTS:
+1) First output: PROPOSED CHANGES (file-by-file + exact items/lines you will add/change).
+2) Then output: FULL FINAL CONTENT of each file you modified:
+- android/app/src/main/res/values/styles.xml
+- android/app/src/main/res/values-night/styles.xml
+- native/android-src/res/values/styles.xml
+- native/android-src/res/values-night/styles.xml
+- scripts/android-restore-native.mjs (only if you touched it)
+
+NO OTHER CHANGES.
