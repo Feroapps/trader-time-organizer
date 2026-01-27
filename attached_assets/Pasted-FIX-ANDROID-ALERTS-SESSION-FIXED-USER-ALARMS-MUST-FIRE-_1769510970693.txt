@@ -1,0 +1,43 @@
+FIX ANDROID ALERTS: SESSION (FIXED) + USER ALARMS MUST FIRE WITH APP OPEN OR CLOSED
+
+PROBLEM (REPRODUCIBLE):
+1) Session Alerts (built-in / isFixed=true): notification + sound + message do NOT fire reliably when the app is OPEN or CLOSED.
+2) User-created alerts (custom): do NOT fire when the app is CLOSED on Android. (They may work only when app is open.)
+
+STRICT RULES:
+- Do NOT refactor unrelated code.
+- Do NOT change package name or file paths.
+- Do NOT add new features/UI.
+- Only fix scheduling + delivery so alerts fire with app open OR closed.
+- Keep local notifications (no web push).
+- Output FULL final content of every file you modify, and list exactly what you changed.
+
+WHAT “WORKING” MEANS:
+- On Android, both Session Alerts and User Alerts must trigger at the correct time even if:
+  a) the app is in background, or
+  b) the app is swiped away / killed, or
+  c) the phone is locked.
+- When fired:
+  - show notification (title/body)
+  - play the selected sound
+  - if user alert uses native AlarmManager plugin, it must still produce a visible notification + sound.
+
+REQUIRED INVESTIGATION (DO THIS BY CODE INSPECTION + FIX):
+1) Verify rescheduleAllAlarms() schedules ALL enabled alarms, including isFixed=true (Session Alerts). If not, fix.
+2) Verify initialization: rescheduleAllAlarms() is called on native app start AND on resume. If not, fix (minimal).
+3) Verify BootReceiver:
+   - Confirm it is registered in AndroidManifest.xml with BOOT_COMPLETED.
+   - Ensure it reschedules alarms after reboot (calls into scheduling logic or recreates AlarmManager alarms).
+4) Verify AlarmManager path for user alerts:
+   - AlarmReceiver must show a notification + start sound service when triggered.
+   - Ensure PendingIntent flags + requestCode are stable and unique per alarmId.
+   - Ensure exact alarm permission handling does not prevent scheduling (Android 12+).
+5) Verify notification channels and sound mapping:
+   - Ensure channelId exists before schedule.
+   - Ensure sound resource names match actual files in android res/raw (or correct mapping).
+6) Add minimal logging in native (Java) and TS to confirm scheduling + firing (do not spam).
+
+DELIVERABLES:
+- Provide step-by-step fix with ONLY necessary code changes.
+- Output FULL UPDATED CONTENT of every modified file.
+- Provide a minimal test checklist (3-5 steps) to verify on a real Android device.
