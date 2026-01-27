@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -13,10 +14,18 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import org.json.JSONObject;
+import org.json.JSONException;
+
+import java.util.HashSet;
+import java.util.Set;
+
 @CapacitorPlugin(name = "UserAlarm")
 public class UserAlarmPlugin extends Plugin {
 
     private static final String TAG = "UserAlarmPlugin";
+    private static final String PREFS_NAME = "TraderTimeAlarms";
+    private static final String ALARMS_KEY = "scheduled_alarms";
 
     @PluginMethod
     public void scheduleAlarm(PluginCall call) {
@@ -67,6 +76,8 @@ public class UserAlarmPlugin extends Plugin {
                 Log.i(TAG, "Scheduled exact alarm (pre-M): " + alarmId);
             }
 
+            saveAlarmToPrefs(context, alarmId, label, triggerTimeMs, soundId);
+
             JSObject result = new JSObject();
             result.put("success", true);
             result.put("alarmId", alarmId);
@@ -114,6 +125,8 @@ public class UserAlarmPlugin extends Plugin {
             } else {
                 Log.w(TAG, "No pending intent found for alarm: " + alarmId);
             }
+
+            removeAlarmFromPrefs(context, alarmId);
 
             JSObject result = new JSObject();
             result.put("success", true);
@@ -165,5 +178,57 @@ public class UserAlarmPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("canSchedule", canSchedule);
         call.resolve(result);
+    }
+
+    private void saveAlarmToPrefs(Context context, String alarmId, String label, long triggerTimeMs, String soundId) {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            Set<String> alarmSet = new HashSet<>(prefs.getStringSet(ALARMS_KEY, new HashSet<>()));
+
+            JSONObject alarmJson = new JSONObject();
+            alarmJson.put("alarmId", alarmId);
+            alarmJson.put("label", label != null ? label : "Trader Time Alert");
+            alarmJson.put("triggerTimeMs", triggerTimeMs);
+            alarmJson.put("soundId", soundId != null ? soundId : "original");
+
+            alarmSet.removeIf(s -> {
+                try {
+                    JSONObject obj = new JSONObject(s);
+                    return alarmId.equals(obj.getString("alarmId"));
+                } catch (JSONException e) {
+                    return false;
+                }
+            });
+
+            alarmSet.add(alarmJson.toString());
+
+            prefs.edit().putStringSet(ALARMS_KEY, alarmSet).apply();
+            Log.i(TAG, "Saved alarm to prefs: " + alarmId);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to save alarm to prefs", e);
+        }
+    }
+
+    private void removeAlarmFromPrefs(Context context, String alarmId) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        Set<String> alarmSet = new HashSet<>(prefs.getStringSet(ALARMS_KEY, new HashSet<>()));
+
+        alarmSet.removeIf(s -> {
+            try {
+                JSONObject obj = new JSONObject(s);
+                return alarmId.equals(obj.getString("alarmId"));
+            } catch (JSONException e) {
+                return false;
+            }
+        });
+
+        prefs.edit().putStringSet(ALARMS_KEY, alarmSet).apply();
+        Log.i(TAG, "Removed alarm from prefs: " + alarmId);
+    }
+
+    public static Set<String> getStoredAlarms(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getStringSet(ALARMS_KEY, new HashSet<>());
     }
 }
