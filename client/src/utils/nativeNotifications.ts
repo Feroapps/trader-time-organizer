@@ -24,8 +24,9 @@ function getChannelIdForSound(soundId: string): string {
 function getNextOccurrence(alarm: Alarm): Date | null {
   const now = new Date();
   const nowUTC = new Date(now.toISOString());
+  const days = Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [];
   
-  if (alarm.isFixed || (alarm.repeatDays && alarm.repeatDays.length > 0)) {
+  if (alarm.isFixed || days.length > 0) {
     const currentDayOfWeek = nowUTC.getUTCDay();
     const currentHour = nowUTC.getUTCHours();
     const currentMinute = nowUTC.getUTCMinutes();
@@ -33,7 +34,7 @@ function getNextOccurrence(alarm: Alarm): Date | null {
     for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
       const checkDay = (currentDayOfWeek + daysAhead) % 7;
       
-      if (alarm.repeatDays.includes(checkDay)) {
+      if (days.includes(checkDay)) {
         if (daysAhead === 0) {
           if (currentHour > alarm.hourUTC || 
               (currentHour === alarm.hourUTC && currentMinute >= alarm.minuteUTC)) {
