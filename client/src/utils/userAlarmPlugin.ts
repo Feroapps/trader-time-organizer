@@ -23,17 +23,40 @@ export async function scheduleUserAlarmNative(
   triggerTime: Date,
   soundId: string
 ): Promise<boolean> {
+  const triggerTimeMs = triggerTime.getTime();
+  const now = Date.now();
+  
+  console.log(`[UserAlarm] ===== scheduleUserAlarmNative ENTERED =====`);
+  console.log(`[UserAlarm] alarmId: ${alarmId}`);
+  console.log(`[UserAlarm] label: ${label}`);
+  console.log(`[UserAlarm] triggerTimeMs: ${triggerTimeMs}`);
+  console.log(`[UserAlarm] triggerTime (ISO): ${triggerTime.toISOString()}`);
+  console.log(`[UserAlarm] now (ms): ${now}`);
+  console.log(`[UserAlarm] now (ISO): ${new Date(now).toISOString()}`);
+  console.log(`[UserAlarm] delta (sec): ${Math.round((triggerTimeMs - now) / 1000)}`);
+  console.log(`[UserAlarm] soundId: ${soundId}`);
+  console.log(`[UserAlarm] isNativePlatform: ${Capacitor.isNativePlatform()}`);
+  console.log(`[UserAlarm] platform: ${Capacitor.getPlatform()}`);
+  
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+    console.log(`[UserAlarm] NOT Android native - returning false`);
+    return false;
+  }
+  
+  if (triggerTimeMs <= now) {
+    console.error(`[UserAlarm] ERROR: Trigger time is in the PAST!`);
     return false;
   }
   
   try {
+    console.log(`[UserAlarm] Calling UserAlarm.scheduleAlarm...`);
     const result = await UserAlarm.scheduleAlarm({
       alarmId,
       label,
-      triggerTimeMs: triggerTime.getTime(),
+      triggerTimeMs,
       soundId,
     });
+    console.log(`[UserAlarm] Result: success=${result.success}, alarmId=${result.alarmId}`);
     console.log(`[UserAlarm] Scheduled: ${alarmId} at ${triggerTime.toISOString()}`);
     return result.success;
   } catch (e) {

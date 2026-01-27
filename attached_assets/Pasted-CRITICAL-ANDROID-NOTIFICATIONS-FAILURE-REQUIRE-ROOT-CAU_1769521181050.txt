@@ -1,0 +1,69 @@
+CRITICAL ANDROID NOTIFICATIONS FAILURE — REQUIRE ROOT CAUSE PROOF
+
+STATUS:
+- ALL Android permissions are ENABLED:
+  • POST_NOTIFICATIONS = GRANTED
+  • Exact alarms = ALLOWED
+  • Battery = UNRESTRICTED
+- App rebuilt from scratch (git clone → clean install).
+- Tests performed with screen ON and OFF.
+- Result: NO session notifications AND NO user alarms fire (2 min / 5 min tests).
+
+THIS IS NOT A DEVICE OR PERMISSION ISSUE.
+THIS IS A CODE / LIFECYCLE / REGISTRATION FAILURE.
+
+YOUR TASK (MANDATORY, NO GUESSING):
+
+1) VERIFY EXECUTION (WITH CODE PROOF)
+- Show EXACT code lines proving that:
+  a) rescheduleAllAlarms() IS CALLED on:
+     - app cold start
+     - app resume
+  b) scheduleUserAlarmNative() IS ACTUALLY EXECUTED when a user alert is created
+- If any call is missing, FIX IT and show the diff.
+
+2) VERIFY ANDROID REGISTRATION (WITH FILE CONTENT)
+- Output FULL content of:
+  • AndroidManifest.xml
+  • AlarmReceiver.java
+  • AlarmSoundService.java
+  • UserAlarmPlugin.java
+- Prove that:
+  • Receiver is registered
+  • Service is registered
+  • Foreground service starts correctly
+  • No missing exported / permission flags
+
+3) VERIFY TIME CALCULATION
+- Prove (with logs or code) that:
+  • triggerTimeMs is ALWAYS in the FUTURE
+  • No UTC → Local conversion bug schedules alarms in the past
+
+4) VERIFY NOTIFICATION CHANNELS (SESSION ALERTS)
+- Show channel creation code
+- Prove channel importance != NONE
+- Prove sound is attached and not muted by code
+
+5) ADD TEMPORARY HARD LOGGING (REQUIRED)
+Add logs in:
+- rescheduleAllAlarms()
+- scheduleAlarmNotification()
+- scheduleUserAlarmNative()
+- AlarmReceiver.onReceive()
+- AlarmSoundService.onStartCommand()
+
+Logs MUST clearly show:
+- Function entered
+- Alarm ID
+- Trigger time (ms)
+- Current time (ms)
+
+OUTPUT RULES:
+- NO assumptions
+- NO explanations without code
+- SHOW exact files and lines
+- If something is missing, FIX IT and show FULL updated file content
+
+GOAL:
+At least ONE alarm or notification MUST fire within 2 minutes.
+If not, the execution path is broken and must be proven.

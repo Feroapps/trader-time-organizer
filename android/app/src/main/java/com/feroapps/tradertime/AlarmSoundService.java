@@ -46,14 +46,20 @@ public class AlarmSoundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "===== AlarmSoundService.onStartCommand ENTERED =====");
+        Log.i(TAG, "Current time (ms): " + System.currentTimeMillis());
+        
         if (intent == null) {
+            Log.w(TAG, "Intent is null - stopping self");
             stopSelf();
             return START_NOT_STICKY;
         }
 
         String action = intent.getAction();
+        Log.i(TAG, "Action: " + action);
+        
         if (ACTION_STOP.equals(action)) {
-            Log.i(TAG, "STOP action received");
+            Log.i(TAG, "STOP action received - stopping alarm");
             stopAlarm();
             return START_NOT_STICKY;
         }
@@ -62,6 +68,10 @@ public class AlarmSoundService extends Service {
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
 
+        Log.i(TAG, "alarmId: " + currentAlarmId);
+        Log.i(TAG, "label: " + currentLabel);
+        Log.i(TAG, "soundId: " + currentSoundId);
+
         if (currentLabel == null) {
             currentLabel = "Trader Time Alert";
         }
@@ -69,14 +79,19 @@ public class AlarmSoundService extends Service {
             currentSoundId = "original";
         }
 
-        Log.i(TAG, "Starting alarm: " + currentAlarmId + " - " + currentLabel);
-
+        Log.i(TAG, "Building notification...");
         Notification notification = buildNotification();
+        
+        Log.i(TAG, "Starting foreground service...");
         startForeground(NOTIFICATION_ID, notification);
 
+        Log.i(TAG, "Playing alarm sound...");
         playAlarmSound();
+        
+        Log.i(TAG, "Scheduling 120s timeout...");
         scheduleTimeout();
 
+        Log.i(TAG, "===== AlarmSoundService.onStartCommand COMPLETED =====");
         return START_NOT_STICKY;
     }
 

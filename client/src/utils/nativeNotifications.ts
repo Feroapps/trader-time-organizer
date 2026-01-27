@@ -125,30 +125,59 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
+  console.log(`[Notifications] ===== scheduleAlarmNotification ENTERED =====`);
+  console.log(`[Notifications] Alarm ID: ${alarm.id}`);
+  console.log(`[Notifications] Label: ${alarm.label}`);
+  console.log(`[Notifications] isFixed: ${alarm.isFixed}`);
+  console.log(`[Notifications] isEnabled: ${alarm.isEnabled}`);
+  console.log(`[Notifications] isNativePlatform: ${Capacitor.isNativePlatform()}`);
+  console.log(`[Notifications] Platform: ${Capacitor.getPlatform()}`);
+  
   if (!Capacitor.isNativePlatform()) {
+    console.log(`[Notifications] NOT native platform - returning`);
     return;
   }
   
   if (!alarm.isEnabled) {
+    console.log(`[Notifications] Alarm disabled - cancelling`);
     await cancelAlarmNotification(alarm.id);
     return;
   }
   
   const nextOccurrence = getNextOccurrence(alarm);
+  const now = Date.now();
+  
+  console.log(`[Notifications] Current time (ms): ${now}`);
+  console.log(`[Notifications] Current time (ISO): ${new Date(now).toISOString()}`);
+  
   if (!nextOccurrence) {
     console.log(`[Notifications] No future occurrence for alarm: ${alarm.label}`);
     return;
   }
   
+  const triggerTimeMs = nextOccurrence.getTime();
+  console.log(`[Notifications] Trigger time (ms): ${triggerTimeMs}`);
+  console.log(`[Notifications] Trigger time (ISO): ${nextOccurrence.toISOString()}`);
+  console.log(`[Notifications] Time until trigger (ms): ${triggerTimeMs - now}`);
+  console.log(`[Notifications] Time until trigger (sec): ${Math.round((triggerTimeMs - now) / 1000)}`);
+  
+  if (triggerTimeMs <= now) {
+    console.error(`[Notifications] ERROR: Trigger time is in the PAST!`);
+    return;
+  }
+  
   const soundId = migrateSoundId(alarm.soundId);
+  console.log(`[Notifications] Sound ID: ${soundId}`);
   
   if (!alarm.isFixed && isAndroidNative()) {
-    await scheduleUserAlarmNative(
+    console.log(`[Notifications] ===== SCHEDULING USER ALARM VIA ALARMMANAGER =====`);
+    const success = await scheduleUserAlarmNative(
       alarm.id,
       alarm.label,
       nextOccurrence,
       soundId
     );
+    console.log(`[Notifications] scheduleUserAlarmNative returned: ${success}`);
     console.log(`[Notifications] User alarm scheduled via AlarmManager: ${alarm.label} at ${nextOccurrence.toISOString()}`);
     return;
   }
@@ -314,25 +343,35 @@ export async function cancelAlarmNotification(alarmId: string, isUserAlarm: bool
 }
 
 export async function rescheduleAllAlarms(): Promise<void> {
+  console.log(`[Notifications] ===== rescheduleAllAlarms ENTERED =====`);
+  console.log(`[Notifications] isNativePlatform: ${Capacitor.isNativePlatform()}`);
+  console.log(`[Notifications] Platform: ${Capacitor.getPlatform()}`);
+  
   if (!Capacitor.isNativePlatform()) {
+    console.log(`[Notifications] NOT native platform - returning`);
     return;
   }
   
   const hasPermission = await requestNotificationPermissions();
+  console.log(`[Notifications] hasPermission: ${hasPermission}`);
+  
   if (!hasPermission) {
     console.warn('[Notifications] No permission, cannot schedule alarms');
     return;
   }
   
   const alarms = await getAlarms();
+  console.log(`[Notifications] Total alarms in storage: ${alarms.length}`);
   
   const enabledAlarms = alarms.filter(a => a.isEnabled);
+  console.log(`[Notifications] Enabled alarms: ${enabledAlarms.length}`);
   
   for (const alarm of enabledAlarms) {
+    console.log(`[Notifications] Processing alarm: ${alarm.id} - ${alarm.label} (isFixed: ${alarm.isFixed})`);
     await scheduleAlarmNotification(alarm);
   }
   
-  console.log(`[Notifications] Rescheduled ${enabledAlarms.length} alarms (all enabled alarms including session alerts)`);
+  console.log(`[Notifications] ===== rescheduleAllAlarms COMPLETED - ${enabledAlarms.length} alarms processed =====`);
 }
 
 export async function checkExactAlarmPermission(): Promise<{ granted: boolean; needsUserAction: boolean }> {

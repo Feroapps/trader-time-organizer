@@ -7,7 +7,13 @@ export async function initCapacitor(): Promise<void> {
     return;
   }
 
-  initializeNotifications();
+  console.log('[CapacitorInit] ===== APP COLD START =====');
+  console.log('[CapacitorInit] Platform:', Capacitor.getPlatform());
+  console.log('[CapacitorInit] Calling initializeNotifications...');
+  
+  await initializeNotifications();
+  
+  console.log('[CapacitorInit] initializeNotifications completed');
 
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
@@ -56,14 +62,18 @@ export async function initCapacitor(): Promise<void> {
     });
 
     App.addListener('appStateChange', (state: { isActive: boolean }) => {
+      console.log('[CapacitorInit] appStateChange - isActive:', state.isActive);
       if (state.isActive) {
         applyCurrentTheme();
+        console.log('[CapacitorInit] Calling rescheduleAllAlarms from appStateChange...');
         rescheduleAllAlarms();
       }
     });
 
     App.addListener('resume', () => {
+      console.log('[CapacitorInit] resume event');
       applyCurrentTheme();
+      console.log('[CapacitorInit] Calling rescheduleAllAlarms from resume...');
       rescheduleAllAlarms();
     });
 

@@ -29,16 +29,37 @@ public class UserAlarmPlugin extends Plugin {
 
     @PluginMethod
     public void scheduleAlarm(PluginCall call) {
+        Log.i(TAG, "===== scheduleAlarm ENTERED =====");
+        
         String alarmId = call.getString("alarmId");
         String label = call.getString("label");
         Long triggerTimeMs = call.getLong("triggerTimeMs");
         String soundId = call.getString("soundId", "original");
+        
+        long now = System.currentTimeMillis();
+        
+        Log.i(TAG, "alarmId: " + alarmId);
+        Log.i(TAG, "label: " + label);
+        Log.i(TAG, "triggerTimeMs: " + triggerTimeMs);
+        Log.i(TAG, "now (ms): " + now);
+        Log.i(TAG, "delta (sec): " + ((triggerTimeMs != null) ? (triggerTimeMs - now) / 1000 : "null"));
+        Log.i(TAG, "soundId: " + soundId);
+        Log.i(TAG, "Build.VERSION.SDK_INT: " + Build.VERSION.SDK_INT);
 
         if (alarmId == null || triggerTimeMs == null) {
             Log.e(TAG, "scheduleAlarm: missing required parameters");
             JSObject result = new JSObject();
             result.put("success", false);
             result.put("error", "Missing alarmId or triggerTimeMs");
+            call.resolve(result);
+            return;
+        }
+        
+        if (triggerTimeMs <= now) {
+            Log.e(TAG, "ERROR: triggerTimeMs is in the PAST! Not scheduling.");
+            JSObject result = new JSObject();
+            result.put("success", false);
+            result.put("error", "Trigger time is in the past");
             call.resolve(result);
             return;
         }
@@ -53,6 +74,8 @@ public class UserAlarmPlugin extends Plugin {
             intent.putExtra(AlarmReceiver.EXTRA_SOUND_ID, soundId);
 
             int requestCode = alarmId.hashCode();
+            Log.i(TAG, "requestCode (hashCode): " + requestCode);
+            
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,
@@ -61,30 +84,36 @@ public class UserAlarmPlugin extends Plugin {
             );
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
+                boolean canScheduleExact = alarmManager.canScheduleExactAlarms();
+                Log.i(TAG, "canScheduleExactAlarms: " + canScheduleExact);
+                
+                if (canScheduleExact) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent);
-                    Log.i(TAG, "Scheduled exact alarm: " + alarmId + " at " + triggerTimeMs);
+                    Log.i(TAG, "SUCCESS: Scheduled EXACT alarm: " + alarmId + " at " + triggerTimeMs + " (in " + ((triggerTimeMs - now) / 1000) + " sec)");
                 } else {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent);
-                    Log.w(TAG, "Scheduled inexact alarm (no permission): " + alarmId);
+                    Log.w(TAG, "WARNING: Scheduled INEXACT alarm (no exact permission): " + alarmId);
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent);
-                Log.i(TAG, "Scheduled exact alarm: " + alarmId + " at " + triggerTimeMs);
+                Log.i(TAG, "SUCCESS: Scheduled EXACT alarm (M+): " + alarmId + " at " + triggerTimeMs);
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent);
-                Log.i(TAG, "Scheduled exact alarm (pre-M): " + alarmId);
+                Log.i(TAG, "SUCCESS: Scheduled EXACT alarm (pre-M): " + alarmId);
             }
 
             saveAlarmToPrefs(context, alarmId, label, triggerTimeMs, soundId);
+            Log.i(TAG, "Alarm saved to SharedPreferences");
 
             JSObject result = new JSObject();
             result.put("success", true);
             result.put("alarmId", alarmId);
             call.resolve(result);
+            
+            Log.i(TAG, "===== scheduleAlarm COMPLETED SUCCESSFULLY =====");
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to schedule alarm: " + alarmId, e);
+            Log.e(TAG, "EXCEPTION in scheduleAlarm: " + alarmId, e);
             JSObject result = new JSObject();
             result.put("success", false);
             result.put("error", e.getMessage());
