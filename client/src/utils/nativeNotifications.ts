@@ -332,9 +332,18 @@ export async function cancelAlarmNotification(alarmId: string, isUserAlarm: bool
   }
   
   const notificationId = alarmIdToNotificationId(alarmId);
-  
+
   try {
-    await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
+    // iOS user alarms schedule multiple local notifications (baseId..baseId+3)
+    const idsToCancel =
+      isUserAlarm && isIOSNative()
+        ? [notificationId, notificationId + 1, notificationId + 2, notificationId + 3]
+        : [notificationId];
+
+    await LocalNotifications.cancel({
+      notifications: idsToCancel.map((id) => ({ id })),
+    });
+
     console.log(`[Notifications] Cancelled notification for alarm: ${alarmId}`);
   } catch (e) {
     console.error(`[Notifications] Failed to cancel notification:`, e);
