@@ -16,6 +16,7 @@ import java.util.Set;
 public class BootReceiver extends BroadcastReceiver {
 
     private static final String TAG = "BootReceiver";
+    private static final long PAST_TOLERANCE_MS = 3000L;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -46,8 +47,9 @@ public class BootReceiver extends BroadcastReceiver {
                 String soundId = obj.optString("soundId", "original");
 
                 long now = System.currentTimeMillis();
-                if (triggerTimeMs <= now) {
-                    Log.w(TAG, "Skipping past alarm: " + alarmId + " (was scheduled for " + triggerTimeMs + ")");
+                long deltaMs = triggerTimeMs - now;
+                if (deltaMs <= -PAST_TOLERANCE_MS) {
+                    Log.w(TAG, "Skipping past alarm beyond tolerance: " + alarmId + " deltaMs=" + deltaMs);
                     skippedCount++;
                     continue;
                 }
