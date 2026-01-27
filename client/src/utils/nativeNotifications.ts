@@ -147,10 +147,6 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
   
   const nextOccurrence = getNextOccurrence(alarm);
-  const now = Date.now();
-  
-  console.log(`[Notifications] Current time (ms): ${now}`);
-  console.log(`[Notifications] Current time (ISO): ${new Date(now).toISOString()}`);
   
   if (!nextOccurrence) {
     console.log(`[Notifications] No future occurrence for alarm: ${alarm.label}`);
@@ -158,19 +154,25 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
   
   const triggerTimeMs = nextOccurrence.getTime();
+  const now = Date.now();
   const deltaMs = triggerTimeMs - now;
+  
+  console.log(`[Notifications] Current time (ms): ${now}`);
+  console.log(`[Notifications] Current time (ISO): ${new Date(now).toISOString()}`);
   console.log(`[Notifications] Trigger time (ms): ${triggerTimeMs}`);
   console.log(`[Notifications] Trigger time (ISO): ${nextOccurrence.toISOString()}`);
   console.log(`[Notifications] Time until trigger (ms): ${deltaMs}`);
   console.log(`[Notifications] Time until trigger (sec): ${Math.round(deltaMs / 1000)}`);
   
-  if (triggerTimeMs <= now - PAST_TOLERANCE_MS) {
-    console.error(`[Notifications] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms, tolerance=${PAST_TOLERANCE_MS}ms`);
+  if (deltaMs <= -PAST_TOLERANCE_MS) {
+    console.error(`[Notifications] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms tolerance=${PAST_TOLERANCE_MS}ms`);
     return;
   }
   
   const soundId = migrateSoundId(alarm.soundId);
   console.log(`[Notifications] Sound ID: ${soundId}`);
+  
+  await cancelAlarmNotification(alarm.id, !alarm.isFixed);
   
   if (!alarm.isFixed && isAndroidNative()) {
     console.log(`[Notifications] ===== SCHEDULING USER ALARM VIA ALARMMANAGER =====`);
@@ -191,13 +193,6 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
   
   const notificationId = alarmIdToNotificationId(alarm.id);
-  
-  try {
-    await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
-  } catch (e) {
-    // Ignore cancel errors
-  }
-  
   const channelId = getChannelIdForSound(soundId);
   
   const scheduleOptions: ScheduleOptions = {
