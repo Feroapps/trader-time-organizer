@@ -15,6 +15,8 @@ const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound
   custom: { channelId: 'alerts_custom_v2', name: 'Alerts - Custom', sound: '' },
 };
 
+const PAST_TOLERANCE_MS = 3000;
+
 function getChannelIdForSound(soundId: string): string {
   return SOUND_CHANNEL_MAP[soundId]?.channelId || SOUND_CHANNEL_MAP.original.channelId;
 }
@@ -139,8 +141,8 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
   
   if (!alarm.isEnabled) {
-    console.log(`[Notifications] Alarm disabled - cancelling`);
-    await cancelAlarmNotification(alarm.id);
+    console.log(`[Notifications] Alarm disabled - cancelling (isUserAlarm: ${!alarm.isFixed})`);
+    await cancelAlarmNotification(alarm.id, !alarm.isFixed);
     return;
   }
   
@@ -156,13 +158,14 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   }
   
   const triggerTimeMs = nextOccurrence.getTime();
+  const deltaMs = triggerTimeMs - now;
   console.log(`[Notifications] Trigger time (ms): ${triggerTimeMs}`);
   console.log(`[Notifications] Trigger time (ISO): ${nextOccurrence.toISOString()}`);
-  console.log(`[Notifications] Time until trigger (ms): ${triggerTimeMs - now}`);
-  console.log(`[Notifications] Time until trigger (sec): ${Math.round((triggerTimeMs - now) / 1000)}`);
+  console.log(`[Notifications] Time until trigger (ms): ${deltaMs}`);
+  console.log(`[Notifications] Time until trigger (sec): ${Math.round(deltaMs / 1000)}`);
   
-  if (triggerTimeMs <= now) {
-    console.error(`[Notifications] ERROR: Trigger time is in the PAST!`);
+  if (triggerTimeMs <= now - PAST_TOLERANCE_MS) {
+    console.error(`[Notifications] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms, tolerance=${PAST_TOLERANCE_MS}ms`);
     return;
   }
   

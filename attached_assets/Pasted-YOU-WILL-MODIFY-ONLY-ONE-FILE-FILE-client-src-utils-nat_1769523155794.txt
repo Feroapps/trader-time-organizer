@@ -1,0 +1,46 @@
+YOU WILL MODIFY ONLY ONE FILE:
+FILE: client/src/utils/nativeNotifications.ts
+
+GOAL:
+Fix alarm scheduling reliability on Android WITHOUT refactoring unrelated code.
+Keep ALL existing behavior except the specific fixes below.
+
+STRICT RULES:
+- Do NOT change file paths.
+- Do NOT rename exports.
+- Do NOT refactor formatting broadly.
+- Do NOT touch other files.
+- Do NOT add new features.
+- Output the FULL FINAL CONTENT of the file after edits.
+
+REQUIRED FIXES (ONLY THESE):
+
+1) FIX CANCEL PATH FOR USER ALARMS (Android AlarmManager)
+Current bug: when an alarm is disabled, scheduleAlarmNotification() calls cancelAlarmNotification(alarm.id) without isUserAlarm=true, so Android AlarmManager alarms may NOT be canceled.
+Do this:
+- In scheduleAlarmNotification(), when alarm.isEnabled is false:
+  - call: await cancelAlarmNotification(alarm.id, !alarm.isFixed);
+  - (Explanation: user alarms are !isFixed, session alerts are isFixed.)
+- Also in scheduleAlarmNotification(), before returning early for non-native, keep existing logic.
+
+2) MAKE “PAST TIME” GUARD SAFE FOR NEAR-FUTURE TESTS
+Current code rejects triggerTimeMs <= now and returns error.
+This may block alarms scheduled “within 1 minute” due to execution delay.
+Do this:
+- Introduce a small tolerance window constant in this file only:
+  const PAST_TOLERANCE_MS = 3000;
+- Replace the check with:
+  if (triggerTimeMs <= now + PAST_TOLERANCE_MS) { ... }
+- Keep logging, but update the log message to include tolerance and actual delta.
+
+3) DO NOT CHANGE THE SCHEDULING ROUTING
+- Keep: user alarms on Android → scheduleUserAlarmNative(...) then return.
+- Keep: session alerts → LocalNotifications.schedule(...).
+- Do NOT modify getNextOccurrence() logic.
+
+4) KEEP LOGGING BUT DO NOT ADD EXCESSIVE NEW LOGS
+- You may add at most 2 new log lines related to (1) cancel isUserAlarm and (2) past tolerance.
+
+OUTPUT REQUIREMENTS:
+- Print the FULL FINAL CONTENT of client/src/utils/nativeNotifications.ts only.
+- No explanations, no diff, no extra text.
