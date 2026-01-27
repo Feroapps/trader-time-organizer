@@ -27,11 +27,7 @@ function getNextOccurrence(alarm: Alarm): Date | null {
   
   const days = Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [];
   
-  if (alarm.isFixed || days.length > 0) {
-    if (days.length === 0) {
-      return null;
-    }
-    
+  if (days.length > 0) {
     const currentDayOfWeek = nowUTC.getUTCDay();
     const currentHour = nowUTC.getUTCHours();
     const currentMinute = nowUTC.getUTCMinutes();
