@@ -164,7 +164,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   console.log(`[Notifications] Time until trigger (ms): ${deltaMs}`);
   console.log(`[Notifications] Time until trigger (sec): ${Math.round(deltaMs / 1000)}`);
   
-  if (triggerTimeMs <= now - PAST_TOLERANCE_MS) {
+  if (triggerTimeMs <= now + PAST_TOLERANCE_MS) {
     console.error(`[Notifications] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms, tolerance=${PAST_TOLERANCE_MS}ms`);
     return;
   }
