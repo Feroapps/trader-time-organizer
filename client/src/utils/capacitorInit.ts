@@ -61,20 +61,18 @@ export async function initCapacitor(): Promise<void> {
       }
     });
 
-    App.addListener('appStateChange', (state: { isActive: boolean }) => {
+    App.addListener('appStateChange', async (state: { isActive: boolean }) => {
       console.log('[CapacitorInit] appStateChange - isActive:', state.isActive);
       if (state.isActive) {
         applyCurrentTheme();
         console.log('[CapacitorInit] Calling rescheduleAllAlarms from appStateChange...');
-        rescheduleAllAlarms();
+        try {
+          await rescheduleAllAlarms();
+          console.log('[CapacitorInit] rescheduleAllAlarms completed');
+        } catch (e) {
+          console.error('[CapacitorInit] rescheduleAllAlarms failed:', e);
+        }
       }
-    });
-
-    App.addListener('resume', () => {
-      console.log('[CapacitorInit] resume event');
-      applyCurrentTheme();
-      console.log('[CapacitorInit] Calling rescheduleAllAlarms from resume...');
-      rescheduleAllAlarms();
     });
 
     window.addEventListener('focus', () => {
