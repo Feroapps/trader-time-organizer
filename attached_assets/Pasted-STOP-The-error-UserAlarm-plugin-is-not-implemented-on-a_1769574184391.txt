@@ -1,0 +1,51 @@
+STOP. The error `"UserAlarm" plugin is not implemented on android` means the native plugin is NOT being loaded at all.
+This is NOT an AlarmManager / Doze / device issue. It is 100% plugin registration/build integration.
+
+ABSOLUTE RULE:
+- DO NOT edit `android/app/src/main/assets/capacitor.plugins.json` (or any capacitor.plugins.json). It is AUTO-GENERATED and WILL DELETE manual entries.
+- Your custom plugin MUST be compiled as native source and registered by MainActivity (or auto-registered by Capacitor), not by JSON.
+
+DO THIS EXACTLY:
+
+1) REMOVE any manual "UserAlarm" entry from any `capacitor.plugins.json` / `capacitor.plugins` file. Never edit it again.
+
+2) VERIFY plugin file exists at EXACT path:
+   android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+
+   AND it contains:
+   @CapacitorPlugin(name = "UserAlarm")
+   public class UserAlarmPlugin extends Plugin { ... }
+
+3) VERIFY MainActivity registers the plugin (this is REQUIRED for app-local plugins):
+   android/app/src/main/java/com/feroapps/tradertime/MainActivity.java
+
+   Use EXACT code:
+   package com.feroapps.tradertime;
+
+   import android.os.Bundle;
+   import com.getcapacitor.BridgeActivity;
+
+   public class MainActivity extends BridgeActivity {
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+       super.onCreate(savedInstanceState);
+       registerPlugin(UserAlarmPlugin.class);
+     }
+   }
+
+4) HARD CLEAN + RESYNC from PROJECT ROOT (where package.json + capacitor.config.ts exist):
+   npm run build
+   npx cap sync android
+
+5) UNINSTALL the app from the emulator/device (to avoid stale cached plugin lists):
+   adb uninstall com.feroapps.tradertime
+
+6) Re-open Android and run:
+   npx cap open android
+   Then Run in Android Studio.
+
+EXPECTED RESULT:
+- The `"UserAlarm" plugin is not implemented on android` error MUST disappear.
+IF it still appears after uninstall + clean sync, you are building/running a different Android project than the one you edited (wrong folder opened) OR the plugin is not actually inside android/app/src/main/java.
+
+DO NOT mention WorkManager. Fix plugin loading first.
