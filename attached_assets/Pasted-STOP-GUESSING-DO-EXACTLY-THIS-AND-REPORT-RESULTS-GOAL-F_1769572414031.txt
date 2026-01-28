@@ -1,0 +1,64 @@
+STOP GUESSING. DO EXACTLY THIS AND REPORT RESULTS.
+
+GOAL:
+Fix Android custom Capacitor plugin registration for "UserAlarm" WITHOUT editing any generated files.
+
+RULES:
+- DO NOT edit android/capacitor.plugins.json (it is generated and will be overwritten).
+- DO NOT propose random refactors.
+- Only touch MainActivity.java and verify UserAlarmPlugin.java location/package.
+- Output: (1) exact file paths found, (2) exact final content of MainActivity.java, (3) a short verification checklist.
+
+STEP 1 — LOCATE FILES (MANDATORY):
+Search the repo and PRINT the exact paths:
+- All MainActivity.java files (there may be multiple).
+- The UserAlarmPlugin.java file.
+Also print the first line (package line) of each file you found.
+
+STEP 2 — VERIFY PACKAGE CONSISTENCY:
+Confirm these are IDENTICAL across MainActivity.java and UserAlarmPlugin.java:
+- package line (e.g. package com.feroapps.tradertime;)
+- appId / applicationId in android/app/build.gradle (print applicationId line).
+If mismatch exists, fix by aligning package declarations to the applicationId package.
+
+STEP 3 — APPLY REGISTRATION (ONLY IN THE REAL MAINACTIVITY USED BY THE APP):
+In the MainActivity.java that matches the applicationId package and resides under:
+android/app/src/main/java/<package_path>/MainActivity.java
+Set EXACT content to:
+
+package com.feroapps.tradertime;
+
+import android.os.Bundle;
+import android.util.Log;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    Log.i("MainActivity", "MainActivity.onCreate - registering UserAlarmPlugin");
+    registerPlugin(UserAlarmPlugin.class);
+  }
+}
+
+Do NOT change anything else.
+
+STEP 4 — VERIFY THE PLUGIN CLASS:
+Ensure UserAlarmPlugin.java is at:
+android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+and starts with:
+package com.feroapps.tradertime;
+
+STEP 5 — SYNC COMMANDS (REPORT ONLY, DO NOT RUN HERE):
+From project root, user will run:
+npm run build
+npx cap sync android
+npx cap open android
+
+STEP 6 — LOGCAT PROOF REQUIRED:
+In Logcat, user must see:
+"MainActivity.onCreate - registering UserAlarmPlugin"
+If not visible, it means edits were applied to the WRONG MainActivity.java path.
+Explain which path is wrong and which is correct based on STEP 1 results.
+
+NOW DO STEP 1-4 AND PRINT RESULTS.
