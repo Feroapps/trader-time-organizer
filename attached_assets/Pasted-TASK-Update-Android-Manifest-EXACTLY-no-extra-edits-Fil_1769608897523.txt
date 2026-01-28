@@ -1,3 +1,11 @@
+TASK: Update Android Manifest EXACTLY (no extra edits)
+
+File to modify:
+android/app/src/main/AndroidManifest.xml
+
+REPLACE the entire file content with EXACTLY the XML below (character-for-character). Do not merge. Do not keep any old lines. Do not add anything else.
+
+--- BEGIN EXACT CONTENT ---
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -69,3 +77,10 @@
 
     </application>
 </manifest>
+--- END EXACT CONTENT ---
+
+After editing, CONFIRM by replying with:
+1) The first line (<?xml ...?>)
+2) The <manifest ...> opening tag line(s)
+3) The full list of <uses-permission ...> lines (exactly as present)
+4) The <application> opening tag line
