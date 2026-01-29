@@ -1,18 +1,26 @@
 package com.feroapps.tradertime;
-
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
+import android.graphics.BitmapFactory;
 import android.util.Log;
+
 import androidx.core.app.NotificationCompat;
 
 public class AlarmSoundService extends Service {
@@ -26,8 +34,15 @@ public class AlarmSoundService extends Service {
     public static final String EXTRA_SOUND_ID = "sound_id";
 
     private static final String CHANNEL_ID = "alarm_sound_channel";
-    private static final int NOTIFICATION_ID = 2001;
+    private static final int FOREGROUND_NOTIFICATION_ID = 2001;
+    private static final int STOPPED_NOTIFICATION_ID = 2002;
+
     private static final long ALARM_TIMEOUT_MS = 120000;
+
+    private BroadcastReceiver screenReceiver;
+    private ContentObserver volumeObserver;
+    private AudioManager audioManager;
+    private int lastAlarmVolume = -1;
 
     private MediaPlayer mediaPlayer;
     private Handler timeoutHandler;
@@ -36,31 +51,32 @@ public class AlarmSoundService extends Service {
     private String currentAlarmId;
     private String currentLabel;
     private String currentSoundId;
-
     @Override
     public void onCreate() {
         super.onCreate();
         timeoutHandler = new Handler(Looper.getMainLooper());
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+
         createNotificationChannel();
+        registerStopOnScreenOff();
+        registerStopOnVolumeChange();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "===== AlarmSoundService.onStartCommand ENTERED =====");
-        Log.i(TAG, "Current time (ms): " + System.currentTimeMillis());
-        
+
         if (intent == null) {
             Log.w(TAG, "Intent is null - stopping self");
-            stopSelf();
             return START_NOT_STICKY;
         }
 
         String action = intent.getAction();
         Log.i(TAG, "Action: " + action);
-        
+
         if (ACTION_STOP.equals(action)) {
-            Log.i(TAG, "STOP action received - stopping alarm");
-            stopAlarm();
+            Log.i(TAG, "STOP action received");
+            stopAlarmSound();
             return START_NOT_STICKY;
         }
 
@@ -68,27 +84,17 @@ public class AlarmSoundService extends Service {
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
 
+        if (currentLabel == null) currentLabel = "Trader Time Alert";
+        if (currentSoundId == null) currentSoundId = "original";
+
         Log.i(TAG, "alarmId: " + currentAlarmId);
         Log.i(TAG, "label: " + currentLabel);
         Log.i(TAG, "soundId: " + currentSoundId);
 
-        if (currentLabel == null) {
-            currentLabel = "Trader Time Alert";
-        }
-        if (currentSoundId == null) {
-            currentSoundId = "original";
-        }
+        Notification notification = buildForegroundNotification();
+        startForeground(FOREGROUND_NOTIFICATION_ID, notification);
 
-        Log.i(TAG, "Building notification...");
-        Notification notification = buildNotification();
-        
-        Log.i(TAG, "Starting foreground service...");
-        startForeground(NOTIFICATION_ID, notification);
-
-        Log.i(TAG, "Playing alarm sound...");
         playAlarmSound();
-        
-        Log.i(TAG, "Scheduling 120s timeout...");
         scheduleTimeout();
 
         Log.i(TAG, "===== AlarmSoundService.onStartCommand COMPLETED =====");
@@ -105,18 +111,31 @@ public class AlarmSoundService extends Service {
         super.onDestroy();
         stopAlarmSound();
         cancelTimeout();
+        unregisterStopListeners();
         Log.i(TAG, "Service destroyed");
+    }
+
+    private void stopAlarm() {
+        stopAlarmSound();
+        cancelTimeout();
+
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.notify(STOPPED_NOTIFICATION_ID, buildStoppedNotification());
+        }
+        Log.i(TAG, "Alarm stopped, stopped notification shown");
     }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID,
-                "Alarm Sound",
-                NotificationManager.IMPORTANCE_HIGH
+                    CHANNEL_ID,
+                    "Alarm Sound",
+                    NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Ongoing alarm sound notification");
+            channel.setDescription("Alarm sound notifications");
             channel.setSound(null, null);
+
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -124,46 +143,67 @@ public class AlarmSoundService extends Service {
         }
     }
 
-    private Notification buildNotification() {
+    private Notification buildForegroundNotification() {
         Intent stopIntent = new Intent(this, AlarmSoundService.class);
         stopIntent.setAction(ACTION_STOP);
-        PendingIntent stopPendingIntent = PendingIntent.getService(
-            this,
-            0,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
 
+        PendingIntent stopPendingIntent = PendingIntent.getService(
+                this,
+                0,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
         Intent openIntent = new Intent(this, MainActivity.class);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent openPendingIntent = PendingIntent.getActivity(
-            this,
-            1,
-            openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                this,
+                1,
+                openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Trader Time Alert")
+                .setContentText(currentLabel)
+                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_stat_notification1))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(currentLabel))
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setContentIntent(openPendingIntent)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "STOP", stopPendingIntent)
+                .build();
+    }
+
+    private Notification buildStoppedNotification() {
+        Intent openIntent = new Intent(this, MainActivity.class);
+        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent openPendingIntent = PendingIntent.getActivity(
+                this,
+                2,
+                openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Trader Time Alert")
-            .setContentText(currentLabel)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setContentIntent(openPendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "STOP", stopPendingIntent)
-            .build();
+                .setContentTitle("Alarm stopped")
+                .setContentText("Tap to open app")
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setOngoing(false)
+                .setAutoCancel(false)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(openPendingIntent)
+                .build();
     }
 
     private void playAlarmSound() {
         stopAlarmSound();
 
         int soundRes = getSoundResource(currentSoundId);
+        if (soundRes == 0) soundRes = getSoundResource("original");
         if (soundRes == 0) {
-            soundRes = getSoundResource("original");
-        }
-        if (soundRes == 0) {
-            Log.e(TAG, "No sound resource found, using system default");
+            Log.e(TAG, "No sound resource found");
             return;
         }
 
@@ -171,15 +211,18 @@ public class AlarmSoundService extends Service {
             mediaPlayer = MediaPlayer.create(this, soundRes);
             if (mediaPlayer != null) {
                 mediaPlayer.setLooping(true);
+
                 AudioAttributes attrs = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build();
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build();
+
                 mediaPlayer.setAudioAttributes(attrs);
                 mediaPlayer.start();
+
                 Log.i(TAG, "Alarm sound started: " + currentSoundId);
             } else {
-                Log.e(TAG, "MediaPlayer.create returned null for soundId: " + currentSoundId);
+                Log.e(TAG, "MediaPlayer.create returned null");
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to play alarm sound", e);
@@ -189,23 +232,13 @@ public class AlarmSoundService extends Service {
     private void stopAlarmSound() {
         if (mediaPlayer != null) {
             try {
-                if (mediaPlayer.isPlaying()) {
-                    mediaPlayer.stop();
-                }
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                 mediaPlayer.release();
             } catch (Exception e) {
                 Log.e(TAG, "Error stopping MediaPlayer", e);
             }
             mediaPlayer = null;
         }
-    }
-
-    private void stopAlarm() {
-        stopAlarmSound();
-        cancelTimeout();
-        stopForeground(true);
-        stopSelf();
-        Log.i(TAG, "Alarm stopped");
     }
 
     private void scheduleTimeout() {
@@ -225,9 +258,8 @@ public class AlarmSoundService extends Service {
     }
 
     private int getSoundResource(String soundId) {
-        if (soundId == null) {
-            return 0;
-        }
+        if (soundId == null) return 0;
+
         switch (soundId) {
             case "original":
                 return getResId("alert_original");
@@ -248,5 +280,58 @@ public class AlarmSoundService extends Service {
 
     private int getResId(String resName) {
         return getResources().getIdentifier(resName, "raw", getPackageName());
+    }
+
+    private void registerStopOnScreenOff() {
+        // Disabled: waking the screen would instantly trigger SCREEN_OFF logic otherwise
+        // Screen-off stop is no longer used
+    }
+
+    private void registerStopOnVolumeChange() {
+        if (volumeObserver != null) return;
+
+        if (audioManager != null) {
+            lastAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+            Log.i(TAG, "Initial ALARM volume: " + lastAlarmVolume);
+        }
+
+        volumeObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                super.onChange(selfChange, uri);
+
+                if (audioManager == null) return;
+
+                int v = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+                if (lastAlarmVolume != -1 && v != lastAlarmVolume) {
+                    Log.i(TAG, "ALARM volume changed " + lastAlarmVolume + " -> " + v + " => stopping alarm");
+                    stopAlarmSound();
+                }
+                lastAlarmVolume = v;
+            }
+
+            @Override
+            public void onChange(boolean selfChange) {
+                onChange(selfChange, null);
+            }
+        };
+
+        getContentResolver().registerContentObserver(Settings.System.CONTENT_URI, true, volumeObserver);
+    }
+
+    private void unregisterStopListeners() {
+        try {
+            if (screenReceiver != null) {
+                unregisterReceiver(screenReceiver);
+                screenReceiver = null;
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            if (volumeObserver != null) {
+                getContentResolver().unregisterContentObserver(volumeObserver);
+                volumeObserver = null;
+            }
+        } catch (Exception ignored) {}
     }
 }

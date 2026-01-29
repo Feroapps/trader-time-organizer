@@ -27,6 +27,11 @@ public class AlarmReceiver extends BroadcastReceiver {
         Log.i(TAG, "label: " + label);
         Log.i(TAG, "soundId: " + soundId);
 
+        // Start AlarmActivity to wake screen and open app
+        Intent alarmActivityIntent = new Intent(context, AlarmActivity.class);
+        alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        context.startActivity(alarmActivityIntent);
+
         Intent serviceIntent = new Intent(context, AlarmSoundService.class);
         serviceIntent.putExtra(AlarmSoundService.EXTRA_ALARM_ID, alarmId);
         serviceIntent.putExtra(AlarmSoundService.EXTRA_ALARM_LABEL, label);

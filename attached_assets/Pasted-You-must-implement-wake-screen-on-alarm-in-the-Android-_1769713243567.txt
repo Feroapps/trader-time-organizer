@@ -1,0 +1,78 @@
+You must implement “wake screen on alarm” in the Android (Capacitor) project. Do NOT change any unrelated files or logic. Follow steps exactly and keep diffs minimal.
+
+GOAL
+- When an alarm fires, the phone screen must turn ON and show a minimal overlay, then immediately return/open the main app.
+- No full UI. No extra buttons. Just wake screen + open app.
+- Do NOT stop the alarm on SCREEN_OFF anymore.
+
+STEP 1 — CREATE a new Android Activity (AlarmActivity.java)
+Path:
+android/app/src/main/java/com/feroapps/tradertime/AlarmActivity.java
+
+Requirements:
+- package com.feroapps.tradertime;
+- Extends android.app.Activity (or AppCompatActivity if already used elsewhere; prefer Activity for minimal).
+- In onCreate:
+  - Apply window flags to wake screen and show over lock screen:
+    - FLAG_KEEP_SCREEN_ON
+    - FLAG_TURN_SCREEN_ON
+    - FLAG_SHOW_WHEN_LOCKED
+    - FLAG_DISMISS_KEYGUARD
+  - Immediately launch MainActivity and finish AlarmActivity.
+- MUST use these intent flags when opening MainActivity:
+  - Intent.FLAG_ACTIVITY_NEW_TASK
+  - Intent.FLAG_ACTIVITY_CLEAR_TOP
+  - Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+STEP 2 — REGISTER AlarmActivity in AndroidManifest.xml
+File:
+android/app/src/main/AndroidManifest.xml
+
+Inside <application> add:
+<activity
+    android:name=".AlarmActivity"
+    android:exported="false"
+    android:launchMode="singleTask"
+    android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+Keep existing activities/receivers/services unchanged.
+
+STEP 3 — TRIGGER AlarmActivity when alarm fires
+File:
+android/app/src/main/java/com/feroapps/tradertime/AlarmReceiver.java
+
+In onReceive(), BEFORE starting AlarmSoundService (or right after logs, but before return):
+- Start AlarmActivity using an explicit Intent:
+  Intent i = new Intent(context, AlarmActivity.class);
+  i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+  context.startActivity(i);
+
+Do NOT remove existing AlarmSoundService start logic.
+
+STEP 4 — REMOVE “stop on screen off”
+File:
+android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+
+Find the BroadcastReceiver that stops the alarm on Intent.ACTION_SCREEN_OFF.
+Disable it completely:
+- Either remove registerStopOnScreenOff() call from onCreate OR make the SCREEN_OFF receiver do nothing.
+Reason: waking the screen would instantly trigger SCREEN_OFF logic otherwise.
+
+DO NOT change stop behavior for volume buttons unless necessary.
+
+STEP 5 — BUILD + SYNC (must be executed)
+From project root, run in this exact order:
+1) npm run build
+2) npx cap sync android
+
+Do not run other commands.
+Do not delete android/ folder.
+Do not regenerate icons.
+
+OUTPUT REQUIRED
+- Confirm the exact files changed/created:
+  - AlarmActivity.java (created)
+  - AndroidManifest.xml (edited)
+  - AlarmReceiver.java (edited)
+  - AlarmSoundService.java (edited only to disable screen-off stop)
+- Ensure compilation succeeds after sync.

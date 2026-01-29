@@ -3,6 +3,7 @@ import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notificati
 import type { Alarm } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
+import { getSelectedSoundId } from '@/utils/soundLibrary';
 import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative, canScheduleExactAlarmsNative } from '@/utils/userAlarmPlugin';
 
 const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
@@ -25,15 +26,15 @@ function getNextOccurrence(alarm: Alarm): Date | null {
   const now = new Date();
   const nowUTC = new Date(now.toISOString());
   const days = Array.isArray(alarm.repeatDays) ? alarm.repeatDays : [];
-  
+
   if (alarm.isFixed || days.length > 0) {
     const currentDayOfWeek = nowUTC.getUTCDay();
     const currentHour = nowUTC.getUTCHours();
     const currentMinute = nowUTC.getUTCMinutes();
-    
+
     for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
       const checkDay = (currentDayOfWeek + daysAhead) % 7;
-      
+
       if (days.includes(checkDay)) {
         if (daysAhead === 0) {
           if (currentHour > alarm.hourUTC || 
@@ -41,7 +42,7 @@ function getNextOccurrence(alarm: Alarm): Date | null {
             continue;
           }
         }
-        
+
         const targetDate = new Date(nowUTC);
         targetDate.setUTCDate(targetDate.getUTCDate() + daysAhead);
         targetDate.setUTCHours(alarm.hourUTC, alarm.minuteUTC, 0, 0);
@@ -50,30 +51,30 @@ function getNextOccurrence(alarm: Alarm): Date | null {
     }
     return null;
   }
-  
+
   if (alarm.dateUTC) {
     const [year, month, day] = alarm.dateUTC.split('-').map(Number);
     const targetDate = new Date(Date.UTC(year, month - 1, day, alarm.hourUTC, alarm.minuteUTC, 0, 0));
-    
+
     if (alarm.repeatWeekly) {
       while (targetDate <= nowUTC) {
         targetDate.setUTCDate(targetDate.getUTCDate() + 7);
       }
       return targetDate;
     }
-    
+
     if (alarm.repeatMonthly) {
       while (targetDate <= nowUTC) {
         targetDate.setUTCMonth(targetDate.getUTCMonth() + 1);
       }
       return targetDate;
     }
-    
+
     if (targetDate > nowUTC) {
       return targetDate;
     }
   }
-  
+
   return null;
 }
 
@@ -86,7 +87,7 @@ function alarmIdToNotificationId(alarmId: string): number {
     const offset = parseInt(sessionMatch[1], 10);
     return SESSION_ALERT_ID_BASE + offset;
   }
-  
+
   let hash = 0;
   for (let i = 0; i < alarmId.length; i++) {
     const char = alarmId.charCodeAt(i);
@@ -94,11 +95,11 @@ function alarmIdToNotificationId(alarmId: string): number {
     hash = hash & hash;
   }
   let result = Math.abs(hash) % 2147483647;
-  
+
   if (result >= SESSION_ALERT_ID_BASE && result <= SESSION_ALERT_ID_MAX) {
     result = result + SESSION_ALERT_ID_MAX + 1;
   }
-  
+
   return result;
 }
 
@@ -106,19 +107,19 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
     return false;
   }
-  
+
   try {
     const permStatus = await LocalNotifications.checkPermissions();
-    
+
     if (permStatus.display === 'granted') {
       return true;
     }
-    
+
     if (permStatus.display === 'denied') {
       console.warn('[Notifications] Permission denied');
       return false;
     }
-    
+
     const result = await LocalNotifications.requestPermissions();
     return result.display === 'granted';
   } catch (e) {
@@ -135,67 +136,72 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
   console.log(`[Notifications] isEnabled: ${alarm.isEnabled}`);
   console.log(`[Notifications] isNativePlatform: ${Capacitor.isNativePlatform()}`);
   console.log(`[Notifications] Platform: ${Capacitor.getPlatform()}`);
-  
+
   if (!Capacitor.isNativePlatform()) {
     console.log(`[Notifications] NOT native platform - returning`);
     return;
   }
-  
+
   if (!alarm.isEnabled) {
     console.log(`[Notifications] Alarm disabled - cancelling (isUserAlarm: ${!alarm.isFixed})`);
     await cancelAlarmNotification(alarm.id, !alarm.isFixed);
     return;
   }
-  
+
   const nextOccurrence = getNextOccurrence(alarm);
-  
+
   if (!nextOccurrence) {
     console.log(`[Notifications] No future occurrence for alarm: ${alarm.label}`);
     return;
   }
-  
+
   const triggerTimeMs = nextOccurrence.getTime();
   const now = Date.now();
   const deltaMs = triggerTimeMs - now;
-  
+
   console.log(`[Notifications] Current time (ms): ${now}`);
   console.log(`[Notifications] Current time (ISO): ${new Date(now).toISOString()}`);
   console.log(`[Notifications] Trigger time (ms): ${triggerTimeMs}`);
   console.log(`[Notifications] Trigger time (ISO): ${nextOccurrence.toISOString()}`);
   console.log(`[Notifications] Time until trigger (ms): ${deltaMs}`);
   console.log(`[Notifications] Time until trigger (sec): ${Math.round(deltaMs / 1000)}`);
-  
+
   if (deltaMs <= -PAST_TOLERANCE_MS) {
     console.error(`[Notifications] ERROR: Trigger time is in the PAST beyond tolerance! delta=${deltaMs}ms tolerance=${PAST_TOLERANCE_MS}ms`);
     return;
   }
-  
+
   const soundId = migrateSoundId(alarm.soundId);
   console.log(`[Notifications] Sound ID: ${soundId}`);
-  
+
+
   await cancelAlarmNotification(alarm.id, !alarm.isFixed);
-  
+
   if (!alarm.isFixed && isAndroidNative()) {
-    console.log(`[Notifications] ===== SCHEDULING USER ALARM VIA ALARMMANAGER =====`);
-    const success = await scheduleUserAlarmNative(
-      alarm.id,
-      alarm.label,
-      nextOccurrence,
-      soundId
-    );
-    console.log(`[Notifications] scheduleUserAlarmNative returned: ${success}`);
-    console.log(`[Notifications] User alarm scheduled via AlarmManager: ${alarm.label} at ${nextOccurrence.toISOString()}`);
-    return;
-  }
-  
+  console.log('[Notifications] ===== SCHEDULING USER ALARM VIA ANDROID NATIVE =====');
+
+  const soundId = getSelectedSoundId();
+
+  const success = await scheduleUserAlarmNative(
+    alarm.id,
+    alarm.label,
+    nextOccurrence,
+    soundId
+  );
+
+  console.log(`[Notifications] scheduleUserAlarmNative returned: ${success}`);
+  console.log('[Notifications] User alarm scheduled via AlarmManager');
+  return;
+}
+
   if (!alarm.isFixed && isIOSNative()) {
     await scheduleIOSUserAlarm(alarm, nextOccurrence, soundId);
     return;
   }
-  
+
   const notificationId = alarmIdToNotificationId(alarm.id);
   const channelId = getChannelIdForSound(soundId);
-  
+
   const scheduleOptions: ScheduleOptions = {
     notifications: [
       {
@@ -213,7 +219,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
       },
     ],
   };
-  
+
   try {
     await LocalNotifications.schedule(scheduleOptions);
     console.log(`[Notifications] Scheduled: ${alarm.label} at ${nextOccurrence.toISOString()} on channel ${channelId}`);
@@ -224,7 +230,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
 
 async function scheduleIOSUserAlarm(alarm: Alarm, triggerTime: Date, soundId: string): Promise<void> {
   const baseId = alarmIdToNotificationId(alarm.id);
-  
+
   try {
     await LocalNotifications.cancel({ 
       notifications: [
@@ -237,12 +243,12 @@ async function scheduleIOSUserAlarm(alarm: Alarm, triggerTime: Date, soundId: st
   } catch (e) {
     // Ignore cancel errors
   }
-  
+
   const channelId = getChannelIdForSound(soundId);
-  
+
   const actionTypeId = 'USER_ALARM_ACTIONS';
   const deepLinkUrl = `tradertime://alarm?alarmId=${alarm.id}`;
-  
+
   const notifications = [
     {
       id: baseId,
@@ -313,7 +319,7 @@ async function scheduleIOSUserAlarm(alarm: Alarm, triggerTime: Date, soundId: st
       },
     },
   ];
-  
+
   try {
     await LocalNotifications.schedule({ notifications });
     console.log(`[Notifications] iOS user alarm scheduled with reminders: ${alarm.label}`);
@@ -326,11 +332,11 @@ export async function cancelAlarmNotification(alarmId: string, isUserAlarm: bool
   if (!Capacitor.isNativePlatform()) {
     return;
   }
-  
+
   if (isUserAlarm && isAndroidNative()) {
     await cancelUserAlarmNative(alarmId);
   }
-  
+
   const notificationId = alarmIdToNotificationId(alarmId);
 
   try {
@@ -354,31 +360,31 @@ export async function rescheduleAllAlarms(): Promise<void> {
   console.log(`[Notifications] ===== rescheduleAllAlarms ENTERED =====`);
   console.log(`[Notifications] isNativePlatform: ${Capacitor.isNativePlatform()}`);
   console.log(`[Notifications] Platform: ${Capacitor.getPlatform()}`);
-  
+
   if (!Capacitor.isNativePlatform()) {
     console.log(`[Notifications] NOT native platform - returning`);
     return;
   }
-  
+
   const hasPermission = await requestNotificationPermissions();
   console.log(`[Notifications] hasPermission: ${hasPermission}`);
-  
+
   if (!hasPermission) {
     console.warn('[Notifications] No permission, cannot schedule alarms');
     return;
   }
-  
+
   const alarms = await getAlarms();
   console.log(`[Notifications] Total alarms in storage: ${alarms.length}`);
-  
+
   const enabledAlarms = alarms.filter(a => a.isEnabled);
   console.log(`[Notifications] Enabled alarms: ${enabledAlarms.length}`);
-  
+
   for (const alarm of enabledAlarms) {
     console.log(`[Notifications] Processing alarm: ${alarm.id} - ${alarm.label} (isFixed: ${alarm.isFixed})`);
     await scheduleAlarmNotification(alarm);
   }
-  
+
   console.log(`[Notifications] ===== rescheduleAllAlarms COMPLETED - ${enabledAlarms.length} alarms processed =====`);
 }
 
@@ -386,14 +392,14 @@ export async function checkExactAlarmPermission(): Promise<{ granted: boolean; n
   if (!isAndroidNative()) {
     return { granted: true, needsUserAction: false };
   }
-  
+
   const canSchedule = await canScheduleExactAlarmsNative();
-  
+
   if (!canSchedule) {
     console.warn('[Notifications] Exact alarm permission not granted');
     return { granted: false, needsUserAction: true };
   }
-  
+
   return { granted: true, needsUserAction: false };
 }
 
@@ -401,17 +407,17 @@ export async function openExactAlarmSettings(): Promise<void> {
   if (!isAndroidNative()) {
     return;
   }
-  
+
   try {
     const { App } = await import('@capacitor/app');
     const appInfo = await App.getInfo();
     const packageName = appInfo.id;
-    
+
     const exactAlarmUrl = `intent:#Intent;action=android.settings.REQUEST_SCHEDULE_EXACT_ALARM;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
     window.location.href = exactAlarmUrl;
   } catch (e) {
     console.error('[Notifications] Failed to open exact alarm settings:', e);
-    
+
     try {
       window.location.href = 'intent:#Intent;action=android.settings.REQUEST_SCHEDULE_EXACT_ALARM;end';
     } catch (e2) {
@@ -424,7 +430,7 @@ export async function createNotificationChannels(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     return;
   }
-  
+
   for (const [soundId, config] of Object.entries(SOUND_CHANNEL_MAP)) {
     try {
       if (config.sound) {
@@ -460,13 +466,13 @@ export async function initializeNotifications(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     return;
   }
-  
+
   await createNotificationChannels();
   await rescheduleAllAlarms();
-  
+
   LocalNotifications.addListener('localNotificationReceived', async (notification) => {
     console.log('[Notifications] Received:', notification);
-    
+
     if (notification.extra?.alarmId && !notification.extra?.isUserAlarm) {
       const alarms = await getAlarms();
       const alarm = alarms.find(a => a.id === notification.extra.alarmId);
@@ -475,16 +481,16 @@ export async function initializeNotifications(): Promise<void> {
       }
     }
   });
-  
+
   LocalNotifications.addListener('localNotificationActionPerformed', async (action) => {
     console.log('[Notifications] Action performed:', action);
-    
+
     const alarmId = action.notification.extra?.alarmId;
     const isUserAlarm = action.notification.extra?.isUserAlarm;
-    
+
     if (alarmId && isUserAlarm) {
       const alarmPath = `/alarm?alarmId=${alarmId}`;
-      
+
       if (isIOSNative()) {
         window.location.hash = alarmPath;
         setTimeout(() => {
@@ -506,21 +512,21 @@ export async function openAndroidNotificationSettings(): Promise<void> {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
     return;
   }
-  
+
   try {
     const { App } = await import('@capacitor/app');
     const appInfo = await App.getInfo();
     const packageName = appInfo.id;
-    
+
     const notificationSettingsUrl = `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${packageName};end`;
-    
+
     try {
       window.location.href = notificationSettingsUrl;
       return;
     } catch (e1) {
       console.warn('[Notifications] APP_NOTIFICATION_SETTINGS failed:', e1);
     }
-    
+
     try {
       const appDetailsUrl = `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${packageName};end`;
       window.location.href = appDetailsUrl;
@@ -528,7 +534,7 @@ export async function openAndroidNotificationSettings(): Promise<void> {
     } catch (e2) {
       console.warn('[Notifications] APPLICATION_DETAILS_SETTINGS failed:', e2);
     }
-    
+
     try {
       const generalSettingsUrl = `intent:#Intent;action=android.settings.SETTINGS;end`;
       window.location.href = generalSettingsUrl;
@@ -536,7 +542,7 @@ export async function openAndroidNotificationSettings(): Promise<void> {
     } catch (e3) {
       console.warn('[Notifications] General settings fallback failed:', e3);
     }
-    
+
   } catch (e) {
     console.warn('[Notifications] Could not open Android notification settings:', e);
   }
@@ -546,7 +552,7 @@ export async function openAndroidAlarmSoundSettings(): Promise<void> {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
     return;
   }
-  
+
   try {
     const alarmSoundUrl = `intent:#Intent;action=android.intent.action.RINGTONE_PICKER;i.android.intent.extra.ringtone.TYPE=4;end`;
     window.location.href = alarmSoundUrl;

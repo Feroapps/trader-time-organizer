@@ -67,5 +67,11 @@
             </intent-filter>
         </receiver>
 
+        <activity
+            android:name=".AlarmActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
     </application>
 </manifest>
