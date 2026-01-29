@@ -1,0 +1,147 @@
+STRICT PATCH (DO EXACTLY). Do not refactor. Do not change any other files. No extra edits. Only the items below.
+
+PROJECT PACKAGE: com.feroapps.tradertime
+
+====================================================
+A) EDIT: android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+====================================================
+
+A1) Add this constant inside the class (near other ACTION_* constants):
+
+public static final String ACTION_FINISH_ALARM_ACTIVITY =
+        "com.feroapps.tradertime.ACTION_FINISH_ALARM_ACTIVITY";
+
+A2) Add this method inside the class (place near stopAlarm()):
+
+private void requestFinishAlarmActivity() {
+    Intent i = new Intent(ACTION_FINISH_ALARM_ACTIVITY);
+    i.setPackage(getPackageName());
+    sendBroadcast(i);
+}
+
+A3) Ensure these imports exist at top (add only if missing):
+import android.content.Intent;
+import android.app.NotificationManager;
+
+A4) Replace the existing stopAlarm() method with EXACTLY this (there must be ONLY ONE stopAlarm() in this file after edit):
+
+private void stopAlarm() {
+    stopAlarmSound();
+    cancelTimeout();
+
+    requestFinishAlarmActivity();
+
+    NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    if (nm != null) {
+        nm.notify(NOTIFICATION_ID, buildStoppedNotification());
+    }
+
+    stopForeground(false);
+
+    Log.i(TAG, "Alarm stopped, notification preserved");
+}
+
+IMPORTANT:
+- Remove any duplicated stopAlarm() methods. Keep only the one above.
+
+====================================================
+B) CREATE/REPLACE: android/app/src/main/java/com/feroapps/tradertime/AlarmActivity.java
+====================================================
+
+Create file if missing. If it exists, REPLACE its entire content with EXACTLY this:
+
+package com.feroapps.tradertime;
+
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.WindowManager;
+
+public class AlarmActivity extends Activity {
+
+    private final BroadcastReceiver finishReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (AlarmSoundService.ACTION_FINISH_ALARM_ACTIVITY.equals(intent.getAction())) {
+                finish();
+            }
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().addFlags(
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                            | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                            | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                            | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            );
+        }
+
+        Intent openMain = new Intent(this, MainActivity.class);
+        openMain.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(openMain);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(finishReceiver, new IntentFilter(AlarmSoundService.ACTION_FINISH_ALARM_ACTIVITY));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            unregisterReceiver(finishReceiver);
+        } catch (Exception ignored) {}
+    }
+}
+
+====================================================
+C) EDIT: android/app/src/main/java/com/feroapps/tradertime/AlarmReceiver.java
+====================================================
+
+In onReceive(), BEFORE starting AlarmSoundService (before ContextCompat.startForegroundService), add EXACTLY this:
+
+Intent a = new Intent(context, AlarmActivity.class);
+a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+context.startActivity(a);
+
+Do not remove existing extras. Do not change service start logic.
+
+====================================================
+D) EDIT: android/app/src/main/AndroidManifest.xml
+====================================================
+
+D1) Add this permission BEFORE <application> (with other uses-permission):
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+
+D2) Inside <application> add/register AlarmActivity (near MainActivity). Add EXACTLY:
+
+<activity
+    android:name=".AlarmActivity"
+    android:exported="false"
+    android:excludeFromRecents="true"
+    android:taskAffinity=""
+    android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+
+====================================================
+E) FINAL COMMANDS (run from project root, in this order)
+====================================================
+
+npm run build
+npx cap sync android
+
+DONE. Return only: list of files changed + confirmation build/sync succeeded.

@@ -29,6 +29,9 @@ public class AlarmSoundService extends Service {
 
     public static final String ACTION_STOP = "com.feroapps.tradertime.ACTION_STOP";
 
+    public static final String ACTION_FINISH_ALARM_ACTIVITY =
+            "com.feroapps.tradertime.ACTION_FINISH_ALARM_ACTIVITY";
+
     public static final String EXTRA_ALARM_ID = "alarm_id";
     public static final String EXTRA_ALARM_LABEL = "alarm_label";
     public static final String EXTRA_SOUND_ID = "sound_id";
@@ -76,7 +79,7 @@ public class AlarmSoundService extends Service {
 
         if (ACTION_STOP.equals(action)) {
             Log.i(TAG, "STOP action received");
-            stopAlarmSound();
+            stopAlarm();
             return START_NOT_STICKY;
         }
 
@@ -119,11 +122,22 @@ public class AlarmSoundService extends Service {
         stopAlarmSound();
         cancelTimeout();
 
+        requestFinishAlarmActivity();
+
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(STOPPED_NOTIFICATION_ID, buildStoppedNotification());
         }
-        Log.i(TAG, "Alarm stopped, stopped notification shown");
+
+        stopForeground(false);
+
+        Log.i(TAG, "Alarm stopped, notification preserved");
+    }
+
+    private void requestFinishAlarmActivity() {
+        Intent i = new Intent(ACTION_FINISH_ALARM_ACTIVITY);
+        i.setPackage(getPackageName());
+        sendBroadcast(i);
     }
 
     private void createNotificationChannel() {
@@ -283,8 +297,22 @@ public class AlarmSoundService extends Service {
     }
 
     private void registerStopOnScreenOff() {
-        // Disabled: waking the screen would instantly trigger SCREEN_OFF logic otherwise
-        // Screen-off stop is no longer used
+        if (screenReceiver != null) return;
+
+        screenReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String a = intent.getAction();
+                if (Intent.ACTION_SCREEN_OFF.equals(a)) {
+                    Log.i(TAG, "SCREEN_OFF detected -> stopping alarm");
+                    stopAlarmSound();
+                }
+            }
+        };
+
+        IntentFilter f = new IntentFilter();
+        f.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(screenReceiver, f);
     }
 
     private void registerStopOnVolumeChange() {
