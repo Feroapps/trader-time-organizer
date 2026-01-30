@@ -18,7 +18,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, "===== AlarmReceiver.onReceive ENTERED =====");
         Log.i(TAG, "Current time (ms): " + System.currentTimeMillis());
-        
+
         String alarmId = intent.getStringExtra(EXTRA_ALARM_ID);
         String label = intent.getStringExtra(EXTRA_ALARM_LABEL);
         String soundId = intent.getStringExtra(EXTRA_SOUND_ID);
@@ -30,6 +30,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Start AlarmActivity to wake screen and open app
         Intent alarmActivityIntent = new Intent(context, AlarmActivity.class);
         alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        alarmActivityIntent.putExtra(AlarmSoundService.EXTRA_ALARM_LABEL, label);
         context.startActivity(alarmActivityIntent);
 
         Intent serviceIntent = new Intent(context, AlarmSoundService.class);
