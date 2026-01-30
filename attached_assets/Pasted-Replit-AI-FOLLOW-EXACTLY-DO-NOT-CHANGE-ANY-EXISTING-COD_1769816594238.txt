@@ -1,0 +1,180 @@
+Replit AI — FOLLOW EXACTLY. DO NOT CHANGE ANY EXISTING CODE OR BEHAVIOR.
+Only ADD/EDIT what is explicitly listed. No refactor, no renaming, no cleanup.
+
+GOAL:
+1) Add Android AccessibilityService to attempt stopping the currently ringing alarm on POWER button press.
+2) Add a simple Alarm screen showing ONLY: alarm label + STOP button.
+3) Keep existing alarm stop behavior (including the existing “stopped notification”) unchanged.
+
+ABSOLUTE RULES:
+- Do NOT modify any existing logic except the explicit minimal edits below.
+- Do NOT change notification channels/sounds/scheduling logic.
+- Do NOT remove or change existing volume-button behavior.
+- Do NOT add libraries.
+- Do NOT change any existing UI except adding AlarmActivity layout.
+- Do NOT touch any other files than those listed below.
+
+========================
+STEP 1) Create AccessibilityService config XML
+Create file:
+android/app/src/main/res/xml/alarm_accessibility_service.xml
+
+Content (exact):
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="0"
+    android:canRequestFilterKeyEvents="true" />
+
+========================
+STEP 2) Create AccessibilityService class
+Create file:
+android/app/src/main/java/com/feroapps/tradertime/AlarmPowerAccessibilityService.java
+
+Content (exact):
+package com.feroapps.tradertime;
+
+import android.accessibilityservice.AccessibilityService;
+import android.content.Intent;
+import android.view.KeyEvent;
+import android.view.accessibility.AccessibilityEvent;
+
+public class AlarmPowerAccessibilityService extends AccessibilityService {
+
+    @Override
+    protected boolean onKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() == KeyEvent.KEYCODE_POWER) {
+
+            Intent i = new Intent(this, AlarmSoundService.class);
+            i.setAction(AlarmSoundService.ACTION_STOP);
+            startService(i);
+
+            return true;
+        }
+        return super.onKeyEvent(event);
+    }
+
+    @Override public void onAccessibilityEvent(AccessibilityEvent event) {}
+    @Override public void onInterrupt() {}
+}
+
+========================
+STEP 3) Create Alarm UI layout (label + STOP only)
+Create file:
+android/app/src/main/res/layout/activity_alarm.xml
+
+Content (exact):
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvAlarmLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Alarm"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnStop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="STOP"
+        android:layout_marginTop="20dp" />
+</LinearLayout>
+
+========================
+STEP 4) Create AlarmActivity (label + STOP only)
+Create file:
+android/app/src/main/java/com/feroapps/tradertime/AlarmActivity.java
+
+Content (exact):
+package com.feroapps.tradertime;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class AlarmActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_alarm);
+
+        String label = getIntent().getStringExtra(AlarmSoundService.EXTRA_ALARM_LABEL);
+        if (label == null) label = "Alarm";
+
+        TextView tv = findViewById(R.id.tvAlarmLabel);
+        tv.setText(label);
+
+        findViewById(R.id.btnStop).setOnClickListener(v -> {
+            Intent i = new Intent(this, AlarmSoundService.class);
+            i.setAction(AlarmSoundService.ACTION_STOP);
+            startService(i);
+            finish();
+        });
+    }
+}
+
+========================
+STEP 5) Register AlarmActivity + AccessibilityService in AndroidManifest.xml
+Edit file:
+android/app/src/main/AndroidManifest.xml
+
+Inside <application> add EXACTLY these blocks (do not change anything else):
+
+<activity
+    android:name=".AlarmActivity"
+    android:exported="false" />
+
+<service
+    android:name=".AlarmPowerAccessibilityService"
+    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+    </intent-filter>
+    <meta-data
+        android:name="android.accessibilityservice"
+        android:resource="@xml/alarm_accessibility_service" />
+</service>
+
+========================
+STEP 6) Pass alarm label into AlarmActivity (full-screen intent)
+Edit file:
+android/app/src/main/java/com/feroapps/tradertime/AlarmSoundService.java
+
+Find where fsIntent is created:
+Intent fsIntent = new Intent(this, AlarmActivity.class);
+
+Immediately after it, add ONLY:
+fsIntent.putExtra(EXTRA_ALARM_LABEL, currentLabel);
+
+If currentLabel is not in scope, use the exact label variable already used in:
+.setContentText(<labelVariable>)
+and pass that same variable.
+
+Do NOT change any other lines.
+
+========================
+STEP 7) Sync + Build (required)
+Run:
+npx cap sync android
+Then run Android build (Gradle) to confirm compilation succeeds.
+
+FINAL RESPONSE FORMAT (strict):
+Return ONLY:
+- Files created (paths)
+- Exact manifest lines added
+- Exact file + location where you inserted fsIntent.putExtra(...)
+- Confirmation: cap sync android completed + Android build succeeded
+No explanations. No suggestions. No extra changes.
