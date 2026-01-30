@@ -4,23 +4,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.ContentObserver;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.provider.Settings;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-
+import android.graphics.Bitmap;
 import androidx.core.app.NotificationCompat;
 
 public class AlarmSoundService extends Service {
@@ -42,11 +35,6 @@ public class AlarmSoundService extends Service {
 
     private static final long ALARM_TIMEOUT_MS = 120000;
 
-    private BroadcastReceiver screenReceiver;
-    private ContentObserver volumeObserver;
-    private AudioManager audioManager;
-    private int lastAlarmVolume = -1;
-
     private MediaPlayer mediaPlayer;
     private Handler timeoutHandler;
     private Runnable timeoutRunnable;
@@ -58,11 +46,7 @@ public class AlarmSoundService extends Service {
     public void onCreate() {
         super.onCreate();
         timeoutHandler = new Handler(Looper.getMainLooper());
-        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-
         createNotificationChannel();
-        registerStopOnScreenOff();
-        registerStopOnVolumeChange();
     }
 
     @Override
@@ -82,7 +66,7 @@ public class AlarmSoundService extends Service {
             stopAlarm();
             return START_NOT_STICKY;
         }
-
+        startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
         currentAlarmId = intent.getStringExtra(EXTRA_ALARM_ID);
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
@@ -112,13 +96,14 @@ public class AlarmSoundService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopAlarmSound();
+        stopAlarm();
         cancelTimeout();
-        unregisterStopListeners();
         Log.i(TAG, "Service destroyed");
     }
-
+    private boolean alreadystopped = false;
     private void stopAlarm() {
+        if(alreadystopped) return;
+        alreadystopped = true;
         stopAlarmSound();
         cancelTimeout();
 
@@ -130,7 +115,7 @@ public class AlarmSoundService extends Service {
         }
 
         stopForeground(false);
-
+        stopSelf();
         Log.i(TAG, "Alarm stopped, notification preserved");
     }
 
@@ -168,24 +153,47 @@ public class AlarmSoundService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         Intent openIntent = new Intent(this, MainActivity.class);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent openPendingIntent = PendingIntent.getActivity(
                 this,
                 1,
                 openIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
+        Intent fsIntent = new Intent(this, AlarmActivity.class);
+        fsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(
+                this,
+                1001,
+                fsIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Bitmap bigBitmap = BitmapFactory.decodeResource(
+                getResources(), R.mipmap.ic_launcher);
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Trader Time Alert")
                 .setContentText(currentLabel)
                 .setSmallIcon(R.drawable.ic_stat_notification)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_stat_notification1))
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(currentLabel))
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setLargeIcon(BitmapFactory.decodeResource(
+                        getResources(), R.mipmap.ic_stat_notification1))
+                .setStyle(
+                        new NotificationCompat.BigPictureStyle()
+                                .bigPicture(bigBitmap)
+                                .setSummaryText(currentLabel)
+                                .bigLargeIcon((Bitmap)null)
+                )
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .addAction(
+                        android.R.drawable.ic_menu_close_clear_cancel,
+                        "STOP",
+                        stopPendingIntent
+                )
                 .setContentIntent(openPendingIntent)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "STOP", stopPendingIntent)
                 .build();
     }
 
@@ -203,9 +211,12 @@ public class AlarmSoundService extends Service {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Alarm stopped")
                 .setContentText("Tap to open app")
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(R.drawable.ic_stat_notification)
                 .setOngoing(false)
                 .setAutoCancel(false)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_stat_notification1))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(currentLabel))
+                .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(openPendingIntent)
                 .build();
@@ -294,72 +305,5 @@ public class AlarmSoundService extends Service {
 
     private int getResId(String resName) {
         return getResources().getIdentifier(resName, "raw", getPackageName());
-    }
-
-    private void registerStopOnScreenOff() {
-        if (screenReceiver != null) return;
-
-        screenReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String a = intent.getAction();
-                if (Intent.ACTION_SCREEN_OFF.equals(a)) {
-                    Log.i(TAG, "SCREEN_OFF detected -> stopping alarm");
-                    stopAlarmSound();
-                }
-            }
-        };
-
-        IntentFilter f = new IntentFilter();
-        f.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(screenReceiver, f);
-    }
-
-    private void registerStopOnVolumeChange() {
-        if (volumeObserver != null) return;
-
-        if (audioManager != null) {
-            lastAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
-            Log.i(TAG, "Initial ALARM volume: " + lastAlarmVolume);
-        }
-
-        volumeObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
-            @Override
-            public void onChange(boolean selfChange, Uri uri) {
-                super.onChange(selfChange, uri);
-
-                if (audioManager == null) return;
-
-                int v = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
-                if (lastAlarmVolume != -1 && v != lastAlarmVolume) {
-                    Log.i(TAG, "ALARM volume changed " + lastAlarmVolume + " -> " + v + " => stopping alarm");
-                    stopAlarmSound();
-                }
-                lastAlarmVolume = v;
-            }
-
-            @Override
-            public void onChange(boolean selfChange) {
-                onChange(selfChange, null);
-            }
-        };
-
-        getContentResolver().registerContentObserver(Settings.System.CONTENT_URI, true, volumeObserver);
-    }
-
-    private void unregisterStopListeners() {
-        try {
-            if (screenReceiver != null) {
-                unregisterReceiver(screenReceiver);
-                screenReceiver = null;
-            }
-        } catch (Exception ignored) {}
-
-        try {
-            if (volumeObserver != null) {
-                getContentResolver().unregisterContentObserver(volumeObserver);
-                volumeObserver = null;
-            }
-        } catch (Exception ignored) {}
     }
 }
