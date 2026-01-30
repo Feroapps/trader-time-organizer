@@ -208,6 +208,7 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
         id: notificationId,
         title: 'Trader Time Alert',
         body: alarm.label,
+        smallIcon: 'ic_stat_session',
         schedule: {
           at: nextOccurrence,
           allowWhileIdle: true,
