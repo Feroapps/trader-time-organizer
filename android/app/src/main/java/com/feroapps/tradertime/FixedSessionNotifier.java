@@ -40,13 +40,18 @@ public class FixedSessionNotifier {
 
         Bitmap bigImage = BitmapFactory.decodeResource(
                 context.getResources(),
-                R.mipmap.ic_launcher
+                R.drawable.ic_notification_large
+        );
+
+        Bitmap bigLargeIcon = BitmapFactory.decodeResource(
+                context.getResources(),
+                R.drawable.ic_notification_large
         );
 
         NotificationCompat.BigPictureStyle style =
                 new NotificationCompat.BigPictureStyle()
                         .bigPicture(bigImage)
-                        .bigLargeIcon(null);
+                        .bigLargeIcon(bigLargeIcon);
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
