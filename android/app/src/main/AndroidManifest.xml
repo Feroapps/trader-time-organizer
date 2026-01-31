@@ -48,6 +48,10 @@
 
         <receiver android:name=".AlarmReceiver" android:exported="false" />
 
+        <receiver
+            android:name=".FixedSessionAlarmReceiver"
+            android:exported="false" />
+
         <service
             android:name=".AlarmSoundService"
             android:exported="false"
