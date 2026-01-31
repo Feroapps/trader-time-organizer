@@ -66,14 +66,13 @@ public class AlarmSoundService extends Service {
             stopAlarm();
             return START_NOT_STICKY;
         }
-        startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
         currentAlarmId = intent.getStringExtra(EXTRA_ALARM_ID);
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
 
         if (currentLabel == null) currentLabel = "Trader Time Alert";
         if (currentSoundId == null) currentSoundId = "original";
-
+        startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
         Log.i(TAG, "alarmId: " + currentAlarmId);
         Log.i(TAG, "label: " + currentLabel);
         Log.i(TAG, "soundId: " + currentSoundId);
@@ -161,13 +160,15 @@ public class AlarmSoundService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         Intent fsIntent = new Intent(this, AlarmActivity.class);
+        fsIntent.putExtra(EXTRA_ALARM_LABEL, currentLabel);
         fsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
         PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(
                 this,
                 1001,
                 fsIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+
 
         Bitmap bigBitmap = BitmapFactory.decodeResource(
                 getResources(), R.mipmap.ic_launcher);

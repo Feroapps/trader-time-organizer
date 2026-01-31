@@ -23,7 +23,19 @@ public class AlarmActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_alarm);
 
+        String label = getIntent().getStringExtra(AlarmSoundService.EXTRA_ALARM_LABEL);
+        if (label == null) label = "Trader Time Alert";
+
+        ((android.widget.TextView) findViewById(R.id.tvAlarmLabel)).setText(label);
+
+        findViewById(R.id.btnStop).setOnClickListener(v -> {
+            android.content.Intent i = new android.content.Intent(this, AlarmSoundService.class);
+            i.setAction(AlarmSoundService.ACTION_STOP);
+            startService(i);
+            finish();
+        });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
