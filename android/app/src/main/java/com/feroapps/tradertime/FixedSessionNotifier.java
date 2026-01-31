@@ -40,7 +40,7 @@ public class FixedSessionNotifier {
 
         Bitmap bigImage = BitmapFactory.decodeResource(
                 context.getResources(),
-                R.drawable.ic_session_banner
+                R.mipmap.ic_launcher
         );
 
         NotificationCompat.BigPictureStyle style =
