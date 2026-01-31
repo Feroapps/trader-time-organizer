@@ -148,13 +148,6 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
     return;
   }
 
-  // Fixed trading sessions are handled by native exact scheduling (FixedSessionScheduler).
-  // Prevent duplicate notifications on Android.
-  if (alarm.isFixed && isAndroidNative()) {
-    console.log('[Notifications] Skipping fixed session scheduling in TS (Android native handles it).');
-    return;
-  }
-
   const nextOccurrence = getNextOccurrence(alarm);
 
   if (!nextOccurrence) {
@@ -183,6 +176,13 @@ export async function scheduleAlarmNotification(alarm: Alarm): Promise<void> {
 
 
   await cancelAlarmNotification(alarm.id, !alarm.isFixed);
+
+  // Fixed trading sessions are handled by native exact scheduling (FixedSessionScheduler).
+  // Prevent duplicate notifications on Android.
+  if (alarm.isFixed && isAndroidNative()) {
+    console.log('[Notifications] Skipping fixed session scheduling in TS (Android native handles it).');
+    return;
+  }
 
   if (!alarm.isFixed && isAndroidNative()) {
   console.log('[Notifications] ===== SCHEDULING USER ALARM VIA ANDROID NATIVE =====');
