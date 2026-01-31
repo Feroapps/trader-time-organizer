@@ -8,7 +8,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "Start of Sydney session",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 5,
   },
   {
     hourUTC: 0,
@@ -17,7 +17,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "Overlap of Tokyo + Sydney session",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 5,
   },
   {
     hourUTC: 6,
@@ -26,7 +26,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "End of Sydney session",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 5,
   },
   {
     hourUTC: 7,
@@ -44,7 +44,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "End of Tokyo session",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 6,
   },
   {
     hourUTC: 13,
@@ -71,7 +71,7 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "New York close / Sydney opens",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 6,
   },
   {
     hourUTC: 22,
@@ -80,6 +80,6 @@ export const fixedAlarms: CreateAlarmInput[] = [
     label: "End of week - New York close",
     isFixed: true,
     isEnabled: true,
-    duration: 10,
+    duration: 5,
   },
 ];
