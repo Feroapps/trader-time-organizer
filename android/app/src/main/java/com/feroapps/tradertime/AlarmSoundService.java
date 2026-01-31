@@ -162,7 +162,6 @@ public class AlarmSoundService extends Service {
         );
         Intent fsIntent = new Intent(this, AlarmActivity.class);
         fsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        fsIntent.putExtra(EXTRA_ALARM_LABEL, currentLabel);
 
         PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(
                 this,
