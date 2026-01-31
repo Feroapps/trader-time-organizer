@@ -30,14 +30,14 @@ public class UserAlarmPlugin extends Plugin {
     @PluginMethod
     public void scheduleAlarm(PluginCall call) {
         Log.i(TAG, "===== scheduleAlarm ENTERED =====");
-        
+
         String alarmId = call.getString("alarmId");
         String label = call.getString("label");
         Long triggerTimeMs = call.getLong("triggerTimeMs");
         String soundId = call.getString("soundId", "original");
-        
+
         long now = System.currentTimeMillis();
-        
+
         Log.i(TAG, "alarmId: " + alarmId);
         Log.i(TAG, "label: " + label);
         Log.i(TAG, "triggerTimeMs: " + triggerTimeMs);
@@ -54,7 +54,7 @@ public class UserAlarmPlugin extends Plugin {
             call.resolve(result);
             return;
         }
-        
+
         if (triggerTimeMs <= now) {
             Log.e(TAG, "ERROR: triggerTimeMs is in the PAST! Not scheduling.");
             JSObject result = new JSObject();
@@ -75,7 +75,7 @@ public class UserAlarmPlugin extends Plugin {
 
             int requestCode = alarmId.hashCode();
             Log.i(TAG, "requestCode (hashCode): " + requestCode);
-            
+
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,
@@ -86,7 +86,7 @@ public class UserAlarmPlugin extends Plugin {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 boolean canScheduleExact = alarmManager.canScheduleExactAlarms();
                 Log.i(TAG, "canScheduleExactAlarms: " + canScheduleExact);
-                
+
                 if (canScheduleExact) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent);
                     Log.i(TAG, "SUCCESS: Scheduled EXACT alarm: " + alarmId + " at " + triggerTimeMs + " (in " + ((triggerTimeMs - now) / 1000) + " sec)");
@@ -109,7 +109,7 @@ public class UserAlarmPlugin extends Plugin {
             result.put("success", true);
             result.put("alarmId", alarmId);
             call.resolve(result);
-            
+
             Log.i(TAG, "===== scheduleAlarm COMPLETED SUCCESSFULLY =====");
 
         } catch (Exception e) {

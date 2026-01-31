@@ -113,7 +113,7 @@ public class AlarmSoundService extends Service {
             nm.notify(STOPPED_NOTIFICATION_ID, buildStoppedNotification());
         }
 
-        stopForeground(false);
+        stopForeground(true);
         stopSelf();
         Log.i(TAG, "Alarm stopped, notification preserved");
     }
@@ -217,7 +217,6 @@ public class AlarmSoundService extends Service {
                 .setAutoCancel(false)
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_stat_notification1))
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(currentLabel))
-                .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(openPendingIntent)
                 .build();

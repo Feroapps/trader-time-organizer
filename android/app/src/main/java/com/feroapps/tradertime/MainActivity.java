@@ -9,5 +9,6 @@ public class MainActivity extends BridgeActivity {
   protected void onCreate(Bundle savedInstanceState) {
     registerPlugin(UserAlarmPlugin.class);
     super.onCreate(savedInstanceState);
+    FixedSessionScheduler.scheduleAllEnabledFixedSessions(this);
   }
 }
