@@ -1,0 +1,65 @@
+REPLIT AI — STRICT INSTRUCTIONS. FOLLOW EXACTLY.
+
+DO NOT modify any existing files except the exact edits below.
+DO NOT refactor, rename, optimize, or auto-correct anything.
+
+GOAL:
+Schedule fixed session alarms on DEVICE BOOT.
+
+STEP 1) CREATE ONE NEW FILE (Boot Receiver)
+Create file (EXACT):
+android/app/src/main/java/com/feroapps/tradertime/FixedSessionBootReceiver.java
+
+Content (EXACT — NO CHANGES):
+
+package com.feroapps.tradertime;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+public class FixedSessionBootReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (action == null) return;
+
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
+                || "android.intent.action.QUICKBOOT_POWERON".equals(action)
+                || "com.htc.intent.action.QUICKBOOT_POWERON".equals(action)) {
+            FixedSessionScheduler.scheduleAllEnabledFixedSessions(context);
+        }
+    }
+}
+
+STEP 2) EDIT AndroidManifest.xml (EXACT MINIMAL CHANGES)
+File:
+android/app/src/main/AndroidManifest.xml
+
+A) Add permission EXACTLY once (do not duplicate):
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+Place it near other <uses-permission> lines, outside <application>.
+
+B) Inside <application>, add this receiver block EXACTLY (do not change anything else):
+
+<receiver
+    android:name=".FixedSessionBootReceiver"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+        <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+    </intent-filter>
+</receiver>
+
+RULES:
+- Do NOT modify any other lines.
+- Do NOT change existing receivers/services/activities.
+- Do NOT run sync/build.
+
+FINAL RESPONSE MUST INCLUDE ONLY:
+- Files created (paths)
+- Exact manifest lines added + line numbers
+- No other output.
