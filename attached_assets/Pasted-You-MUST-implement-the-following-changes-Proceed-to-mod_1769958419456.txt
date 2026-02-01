@@ -1,0 +1,76 @@
+You MUST implement the following changes. Proceed to modify files. No placeholders. Keep changes minimal and safe.
+
+GOAL:
+1) Remove the “Ad Required” blocking flow BEFORE saving an alert.
+2) Save alerts immediately, then show an OPTIONAL support modal offering a Rewarded Ad.
+3) Keep the Eye icon “pairs reveal” gated behind a Rewarded Ad (unlock flow).
+4) Centralize all ad calls through client/src/utils/adService.ts.
+5) Add Capacitor-native bridge calls for Android Rewarded Ads with a safe web fallback (existing setTimeout stub).
+6) Do NOT add a “Don’t show again” option. Only two buttons.
+
+FILES & REQUIRED CHANGES:
+
+A) client/src/components/AdRequiredModal.tsx
+- Keep it as a generic reusable modal (title/message/continue/cancel props).
+- Ensure labels can be customized per usage.
+
+B) client/src/screens/Home.tsx
+- Locate current “Save Alert ad prompt” using adModalOpen and “Ad Required”.
+- Change save flow:
+  - On Save: perform save immediately (no ad gating).
+  - After successful save: open a new modal (reuse AdRequiredModal) with:
+    Title: "Alert saved successfully"
+    Message: "If you’d like to support the development of Trader Time Organizer, you can watch a short ad. Watching the ad is optional and won’t affect your alerts."
+    Buttons: Primary: "Support & Watch", Secondary: "Not now"
+  - Primary button calls adService.showRewardedAd(), then closes modal, then show a brief thank-you toast/message.
+  - Secondary closes modal only.
+- Locate Eye icon / pairs reveal prompt.
+  - Update text to:
+    Title: "Unlock pairs"
+    Message: "Watch a short ad to unlock the strongest trading pairs for this session."
+    Buttons: "Continue" / "Not now"
+  - Continue calls adService.showRewardedAd(), then reveal pairs.
+
+C) client/src/screens/DayView.tsx
+- Same save flow change as Home:
+  - Save immediately
+  - After save, show the same optional support modal (2 buttons only)
+  - Support & Watch triggers adService.showRewardedAd() then thank-you
+
+D) client/src/utils/adService.ts
+- Current implementation is stubbed with setTimeout. Keep web fallback.
+- Add Capacitor detection and a native bridge call:
+  - If running on Capacitor Android and a plugin is available, call it for rewarded ads.
+  - Else fallback to stub setTimeout.
+- Provide:
+  - async showRewardedAd(): Promise<void>
+  - (optional) async showInterstitialAd(): Promise<void> (keep stub)
+- Make sure showRewardedAd resolves after ad closes, rejects on error.
+
+CAPACITOR PLUGIN (ADD):
+- Create a Capacitor Android plugin under android/app/src/main/java/... (choose a reasonable package name consistent with the project)
+- Plugin name: RewardedAds
+- Methods:
+  - load(options: { adUnitId: string })
+  - show(): resolves when reward earned OR ad closed (include a boolean in the resolve payload e.g., rewarded: true/false)
+- Use Google Mobile Ads SDK RewardedAd.
+- Initialize MobileAds if needed.
+- Ensure calls are safe if ad is not loaded: auto-load then show, or return a clear error.
+- Expose plugin to the web layer via Capacitor (add the needed registration).
+
+CONFIG:
+- Use these IDs (hardcode for now; we will refactor later):
+  App ID: ca-app-pub-9912951398967782~9777013433
+  Rewarded Ad Unit ID: ca-app-pub-9912951398967782/8731525076
+
+OUTPUT:
+- After changes, provide:
+  1) A concise list of modified/created files
+  2) Where to paste App ID in AndroidManifest (if not already present)
+  3) How to test: click Save -> saved -> optional modal -> Support & Watch
+     and Eye icon -> Unlock pairs -> rewarded -> show pairs
+
+Important constraints:
+- Do NOT block saving behind ads.
+- Do NOT add “Don’t show again”.
+- Do NOT add any new ad placements beyond these two flows.

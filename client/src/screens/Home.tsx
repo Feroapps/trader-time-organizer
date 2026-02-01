@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp, FileText, Plus, StickyNote, Eye } from "lucide-
 import { AlertModal } from "@/components/AlertModal";
 import { FixedAlarmModal } from "@/components/FixedAlarmModal";
 import { AdRequiredModal } from "@/components/AdRequiredModal";
-import { showInterstitialAd } from "@/utils/adService";
+import { showRewardedAd } from "@/utils/adService";
 import { useToast } from "@/hooks/use-toast";
 import type { Alarm, CreateAlarmInput, CreateNoteInput } from "@/types";
 
@@ -38,39 +38,37 @@ export function Home() {
     return getTradingContext(getUtcHour(), status.isOpen);
   });
   const [isMarketOpen, setIsMarketOpen] = useState(() => getMarketStatus().isOpen);
-  const [adModalOpen, setAdModalOpen] = useState(false);
-  const [pendingAlertData, setPendingAlertData] = useState<CreateAlarmInput | null>(null);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [pairsAdModalOpen, setPairsAdModalOpen] = useState(false);
   const [pairsUnlocked, setPairsUnlocked] = useState(false);
 
-  function handleAlertSaveRequest(alertData: CreateAlarmInput) {
-    setPendingAlertData(alertData);
-    setAdModalOpen(true);
+  async function handleAlertSave(alertData: CreateAlarmInput) {
+    await createAlarm(alertData);
+    const allAlarms = await getAlarms();
+    setAlarms(allAlarms);
+    toast({ title: "Alert saved" });
+    setSupportModalOpen(true);
   }
 
-  function handleAdContinue() {
-    if (!pendingAlertData) return;
-    showInterstitialAd(async () => {
-      await createAlarm(pendingAlertData);
-      const allAlarms = await getAlarms();
-      setAlarms(allAlarms);
-      setPendingAlertData(null);
-      toast({ title: "Alert saved" });
-    });
+  async function handleSupportContinue() {
+    const rewarded = await showRewardedAd();
+    if (rewarded) {
+      toast({ title: "Thank you!", description: "Your support helps keep the app free." });
+    }
   }
 
-  function handleAdCancel() {
-    setPendingAlertData(null);
+  function handleSupportCancel() {
   }
 
   function handleViewPairsRequest() {
     setPairsAdModalOpen(true);
   }
 
-  function handlePairsAdContinue() {
-    showInterstitialAd(() => {
+  async function handlePairsAdContinue() {
+    const rewarded = await showRewardedAd();
+    if (rewarded) {
       setPairsUnlocked(true);
-    });
+    }
   }
 
   function handlePairsAdCancel() {
@@ -307,7 +305,7 @@ export function Home() {
       <AlertModal
         open={addAlertOpen}
         onOpenChange={setAddAlertOpen}
-        onSave={handleAlertSaveRequest}
+        onSave={handleAlertSave}
       />
 
       <NoteModal
@@ -322,21 +320,25 @@ export function Home() {
       />
 
       <AdRequiredModal
-        open={adModalOpen}
-        onOpenChange={setAdModalOpen}
-        title="Ad Required"
-        message="To keep Trader Time Organizer free, a short ad will be shown before saving this alert."
-        onContinue={handleAdContinue}
-        onCancel={handleAdCancel}
+        open={supportModalOpen}
+        onOpenChange={setSupportModalOpen}
+        title="Alert saved successfully"
+        message="If you'd like to support the development of Trader Time Organizer, you can watch a short ad. Watching the ad is optional and won't affect your alerts."
+        onContinue={handleSupportContinue}
+        onCancel={handleSupportCancel}
+        continueLabel="Support & Watch"
+        cancelLabel="Not now"
       />
 
       <AdRequiredModal
         open={pairsAdModalOpen}
         onOpenChange={setPairsAdModalOpen}
-        title="Ad Required"
-        message="Viewing session-based trading pairs is supported by a short ad."
+        title="Unlock pairs"
+        message="Watch a short ad to unlock the strongest trading pairs for this session."
         onContinue={handlePairsAdContinue}
         onCancel={handlePairsAdCancel}
+        continueLabel="Continue"
+        cancelLabel="Not now"
       />
     </div>
   );

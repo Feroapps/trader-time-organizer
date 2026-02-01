@@ -28,7 +28,7 @@ import { getNotes, createNote, deleteNote } from "@/storage/notesRepo";
 import { getAlarms, createAlarm, deleteAlarm } from "@/storage/alarmsRepo";
 import { AlertModal } from "@/components/AlertModal";
 import { AdRequiredModal } from "@/components/AdRequiredModal";
-import { showInterstitialAd } from "@/utils/adService";
+import { showRewardedAd } from "@/utils/adService";
 import type { Note, Alarm, CreateAlarmInput } from "@/types";
 
 const MONTH_NAMES = [
@@ -179,8 +179,7 @@ export function DayView() {
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [showAddNote, setShowAddNote] = useState(false);
   const [showAddAlert, setShowAddAlert] = useState(false);
-  const [adModalOpen, setAdModalOpen] = useState(false);
-  const [pendingAlertData, setPendingAlertData] = useState<CreateAlarmInput | null>(null);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
 
   const date = useMemo(() => parseRouteDate(params.date || ""), [params.date]);
 
@@ -269,24 +268,22 @@ export function DayView() {
     toast({ title: "Note added" });
   };
 
-  const handleAlertSaveRequest = (data: CreateAlarmInput) => {
-    setPendingAlertData(data);
-    setAdModalOpen(true);
+  const handleAlertSave = async (data: CreateAlarmInput) => {
+    await createAlarm(data);
+    await loadData();
+    toast({ title: "Alert saved" });
+    setSupportModalOpen(true);
   };
 
-  const handleAdContinue = () => {
-    if (!pendingAlertData) return;
-    showInterstitialAd(async () => {
-      await createAlarm(pendingAlertData);
-      await loadData();
-      setPendingAlertData(null);
-      toast({ title: "Alert saved" });
-    });
-  };
+  async function handleSupportContinue() {
+    const rewarded = await showRewardedAd();
+    if (rewarded) {
+      toast({ title: "Thank you!", description: "Your support helps keep the app free." });
+    }
+  }
 
-  const handleAdCancel = () => {
-    setPendingAlertData(null);
-  };
+  function handleSupportCancel() {
+  }
 
   const handleDeleteNote = async (id: string) => {
     await deleteNote(id);
@@ -446,16 +443,18 @@ export function DayView() {
       <AlertModal
         open={showAddAlert}
         onOpenChange={setShowAddAlert}
-        onSave={handleAlertSaveRequest}
+        onSave={handleAlertSave}
       />
 
       <AdRequiredModal
-        open={adModalOpen}
-        onOpenChange={setAdModalOpen}
-        title="Ad Required"
-        message="To keep Trader Time Organizer free, a short ad will be shown before saving this alert."
-        onContinue={handleAdContinue}
-        onCancel={handleAdCancel}
+        open={supportModalOpen}
+        onOpenChange={setSupportModalOpen}
+        title="Alert saved successfully"
+        message="If you'd like to support the development of Trader Time Organizer, you can watch a short ad. Watching the ad is optional and won't affect your alerts."
+        onContinue={handleSupportContinue}
+        onCancel={handleSupportCancel}
+        continueLabel="Support & Watch"
+        cancelLabel="Not now"
       />
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

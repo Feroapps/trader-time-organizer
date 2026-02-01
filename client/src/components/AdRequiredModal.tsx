@@ -15,6 +15,8 @@ interface AdRequiredModalProps {
   message: string;
   onContinue: () => void;
   onCancel: () => void;
+  continueLabel?: string;
+  cancelLabel?: string;
 }
 
 export function AdRequiredModal({
@@ -24,6 +26,8 @@ export function AdRequiredModal({
   message,
   onContinue,
   onCancel,
+  continueLabel = "Continue",
+  cancelLabel = "Cancel",
 }: AdRequiredModalProps) {
   function handleContinue() {
     onOpenChange(false);
@@ -50,13 +54,13 @@ export function AdRequiredModal({
             onClick={handleCancel}
             data-testid="button-ad-cancel"
           >
-            Cancel
+            {cancelLabel}
           </Button>
           <Button
             onClick={handleContinue}
             data-testid="button-ad-continue"
           >
-            Continue
+            {continueLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
