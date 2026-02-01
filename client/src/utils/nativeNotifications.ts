@@ -475,6 +475,18 @@ export async function initializeNotifications(): Promise<void> {
     return;
   }
 
+  const hasPermission = await requestNotificationPermissions();
+  console.log('[Notifications] Permission granted:', hasPermission);
+
+  if (!hasPermission) {
+    console.warn('[Notifications] No permission – abort initialization');
+    return;
+  }
+
+  await createNotificationChannels();
+  await rescheduleAllAlarms();
+  }
+
   await createNotificationChannels();
   await rescheduleAllAlarms();
 

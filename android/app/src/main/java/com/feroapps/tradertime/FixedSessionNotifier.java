@@ -48,10 +48,10 @@ public class FixedSessionNotifier {
                 R.drawable.ic_notification_large
         );
 
-        NotificationCompat.BigPictureStyle style =
-                new NotificationCompat.BigPictureStyle()
-                        .bigPicture(bigImage)
-                        .bigLargeIcon(bigLargeIcon);
+         NotificationCompat.BigPictureStyle style
+                = new NotificationCompat.BigPictureStyle();
+        style.bigPicture(bigImage);
+        style.bigLargeIcon(bigImage);
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
