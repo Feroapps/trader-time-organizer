@@ -485,10 +485,6 @@ export async function initializeNotifications(): Promise<void> {
 
   await createNotificationChannels();
   await rescheduleAllAlarms();
-  }
-
-  await createNotificationChannels();
-  await rescheduleAllAlarms();
 
   LocalNotifications.addListener('localNotificationReceived', async (notification) => {
     console.log('[Notifications] Received:', notification);
