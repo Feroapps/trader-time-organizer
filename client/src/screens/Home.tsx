@@ -232,16 +232,13 @@ export function Home() {
         >
           {tradingContext ? (
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="font-semibold" data-testid="text-context-time-range">
-                  {tradingContext.timeRange} UTC
-                </span>
-                {tradingContext.liquidity && (
+              {tradingContext.liquidity && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <span className="text-sm text-muted-foreground" data-testid="text-context-liquidity">
                     Liquidity: {tradingContext.liquidity}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
               <div className="text-sm" data-testid="text-context-behavior">
                 <span className="text-muted-foreground">Behavior: </span>
                 <span className="font-medium">{tradingContext.behavior}</span>
