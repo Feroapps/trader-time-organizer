@@ -1,0 +1,36 @@
+You must fix the Android build image issue by converting ALL notification/icon images to REAL PNG files.
+
+Context:
+- The project currently contains images that are JPEG-encoded but saved with .png extension (Android Studio shows "JPEG" for files like ic_stat_notification1.png).
+- This breaks AAPT2 compilation when generating a signed AAB.
+
+Goal:
+- Convert every affected image under android/app/src/main/res/** (drawable*, mipmap*, etc.) to true PNG encoding.
+- Keep file names the same when they are referenced by Android resources (e.g., ic_stat_notification1.png must remain that name if referenced).
+- Remove any .jpg/.jpeg originals after conversion (do not keep duplicates).
+- Ensure the Android build succeeds (AAPT2 resource compilation).
+
+Strict requirements:
+1) Scan these folders recursively:
+   - android/app/src/main/res/drawable*
+   - android/app/src/main/res/mipmap*
+   - android/app/src/main/res/raw (if any images exist)
+2) For every file with extension .png, verify its actual format by inspecting its header/magic bytes.
+   - If it is JPEG content, convert it to a real PNG (lossless).
+   - Overwrite the same .png path with the converted PNG output.
+3) For any .jpg/.jpeg files found in those res folders:
+   - Convert them to .png with the same base name.
+   - Update ALL references in Android resources if needed:
+     - XML under res/** (layouts, drawables, etc.)
+     - AndroidManifest.xml if any icon references exist
+   - Then delete the old .jpg/.jpeg files.
+4) Do NOT remove or rename resources unless you also update every reference.
+5) After conversions, run a cleanup step:
+   - Remove any duplicate icon/notification assets that only existed as JPEG copies.
+6) Provide a short report:
+   - List every file changed (before format -> after format)
+   - List every file deleted
+   - Confirm there are no JPEG-encoded files left in android/app/src/main/res/**
+7) Finally, ensure Gradle can compile resources successfully (no AAPT2 errors).
+
+Use the safest approach available in this environment (Node + a converter library, or a script executed by the agent). Do not ask me questions—just implement.
