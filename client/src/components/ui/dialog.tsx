@@ -3,8 +3,11 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
+import { Capacitor } from "@capacitor/core"
 
 import { cn } from "@/lib/utils"
+
+const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android"
 
 const Dialog = DialogPrimitive.Root
 
@@ -42,6 +45,7 @@ const DialogContent = React.forwardRef<
         className
       )}
       onOpenAutoFocus={(e) => { e.preventDefault(); onOpenAutoFocus?.(e); }}
+      {...(isAndroidNative ? { trapFocus: false } as any : {})}
       {...props}
     >
       {children}

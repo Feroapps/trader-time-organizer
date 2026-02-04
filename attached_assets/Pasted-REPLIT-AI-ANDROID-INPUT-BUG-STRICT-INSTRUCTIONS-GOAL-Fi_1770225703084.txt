@@ -1,0 +1,51 @@
+REPLIT AI — ANDROID INPUT BUG (STRICT INSTRUCTIONS)
+
+GOAL
+Fix Android (Capacitor WebView) issue where user cannot type in:
+1) NoteModal textarea (Add Note)
+2) AlertModal input (User alarm label / rename)
+
+SYMPTOM
+On Android native build only:
+- Keyboard may appear, but typing does not enter text (inputs behave “non-editable”).
+On PWA/desktop it works.
+
+ABSOLUTE RULES
+1) FIRST: Do a diagnosis summary (root cause hypothesis) BEFORE changing anything.
+2) Then apply the MINIMAL fix that restores typing on Android.
+3) DO NOT refactor, rename, reformat, optimize, or auto-correct unrelated code.
+4) DO NOT modify Android native files (android/**) unless you prove it’s required.
+5) Keep PWA behavior unchanged.
+6) After changes: provide a STRICT CHANGE REPORT:
+   - EXACT file paths changed
+   - For each file: show BEFORE and AFTER snippets for ONLY the edited lines/blocks
+   - Explain why each change is necessary (short)
+7) If you cannot be 100% sure, add an OPTIONAL “Plan B” but DO NOT implement Plan B.
+
+WHAT TO CHECK (DIAGNOSIS STEP)
+- Verify whether Radix Dialog focus trap is the cause on Android WebView:
+  - client/src/components/ui/dialog.tsx
+  - client/src/components/AlertModal.tsx
+  - client/src/components/NoteModal.tsx
+- Check if DialogContent wrapper forwards props like trapFocus / disableOutsidePointerEvents.
+- Confirm platform detection available via @capacitor/core.
+
+FIX REQUIREMENT (IMPLEMENTATION STEP)
+Implement ONE of these minimal fixes (choose the smallest):
+Option A (preferred): Disable trapFocus ONLY on Android native:
+- In the DialogContent wrapper OR in the two modals (AlertModal/NoteModal),
+  set trapFocus={false} ONLY when Capacitor.isNativePlatform() && Capacitor.getPlatform()==="android".
+- Keep trapFocus enabled on web/PWA and iOS.
+Option B: If trapFocus prop cannot be passed due to wrapper typing,
+  update dialog.tsx to forward all props correctly (without changing visuals).
+
+LIMIT SCOPE
+- Only touch files necessary to fix typing.
+- If you edit dialog.tsx, ensure you do NOT change styling/className strings.
+
+OUTPUT FORMAT
+1) DIAGNOSIS (short, bullet points)
+2) FIX APPLIED (what you did)
+3) STRICT CHANGE REPORT (files + exact diffs for edited blocks only)
+
+START NOW.
