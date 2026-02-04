@@ -1,0 +1,39 @@
+REPLIT AI — STRICT MODE. DO NOT CHANGE OR EDIT ANY FILES. NO COMMITS. NO INSTALLS. NO SYNC/BUILD.
+You are ONLY allowed to READ and ANALYZE the current repo state and respond with a report.
+
+TASK A — Dark Mode Status (post-fix verification)
+1) Verify the dark-mode persistence implementation is correct and complete:
+   - Confirm the inline <script> in client/index.html runs BEFORE React render and correctly applies/removes the "dark" class.
+   - Confirm App.tsx saves localStorage key "theme" with values "dark"/"light" when toggling.
+   - Check for any other code that may overwrite theme on startup (e.g., capacitorInit.ts, App.tsx effects, Tailwind config, CSS).
+2) List any remaining edge cases or regressions:
+   - Flash of wrong theme (FOUC) risk
+   - SSR/Prerender issues (if any)
+   - iOS WKWebView / Android WebView localStorage availability edge cases
+3) Output the exact file paths + line ranges you reviewed, and your PASS/FAIL verdict for theme persistence.
+
+TASK B — Android Release Readiness (NO CHANGES)
+1) Provide a go/no-go assessment for releasing the Android build to Play Console (internal/closed/production).
+2) Identify ONLY the top 10 highest-risk items that could cause:
+   - crash on launch
+   - alarms/notifications not firing
+   - ANR/background restrictions
+   - AdMob/rewarded ad failures
+   - permission-related failures (POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM, FOREGROUND_SERVICE)
+3) For each risk item:
+   - severity (Critical/High/Medium/Low)
+   - likelihood on real devices
+   - exact file(s) and line range(s) involved
+   - recommended mitigation (DESCRIPTION ONLY — do not apply)
+
+ABSOLUTE OUTPUT FORMAT (strict):
+- Section A: Dark Mode Verification
+  - Verdict: PASS/FAIL
+  - Evidence: bullets with file:line references
+  - Remaining Risks: bullets
+- Section B: Android Release Readiness
+  - Verdict: GO / GO WITH WARNINGS / NO-GO
+  - Top Risks (1..10): each with severity, likelihood, file:line, mitigation (description only)
+
+REMINDER:
+DO NOT MODIFY ANYTHING. DO NOT SUGGEST CHANGES OUTSIDE THE FORMAT. DO NOT RUN COMMANDS.
