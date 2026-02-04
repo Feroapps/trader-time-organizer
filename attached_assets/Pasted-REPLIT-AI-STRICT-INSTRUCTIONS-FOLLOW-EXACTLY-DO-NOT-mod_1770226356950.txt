@@ -1,0 +1,54 @@
+REPLIT AI — STRICT INSTRUCTIONS (FOLLOW EXACTLY)
+
+DO NOT modify any file.
+DO NOT run any refactor/format/cleanup.
+DO NOT add packages.
+DO NOT commit changes.
+ONLY investigate, reproduce, and report evidence.
+
+BUG TO VERIFY (Android Native ONLY):
+- In Capacitor Android build: inside Dialog modals (AlertModal + NoteModal), keyboard may appear but typing does NOT work.
+- PWA works normally.
+- Symptoms:
+  1) Cannot type in Note text area (NoteModal).
+  2) Cannot edit user alarm label/name input (AlertModal).
+- It used to work in a previous build (user claim), now broken in Android native.
+
+PROJECT FILES TO FOCUS ON:
+- client/src/components/AlertModal.tsx
+- client/src/components/NoteModal.tsx
+- client/src/components/ui/dialog.tsx
+- Any Radix/shadcn Dialog wrapper used by these modals
+
+WHAT YOU MUST DO:
+1) Reproduce (or simulate) as close as possible:
+   - Assume Android WebView/Capacitor environment.
+   - Identify if the issue can be reproduced by running Android build OR by reasoned analysis of Radix focus trap + WebView.
+2) Confirm whether Radix Dialog FocusScope "trapFocus" is the root cause on Android WebView:
+   - Look for trapFocus default behavior in Dialog implementation.
+   - Check if focus is being stolen during IME/keyboard activation.
+3) Provide HARD EVIDENCE from codebase:
+   - Quote exact code lines where Dialog enables focus trap.
+   - Quote exact lines in our dialog wrapper and whether we pass trapFocus / onOpenAutoFocus / onCloseAutoFocus.
+   - Mention Radix version(s) from package.json / lockfile.
+4) Provide a STRICT DIAGNOSIS with high confidence:
+   - “Root cause confirmed” or “Root cause not confirmed”
+   - If confirmed, explain the exact mechanism in 3–6 bullet points max.
+5) Provide a MINIMAL FIX PLAN (do not apply it):
+   - Option A: disable trapFocus ONLY on Android Native.
+   - Option B: keep trapFocus but disable FocusScope trapping/auto focus differently (if applicable).
+   - Mention which option is safest and why.
+6) Provide a RISK CHECK:
+   - What could break if we disable trapFocus on Android only?
+   - Any accessibility or escape-key issues?
+   - Any side effect on other dialogs?
+
+OUTPUT FORMAT (MANDATORY):
+A) Repro Status: (Reproduced / Not Reproduced / Cannot Run — Code Evidence Only)
+B) Confirmed Root Cause: (Yes/No) + one sentence
+C) Evidence: list exact file paths + line ranges + snippets
+D) Minimal Fix Options (NO CODE APPLIED)
+E) Risk Assessment (short)
+
+DO NOT include any code changes, diffs, or file edits.
+ONLY analysis and report.
