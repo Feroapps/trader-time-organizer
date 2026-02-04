@@ -10,6 +10,7 @@ import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -23,6 +24,10 @@ public class MainActivity extends BridgeActivity {
     registerPlugin(RewardedAdsPlugin.class);
 
     super.onCreate(savedInstanceState);
+
+    // Fix for Android 15+ edge-to-edge: ensure WebView receives proper IME (keyboard) insets
+    // This must be called AFTER super.onCreate() to override splash screen settings
+    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
 
     requestNotificationPermissionIfNeeded();
 
