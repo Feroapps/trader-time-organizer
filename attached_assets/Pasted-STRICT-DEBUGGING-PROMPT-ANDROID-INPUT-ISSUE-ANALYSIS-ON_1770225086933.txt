@@ -1,0 +1,87 @@
+STRICT DEBUGGING PROMPT — ANDROID INPUT ISSUE (ANALYSIS ONLY)
+
+You must ONLY ANALYZE the problem first.
+❌ Do NOT apply fixes
+❌ Do NOT refactor code
+❌ Do NOT suggest multiple solutions yet
+
+⸻
+
+PROBLEM STATEMENT
+
+On Android (Capacitor build only):
+	•	The virtual keyboard does NOT allow typing
+	•	User cannot type in Note textarea
+	•	User cannot edit the Alert label (name)
+	•	Inputs visually receive focus, but no text can be entered
+	•	PWA version works perfectly
+	•	Previous Android version worked (no phone settings were changed)
+	•	Issue affects multiple inputs across different modals
+
+This is NOT a language / locale / keyboard setting issue.
+
+⸻
+
+AFFECTED COMPONENTS
+	•	AlertModal.tsx
+	•	<Input /> for alert label (user cannot change name)
+	•	NoteModal.tsx
+	•	<Textarea /> for notes (user cannot type)
+
+Both are rendered inside Radix Dialog (shadcn/ui).
+
+⸻
+
+CONSTRAINTS (VERY IMPORTANT)
+	•	❌ No changes to phone settings
+	•	❌ No assumptions like “user didn’t test Android before”
+	•	❌ Do NOT blame user environment
+	•	❌ Do NOT propose generic fixes yet
+	•	❌ Do NOT touch unrelated files
+
+⸻
+
+CONTEXT
+	•	PWA (browser) → ✅ Works
+	•	Android Capacitor (WebView) → ❌ Broken
+	•	No recent changes to:
+	•	AlertModal
+	•	NoteModal
+	•	dialog.tsx (before attempted fixes)
+	•	index.css (no pointer-events on inputs)
+	•	AndroidManifest.xml tested with:
+	•	windowSoftInputMode="adjustResize" → ❌ did NOT fix
+
+⸻
+
+YOUR TASK (ANALYSIS ONLY)
+	1.	Identify the REAL root cause of:
+	•	Keyboard appearing but not typing
+	•	Input focus without text entry
+	•	Affecting ALL Radix Dialog inputs on Android
+	2.	Verify:
+	•	Radix Dialog focus trap behavior on Android WebView
+	•	Capacitor WebView + focus/IME interaction
+	•	Any known Android WebView regressions
+	•	Whether MainActivity / WebView config can block IME input
+	•	Whether Ads / plugins can steal focus
+	3.	Clearly state:
+	•	What EXACT mechanism is blocking typing
+	•	Why it affects Android only
+	•	Why PWA is not affected
+	4.	DO NOT APPLY FIXES YET
+	•	End response with: “Root cause identified. Ready to apply minimal fix.”
+
+⸻
+
+FAILURE CONDITIONS (DO NOT DO THESE)
+	•	❌ Giving multiple guesses
+	•	❌ Saying “try X and see”
+	•	❌ Refactoring Dialog without explanation
+	•	❌ Adding keyboard plugins without justification
+	•	❌ Long generic Android explanations
+
+⸻
+
+You are debugging a production-blocking Android input issue.
+Be precise, technical, and deterministic.
