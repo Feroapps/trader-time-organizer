@@ -1,0 +1,42 @@
+You are working on a Capacitor Android app (WebView). Problem: On Android ONLY, the soft keyboard does NOT appear and text input is impossible inside our modal dialogs:
+- Cannot type in Note textarea (NoteModal)
+- Cannot change alert label (AlertModal)
+PWA works fine. Android native build is broken. This worked in a previous Android build. No phone settings changes.
+
+IMPORTANT: We already tried adding android:windowSoftInputMode="adjustResize" on MainActivity in android/app/src/main/AndroidManifest.xml and it did NOT fix the issue. So do NOT repeat this fix.
+
+STRICT INSTRUCTIONS:
+1) INVESTIGATE FIRST. Do NOT change any code until you produce an investigation report with concrete evidence.
+2) Confirm the exact failure mechanism on Android WebView (Capacitor) that prevents the keyboard from showing.
+3) Use code-level evidence + Android-side evidence. Identify whether:
+   - WebView is not focusable / losing focus immediately
+   - WindowInsets / edge-to-edge / system bars configuration breaks IME
+   - Modal overlay blocks touches/focus
+   - Capacitor WebView input mode / Keyboard plugin missing
+   - Activity config (launchMode, configChanges, theme) causes IME not to attach
+4) Provide a short “Root Cause” section with a definitive statement (no vague guesses).
+5) Then apply the minimal fix that ONLY targets Android native (must not change PWA behavior).
+6) Provide a STRICT CHANGE REPORT:
+   - List every file changed
+   - Show exact code diffs
+   - Explain why this fix solves the Android keyboard issue
+   - Confirm no unrelated changes were made
+
+WHAT YOU MUST CHECK (MANDATORY):
+- android/app/src/main/AndroidManifest.xml (MainActivity config, theme, windowSoftInputMode already tried)
+- android/app/src/main/java/**/MainActivity.java (any WebView / edge-to-edge / window flags)
+- styles.xml / themes (AppTheme.NoActionBarLaunch) for windowSoftInputMode or translucent/adjustPan behavior
+- Capacitor version and whether @capacitor/keyboard is installed/needed
+- Any code that sets viewport/overscroll/insets or uses StatusBar/NavigationBar plugins
+- Whether Dialog/Overlay prevents focus on Android (test/confirm by temporarily logging focus events)
+
+CONSTRAINTS:
+- Do NOT change UI/UX.
+- Do NOT change Radix dialog behavior for PWA.
+- Do NOT introduce new dependencies unless absolutely required.
+- If you propose installing @capacitor/keyboard, justify with evidence and keep changes minimal.
+
+Deliverables:
+A) Investigation report (bullet points, evidence-based)
+B) One minimal fix
+C) Strict change report (diffs + explanation)
