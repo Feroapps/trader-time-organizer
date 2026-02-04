@@ -368,38 +368,40 @@ export function Settings() {
                   )}
                 </div>
               ))}
-              <>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4"
-                  onClick={() => {
-                    if (isAndroidPlatform()) {
-                      openAndroidAlarmSoundSettings();
-                    }
-                  }}
-                  data-testid="button-open-android-settings"
-                >
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Open Android Alarm Sound Settings
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    if (isAndroidPlatform()) {
-                      openAndroidBatteryOptimizationSettings();
-                    }
-                  }}
-                  data-testid="button-open-battery-settings"
-                >
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Open Battery Optimization Settings
-                </Button>
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Set Battery usage to Unrestricted / Not optimized to prevent delays.
-                </p>
-                <ExactAlarmPermissionButton />
-              </>
+              {isAndroidPlatform() && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => {
+                      if (isAndroidPlatform()) {
+                        openAndroidAlarmSoundSettings();
+                      }
+                    }}
+                    data-testid="button-open-android-settings"
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Open Android Alarm Sound Settings
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      if (isAndroidPlatform()) {
+                        openAndroidBatteryOptimizationSettings();
+                      }
+                    }}
+                    data-testid="button-open-battery-settings"
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Open Battery Optimization Settings
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Set Battery usage to Unrestricted / Not optimized to prevent delays.
+                  </p>
+                  <ExactAlarmPermissionButton />
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
