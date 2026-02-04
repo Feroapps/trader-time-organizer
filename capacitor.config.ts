@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
       splashFullScreen: true,
-      splashImmersive: true,
+      splashImmersive: false,
     },
     LocalNotifications: {
       smallIcon: "ic_stat_notification",
