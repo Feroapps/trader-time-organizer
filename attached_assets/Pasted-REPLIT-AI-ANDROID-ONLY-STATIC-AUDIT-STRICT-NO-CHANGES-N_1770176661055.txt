@@ -1,0 +1,76 @@
+REPLIT AI — ANDROID-ONLY STATIC AUDIT (STRICT). NO CHANGES, NO COMMANDS.
+
+ABSOLUTE RULES:
+- DO NOT modify, create, delete, or format ANY file.
+- DO NOT run any commands (NO npm, NO gradle, NO cap sync, NO build, NO install).
+- DO NOT propose fixes as code edits.
+- ANALYSIS ONLY: identify risks, failure scenarios, and likely runtime errors.
+
+SCOPE:
+ANDROID ONLY.
+Ignore iOS and PWA completely.
+Focus on the native Android runtime behavior + Capacitor bridge + local plugins + AlarmManager + notifications.
+
+WHAT YOU MUST ANALYZE:
+1) App launch stability on CLEAN INSTALL from Play Store (release AAB)
+2) Capacitor plugin registration + discovery:
+   - MainActivity registration order and implications
+   - Local plugins (UserAlarmPlugin, RewardedAdsPlugin, FixedSessionScheduler)
+3) Exact alarms behavior across Android versions:
+   - Android 12/13/14/15 (API 31+)
+   - canScheduleExactAlarms() permission behavior
+   - Failure modes if permission denied/revoked
+4) Foreground service constraints:
+   - AlarmSoundService startForeground timing and required types
+   - Background start restrictions
+5) Notification behavior:
+   - channel creation, importance, sound mapping
+   - icon resources (drawable vs mipmap)
+   - duplicate notification risks (TS scheduling vs native scheduling)
+6) Boot and rescheduling:
+   - Boot receivers, quickboot actions, timing issues after boot
+   - Data availability (SharedPreferences vs IndexedDB/localforage)
+7) OEM restrictions risks (Samsung/Xiaomi/Huawei etc.):
+   - battery optimization, autostart, background restrictions
+   - what breaks and how it appears to users
+8) Logging and crash signatures:
+   - likely exceptions (SecurityException, IllegalStateException, ForegroundServiceStartNotAllowedException, etc.)
+   - where they would happen (file + method)
+
+OUTPUT FORMAT (STRICT):
+SECTION A — ZERO-RISK CONFIRMED AREAS (Android)
+(list files/components that are clearly safe)
+
+SECTION B — HIGH-RISK AREAS (Android)
+For each item:
+- File path
+- Class / method
+- Exact reason
+- Likely exception name (if any)
+- User-visible symptom (e.g., opens then closes, alarm delayed, no sound, notification missing)
+
+SECTION C — MEDIUM-RISK AREAS (Android)
+(same structure as Section B)
+
+SECTION D — DUPLICATE/DOUBLE-NOTIFICATION CHECK
+- Explain whether fixed sessions can fire twice (native + TS)
+- Explain whether user alarms can fire twice
+- Identify the exact points where duplication could occur
+
+SECTION E — PLAY STORE RELEASE RISKS
+- Anything that behaves differently in release vs debug
+- Anything that depends on clean rebuild / cached artifacts
+
+SECTION F — TOP 5 FAILURE SCENARIOS (Android)
+Write 5 concrete scenarios:
+- device type / Android version
+- steps user does
+- what breaks
+- likely root cause location
+
+IMPORTANT:
+- Do NOT include code changes or code blocks.
+- Do NOT suggest “fix by doing X”.
+- ONLY report risks and expected error patterns.
+
+START NOW.
