@@ -1,0 +1,84 @@
+STRICT FINAL RELEASE READINESS CHECK — NO CODE CHANGES ALLOWED
+
+You are acting as a senior Android release engineer performing a final pre-production audit.
+
+Scope
+	•	Platform: Android (Google Play)
+	•	Current state: Post-fix, post-verification
+	•	Goal: Decision only — NO implementation
+
+Rules (MANDATORY)
+	1.	❌ DO NOT modify any file
+	2.	❌ DO NOT suggest code snippets
+	3.	❌ DO NOT refactor, optimize, or rewrite
+	4.	❌ DO NOT apply fixes
+	5.	❌ DO NOT touch Android, iOS, PWA, or client code
+	6.	✅ Analysis + judgment only
+
+⸻
+
+Tasks
+
+1️⃣ Release Readiness Decision
+Answer clearly and explicitly:
+	•	Is the application READY for Google Play production release?
+Answer must be one of:
+	•	YES — ready for production
+	•	YES — ready with known limitations
+	•	NO — blocking issues remain
+
+If NO, list blocking issues only (crash, ANR, policy violation).
+
+⸻
+
+2️⃣ Crash & Stability Assessment
+Based on the current verified state, confirm:
+	•	Any remaining crash paths?
+	•	Any SecurityException / ForegroundService / AlarmManager risks?
+	•	Any Android 13+ permission-related fatal issues?
+	•	Any OEM-specific issues that can cause app termination?
+
+Only list real risks, not theoretical ones.
+
+⸻
+
+3️⃣ Google Play Policy Compliance
+Confirm whether the app:
+	•	Complies with POST_NOTIFICATIONS
+	•	Complies with SCHEDULE_EXACT_ALARM policy usage
+	•	Uses foregroundServiceType appropriately
+	•	Has no deceptive permission flows
+	•	Is acceptable under Play Store review standards
+
+Answer: PASS / PASS WITH NOTES / FAIL
+
+⸻
+
+4️⃣ Known Limitations (Non-Blocking)
+List only:
+	•	Limitations that do NOT prevent release
+	•	Items that can be documented as:
+“Behavior may vary by device / Android version”
+
+Do NOT propose fixes — description only.
+
+⸻
+
+5️⃣ Final Verdict Summary
+End your response with this exact format:
+
+FINAL VERDICT
+	•	Release decision: ✅ / ⚠️ / ❌
+	•	Crash risk: LOW / MEDIUM / HIGH
+	•	Play Store rejection risk: LOW / MEDIUM / HIGH
+	•	Recommendation:
+	•	“Proceed to production”
+	•	or “Proceed to production with known limitations”
+	•	or “Do not release”
+
+⸻
+
+Important
+
+This is the final gate before Play Store production.
+Your role is judge, not implementer.
