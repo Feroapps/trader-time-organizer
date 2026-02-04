@@ -65,10 +65,14 @@ public class FixedSessionScheduler {
 
         PendingIntent pi = buildPendingIntent(context, s.sessionId, 0);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
-        } else {
-            am.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
+            } else {
+                am.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
+            }
+        } catch (SecurityException e) {
+            android.util.Log.w("FixedSessionScheduler", "SecurityException scheduling exact alarm for " + sessionId, e);
         }
     }
 
