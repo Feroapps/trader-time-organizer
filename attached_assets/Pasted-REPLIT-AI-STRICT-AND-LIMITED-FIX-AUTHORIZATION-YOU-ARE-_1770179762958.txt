@@ -1,0 +1,67 @@
+REPLIT AI — STRICT AND LIMITED FIX AUTHORIZATION
+
+YOU ARE ALLOWED TO FIX ONLY THE CRITICAL ANDROID ISSUES LISTED BELOW.
+DO NOT perform refactoring.
+DO NOT change logic unrelated to the listed issues.
+DO NOT touch iOS or PWA code.
+DO NOT modify UI/UX except where strictly required for permission handling.
+DO NOT rename files, classes, methods, or variables.
+DO NOT optimize or restructure code.
+DO NOT add new features.
+
+SCOPE: ANDROID ONLY.
+
+====================
+AUTHORIZED FIXES ONLY
+====================
+
+1) FixedSessionBootReceiver.java
+- Add canScheduleExactAlarms() check BEFORE calling FixedSessionScheduler.scheduleAllEnabledFixedSessions()
+- If permission is NOT granted, skip scheduling safely.
+- NO other logic changes.
+
+2) FixedSessionScheduler.java
+- Wrap AlarmManager.setExactAndAllowWhileIdle() in try/catch OR
+- Add internal canScheduleExactAlarms() guard before calling it.
+- Prevent SecurityException on Android 12+.
+- NO behavior change if permission is granted.
+
+3) AlarmReceiver.java
+- REMOVE direct context.startActivity()
+- Rely ONLY on notification fullScreenIntent
+- This is to comply with Android 10+ background activity restrictions.
+
+4) AlarmSoundService.java
+- Remove the redundant second startForeground() call.
+- Ensure startForeground() is called exactly once.
+
+5) POST_NOTIFICATIONS runtime permission
+- Add a minimal runtime permission request flow for Android 13+.
+- Trigger it ONLY when:
+  - App launches for the first time OR
+  - User creates their first alarm.
+- NO UI redesign. Simple permission request only.
+
+6) UserAlarmPlugin.java
+- In saveAlarmToPrefs():
+  - Ensure getStringSet() result is copied into a NEW HashSet before modification.
+  - Prevent UnsupportedOperationException on OEM ROMs.
+
+====================
+STRICT OUTPUT RULES
+====================
+
+AFTER APPLYING CHANGES:
+- Provide a CLEAR CHANGE REPORT:
+  - List each file modified
+  - Describe exactly what changed (1–2 lines per file)
+- DO NOT include explanations, opinions, or suggestions.
+- DO NOT touch any other files.
+- DO NOT change AndroidManifest.xml unless strictly required for POST_NOTIFICATIONS runtime handling.
+
+If any requested fix is impossible without broader changes:
+- STOP
+- REPORT the blocker
+- DO NOT improvise
+
+BEGIN ONLY AFTER CONFIRMING THESE RULES INTERNALLY.
