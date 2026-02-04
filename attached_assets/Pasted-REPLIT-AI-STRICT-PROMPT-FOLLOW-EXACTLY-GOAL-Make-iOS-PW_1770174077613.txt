@@ -1,0 +1,62 @@
+REPLIT AI — STRICT PROMPT. FOLLOW EXACTLY.
+
+GOAL:
+Make iOS + PWA use the SAME Settings options + UI flow that Android currently has,
+WITHOUT changing ANY Android behavior or Android files.
+After changes, you MUST output an exact change report so we can verify.
+
+ABSOLUTE RULES:
+1) DO NOT modify anything inside:
+   - android/ (entire folder)  ✅ NO CHANGES AT ALL
+2) DO NOT change any existing business logic for alarms, schedules, sessions, ads, or routing.
+3) DO NOT refactor, rename, reorganize folders, or auto-format across the project.
+4) ONLY add the minimum required iOS + PWA glue so the same Settings/UX appears consistently.
+5) If something is already working via shared React code, DO NOT touch it.
+
+WHAT “GENERALIZE ANDROID SETTINGS/UI TO iOS + PWA” MEANS (STRICT):
+A) iOS build should run (Capacitor iOS platform created) without code changes to Android.
+B) PWA should show the same Settings items + screens + toggles currently shown on Android.
+C) Any Android-only native features must have SAFE fallbacks on iOS/PWA:
+   - UserAlarm native plugin: iOS already uses LocalNotifications path; PWA should not crash.
+   - Fixed sessions: iOS/PWA use LocalNotifications (or existing TS scheduling) where already implemented.
+   - Rewarded ads: keep existing fallback/stub for iOS/PWA if real iOS ads are not implemented.
+
+TASKS (DO IN ORDER):
+
+STEP 1) Create iOS platform WITHOUT touching android/
+- Ensure @capacitor/ios is installed (only if missing).
+- Run:
+  npx cap add ios
+- Run:
+  npx cap sync ios
+IMPORTANT: Do NOT run cap sync android. Do NOT edit anything under android/.
+
+STEP 2) Verify platform guards prevent crashes on iOS/PWA
+- Search for any direct native calls that might run on startup without platform checks.
+- Ensure all calls to:
+  scheduleUserAlarmNative / cancelUserAlarmNative / canScheduleExactAlarmsNative
+  are protected by isAndroidNative() (or equivalent) so iOS/PWA never call Android plugins.
+- If any missing guard exists, add ONLY the minimal guard (one if-statement) in the SAME file.
+- Do not change logic; only prevent calling Android plugins on iOS/PWA.
+
+STEP 3) Ensure Settings UI is shared for Android/iOS/PWA
+- Identify the Settings screen/component used on Android.
+- Confirm the same component is used for iOS + PWA builds (no platform-specific alternate UI).
+- If there is any “Android only” conditional hiding Settings items on iOS/PWA, remove ONLY the UI-hiding condition,
+  but keep the action behavior safe (e.g., button still visible but uses safe fallback on non-Android).
+- Do NOT add new settings. Do NOT remove settings.
+
+STEP 4) Output a STRICT change report (MANDATORY)
+Return ONLY:
+1) A list of files CHANGED (exact paths)
+2) A list of files CREATED (exact paths)
+3) For each CHANGED file: show the exact before/after code lines (diff-style or clearly separated)
+4) Confirm explicitly: "NO FILES UNDER android/ WERE MODIFIED."
+
+DO NOT:
+- Provide explanations or recommendations.
+- Add future work notes.
+- Change Android, scheduling rules, or UI design.
+- Add ads implementation for iOS.
+
+START NOW. FOLLOW THESE INSTRUCTIONS EXACTLY.
