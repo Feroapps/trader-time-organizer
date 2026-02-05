@@ -72,7 +72,7 @@ public class AlarmSoundService extends Service {
 
         if (currentLabel == null) currentLabel = "Trader Time Alert";
         if (currentSoundId == null) currentSoundId = "original";
-
+        startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
         Log.i(TAG, "alarmId: " + currentAlarmId);
         Log.i(TAG, "label: " + currentLabel);
         Log.i(TAG, "soundId: " + currentSoundId);

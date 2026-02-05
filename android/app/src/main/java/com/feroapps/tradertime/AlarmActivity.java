@@ -4,15 +4,12 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.WindowManager;
 import android.os.PowerManager;
 import android.app.KeyguardManager;
 public class AlarmActivity extends Activity {
-    private static final String TAG = "AlarmActivity";
 
     private final BroadcastReceiver finishReceiver = new BroadcastReceiver() {
         @Override
@@ -71,17 +68,6 @@ public class AlarmActivity extends Activity {
             }
         }
 
-        registerReceiver(finishReceiver, new IntentFilter(AlarmSoundService.ACTION_FINISH_ALARM_ACTIVITY));
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        try {
-            unregisterReceiver(finishReceiver);
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "finishReceiver already unregistered", e);
-        }
     }
 
     private boolean stopSent = false;
@@ -94,19 +80,10 @@ public class AlarmActivity extends Activity {
             stopSent = true;
             Intent stopIntent = new Intent(this, AlarmSoundService.class);
             stopIntent.setAction(AlarmSoundService.ACTION_STOP);
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(stopIntent);
-                } else {
-                    startService(stopIntent);
-                }
-            } catch (Throwable t) {
-                Log.e(TAG, "startForegroundService failed, falling back to startService", t);
-                try {
-                    startService(stopIntent);
-                } catch (Throwable t2) {
-                    Log.e(TAG, "startService fallback also failed", t2);
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(stopIntent);
+            } else {
+                startService(stopIntent);
             }
             finish();
             return true;

@@ -62,26 +62,13 @@ public class FixedSessionScheduler {
         long triggerTimeMs = computeNextUtcTriggerTimeMs(s.utcHour, s.utcMinute, s.repeatDaysUtc);
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am == null) {
-            android.util.Log.w("FixedSessionScheduler", "AlarmManager null, cannot schedule " + sessionId);
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
-            android.util.Log.w("FixedSessionScheduler", "Exact alarms not permitted, skipping " + sessionId);
-            return;
-        }
 
         PendingIntent pi = buildPendingIntent(context, s.sessionId, 0);
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
-            } else {
-                am.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
-            }
-        } catch (SecurityException e) {
-            android.util.Log.w("FixedSessionScheduler", "SecurityException scheduling exact alarm for " + sessionId, e);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMs, pi);
         }
     }
 

@@ -38,8 +38,8 @@ function Navigation() {
               variant="ghost"
               onClick={() => {
                 const html = document.documentElement;
-                const isDark = html.classList.toggle('dark');
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                html.classList.toggle('dark');
+                console.info("UI: theme toggle used (visual-only)");
               }}
               aria-label="Toggle theme"
               data-testid="button-theme-toggle-nav"

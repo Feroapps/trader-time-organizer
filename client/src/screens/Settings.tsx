@@ -373,11 +373,7 @@ export function Settings() {
                   <Button
                     variant="outline"
                     className="w-full mt-4"
-                    onClick={() => {
-                      if (isAndroidPlatform()) {
-                        openAndroidAlarmSoundSettings();
-                      }
-                    }}
+                    onClick={() => openAndroidAlarmSoundSettings()}
                     data-testid="button-open-android-settings"
                   >
                     <Settings2 className="w-4 h-4 mr-2" />
@@ -386,11 +382,7 @@ export function Settings() {
                   <Button
                     variant="outline"
                     className="w-full mt-2"
-                    onClick={() => {
-                      if (isAndroidPlatform()) {
-                        openAndroidBatteryOptimizationSettings();
-                      }
-                    }}
+                    onClick={() => openAndroidBatteryOptimizationSettings()}
                     data-testid="button-open-battery-settings"
                   >
                     <Settings2 className="w-4 h-4 mr-2" />
