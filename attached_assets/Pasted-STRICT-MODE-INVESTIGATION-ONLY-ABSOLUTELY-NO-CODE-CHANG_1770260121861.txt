@@ -1,0 +1,66 @@
+STRICT MODE — INVESTIGATION ONLY (ABSOLUTELY NO CODE CHANGES)
+
+Project: Trader Time Organizer
+Tech: Capacitor + React/Vite + Android native
+
+GOAL:
+Produce a FULL, evidence-based audit of the CURRENT project to find:
+1) Crash risks (Android / iOS / PWA)
+2) Build/release risks (Play Store compliance, Android 13+ permissions, exact alarms, foreground services)
+3) Silent-failure risks (alarms/notifications that fail without crashing)
+4) Regression risks from recent commits (dialogs/keyboard/notifications/alarms)
+5) TypeScript/runtime errors that could appear only on native builds
+
+HARD RULES (MANDATORY):
+- DO NOT modify, format, refactor, or “fix” ANYTHING.
+- DO NOT create commits.
+- DO NOT run npm install / upgrade packages / change lockfiles.
+- Output must be INVESTIGATION REPORT ONLY (read-only).
+
+MANDATORY CHECKS (must include evidence):
+A) TypeScript / Build
+- Run: npx tsc --noEmit
+- Report ALL errors/warnings with exact: file path + line numbers + TS error codes.
+- Run: npm run build
+- Report Vite build warnings (copy the exact warning text + where it comes from).
+
+B) Android native (android/ folder)
+- Search for crash sources:
+  - startForegroundService without try/catch (ForegroundServiceStartNotAllowedException risk)
+  - startForeground called late or multiple times
+  - missing notification channels before startForeground
+  - SecurityException paths around setExactAndAllowWhileIdle / exact alarms
+  - any missing resources referenced (icons/layout/sounds)
+- Verify POST_NOTIFICATIONS flow:
+  - Manifest permission exists
+  - Runtime request exists for Android 13+
+  - App behavior if denied (no crash)
+- Verify exact alarm flow:
+  - canScheduleExactAlarms() checks + try/catch everywhere exact alarms are used
+  - BootReceiver / FixedSessionBootReceiver cannot crash on boot
+
+C) UI / Runtime (JS/TS side)
+- Confirm Dialog/keyboard behavior changes are limited and platform-guarded (Android only) and do not affect PWA/iOS.
+- Verify all platform guards (Capacitor.isNativePlatform + getPlatform) are consistent.
+- Look for global CSS / pointer-events / overlays that could block input.
+
+D) Data / Storage
+- Identify any migrations or schema assumptions that could break existing users:
+  - alarms schema fields (dateUTC, repeatDays, isFixed, isEnabled)
+  - notes schema
+  - any localStorage/IndexedDB migrations that could delete data or cause crashes
+
+DELIVERABLES (STRICT FORMAT):
+1) RED FLAGS (crash / release blockers) — each item MUST include:
+   - file path + line numbers + why it’s a blocker
+2) WARNINGS (non-blocking risks) — same evidence format
+3) NO ISSUE / CONFIRMED SAFE areas — brief list
+4) UNCONFIRMED items — label clearly + what evidence is missing (e.g., logcat)
+5) CHANGE REPORT — MUST explicitly say:
+   - Files modified: 0
+   - Dependencies changed: 0
+   - Config changed: 0
+   - NO FILES WERE CHANGED
+
+IMPORTANT:
+If you cannot prove something from code/build output, mark it UNCONFIRMED. Do NOT guess.
