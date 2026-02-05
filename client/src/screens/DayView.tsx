@@ -230,6 +230,7 @@ export function DayView() {
 
   const dayNotes = notes.filter((n) => n.dateUTC === dateStr);
   const dayAlarms = alarms.filter((a) => {
+    if (!a.dateUTC) return false;
     const [year, month, day] = a.dateUTC.split("-").map(Number);
     const alarmDate = new Date(Date.UTC(year, month - 1, day));
     const alarmDow = alarmDate.getUTCDay();

@@ -139,6 +139,7 @@ export function Calendar() {
     });
 
     alarms.forEach((alarm) => {
+      if (!alarm.dateUTC) return;
       const [year, month, day] = alarm.dateUTC.split("-").map(Number);
       const alarmDate = new Date(Date.UTC(year, month - 1, day));
       const alarmDow = alarmDate.getUTCDay();
