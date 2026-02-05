@@ -33,7 +33,11 @@ public class AlarmReceiver extends BroadcastReceiver {
         serviceIntent.putExtra(AlarmSoundService.EXTRA_SOUND_ID, soundId);
 
         Log.i(TAG, "Starting AlarmSoundService as foreground...");
-        ContextCompat.startForegroundService(context, serviceIntent);
+        try {
+            ContextCompat.startForegroundService(context, serviceIntent);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to start AlarmSoundService foreground", t);
+        }
         Log.i(TAG, "===== AlarmReceiver.onReceive COMPLETED =====");
     }
 }
