@@ -25,10 +25,6 @@ public class MainActivity extends BridgeActivity {
 
     super.onCreate(savedInstanceState);
 
-    // Fix for Android 15+ edge-to-edge: ensure WebView receives proper IME (keyboard) insets
-    // This must be called AFTER super.onCreate() to override splash screen settings
-    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-
     requestNotificationPermissionIfNeeded();
 
     try {
