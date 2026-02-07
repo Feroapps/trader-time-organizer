@@ -175,9 +175,28 @@ public class UserAlarmPlugin extends Plugin {
     public void stopCurrentAlarm(PluginCall call) {
         try {
             Context context = getContext();
+
+            String ringingId = AlarmSoundService.getCurrentAlarmId();
+
             Intent stopIntent = new Intent(context, AlarmSoundService.class);
             stopIntent.setAction(AlarmSoundService.ACTION_STOP);
             context.startService(stopIntent);
+
+            if (ringingId != null) {
+                AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                Intent intent = new Intent(context, AlarmReceiver.class);
+                int requestCode = ringingId.hashCode();
+                PendingIntent pi = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE
+                );
+                if (pi != null) {
+                    alarmManager.cancel(pi);
+                    pi.cancel();
+                }
+            }
 
             Log.i(TAG, "Stop current alarm requested");
 

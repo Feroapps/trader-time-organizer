@@ -1,0 +1,42 @@
+TASK TYPE: MINIMAL SAFE FIX (DO NOT BREAK WEEKLY/MONTHLY REPEATS)
+
+NON-NEGOTIABLE RULES:
+- Change ONLY Android native code related to stopping the CURRENTLY RINGING user alarm.
+- DO NOT disable alarms.
+- DO NOT delete alarms from SharedPreferences.
+- DO NOT change repeat logic (weekly/monthly) or next-occurrence calculations.
+- DO NOT modify capacitorInit.ts, nativeNotifications.ts, or any JS/TS scheduling logic.
+- DO NOT add logs/tests/refactors/formatting changes.
+
+PROBLEM:
+After pressing Stop, the alarm sound stops. But when the user later opens the app, the sound briefly replays.
+Diagnostic indicates stopCurrentAlarm() stops the sound service but does NOT cancel the underlying AlarmManager PendingIntent created in scheduleAlarm().
+
+GOAL:
+In stopCurrentAlarm(), cancel ONLY the AlarmManager PendingIntent for the currently ringing alarm, using the EXACT same PendingIntent identity used by scheduleAlarm(). This prevents any stale PendingIntent from being re-fired, without affecting future repeats.
+
+REQUIRED IMPLEMENTATION (STRICT):
+1) Locate UserAlarmPlugin.java:
+   - Method: scheduleAlarm(...) (reported around lines 79–84) where the AlarmManager PendingIntent is created.
+   - Method: stopCurrentAlarm(...) (reported around lines 175–195).
+
+2) Create/Reuse a single helper method (or reuse existing one if already present) that builds the Broadcast PendingIntent for a given alarmId EXACTLY as scheduleAlarm does:
+   - Same receiver class (e.g., AlarmReceiver)
+   - Same intent action
+   - Same extras (if used when creating the PendingIntent)
+   - Same requestCode
+   - Same PendingIntent flags (UPDATE_CURRENT / IMMUTABLE, etc.)
+
+3) In stopCurrentAlarm(...):
+   - Keep the existing ACTION_STOP intent to AlarmSoundService (do not remove).
+   - After stopping the service, call AlarmManager.cancel(pendingIntentForCurrentAlarmId) using the SAME pendingIntent builder from step (2).
+   - DO NOT remove the alarm from SharedPreferences.
+   - DO NOT change enabled state.
+   - DO NOT touch any reschedule logic.
+
+DELIVERABLE:
+- Implement the above minimal change.
+- Confirm in your response:
+  a) The exact receiver/action/requestCode/flags used for the canceled PendingIntent match scheduleAlarm().
+  b) No SharedPreferences deletion/disable was added.
+  c) Weekly/monthly repeats remain unaffected because alarm data persists and rescheduling remains unchanged.

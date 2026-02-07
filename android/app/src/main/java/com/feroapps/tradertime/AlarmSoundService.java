@@ -39,9 +39,15 @@ public class AlarmSoundService extends Service {
     private Handler timeoutHandler;
     private Runnable timeoutRunnable;
 
+    private static volatile String sCurrentAlarmId;
+
     private String currentAlarmId;
     private String currentLabel;
     private String currentSoundId;
+
+    public static String getCurrentAlarmId() {
+        return sCurrentAlarmId;
+    }
     @Override
     public void onCreate() {
         super.onCreate();
@@ -69,6 +75,7 @@ public class AlarmSoundService extends Service {
         currentAlarmId = intent.getStringExtra(EXTRA_ALARM_ID);
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
+        sCurrentAlarmId = currentAlarmId;
 
         if (currentLabel == null) currentLabel = "Trader Time Alert";
         if (currentSoundId == null) currentSoundId = "original";
@@ -103,6 +110,7 @@ public class AlarmSoundService extends Service {
     private void stopAlarm() {
         if(alreadystopped) return;
         alreadystopped = true;
+        sCurrentAlarmId = null;
         stopAlarmSound();
         cancelTimeout();
 
