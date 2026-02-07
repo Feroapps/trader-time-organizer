@@ -1,0 +1,47 @@
+TASK TYPE: STRICT READ-ONLY ROOT-CAUSE ANALYSIS (NO CHANGES)
+
+NON-NEGOTIABLE RULES:
+- DO NOT modify any code or files.
+- DO NOT add logs, tests, or debug prints.
+- DO NOT reformat, rename, refactor, or reorganize anything.
+- DO NOT run automated “fixes”.
+- OUTPUT MUST BE REPORT ONLY (file paths + exact line numbers + exact cause).
+
+PROBLEM STATEMENT:
+On Android, exactly ONE fixed session notification displays a generic name like "Session" / "Session Alert" instead of the intended fixed session name. All other fixed sessions display correctly.
+
+GOAL:
+Find the exact, literal root cause in the codebase (not assumptions) and point to the exact file(s), method(s), and line(s) responsible.
+
+SCOPE:
+Focus ONLY on the Android fixed-session notification pipeline (not user alarms), including:
+- FixedSessionNotifier.java (and any related notifier/receiver/service classes)
+- Where the sessionId/alarm identifier is produced/selected
+- Where the display string is resolved/mapped
+- Where the notification title/body is set
+
+REQUIRED INVESTIGATION STEPS (ANALYSIS ONLY):
+1) Identify the entry point that triggers fixed session notifications on Android.
+   - List the class and method that schedules/emits the fixed session notification.
+2) Identify the identifier used for the fixed session (sessionId / key / enum).
+   - Trace where that identifier comes from and how it is determined.
+3) Identify the exact mapping from identifier -> display text.
+   - Locate the mapping function (e.g., sessionTitle(sessionId)).
+   - Produce a table of ALL supported identifiers/cases and their returned strings.
+4) Identify why ONLY ONE session ends up generic.
+   - Determine whether:
+     a) its identifier does not match any mapping case and falls back to a default string, OR
+     b) its identifier is different than expected (typo/mismatch), OR
+     c) there are multiple mapping sources and one diverges, OR
+     d) the wrong field is used (title/body) for that one path.
+5) Provide the exact root cause and exact fix suggestion WITHOUT editing code.
+   - The fix suggestion must reference the exact lines to change, but you must not change them.
+
+OUTPUT FORMAT (MANDATORY):
+- Section A: Trace summary (file -> class -> method -> line numbers)
+- Section B: Identifier mapping table (identifier -> returned text -> file/line)
+- Section C: Root cause (single sentence) + evidence (exact lines)
+- Section D: Minimal fix recommendation (exact lines to change, no patches)
+
+STOP CONDITION:
+If you cannot prove the root cause with direct references (file/line), stop and say what information is missing, without modifying anything.
