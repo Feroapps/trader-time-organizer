@@ -1,0 +1,48 @@
+TASK TYPE: PRECISE CODE EXTRACTION FOR A GUARANTEED FIX (NO CHANGES YET)
+
+STRICT RULES:
+- DO NOT modify any code.
+- DO NOT add logs, tests, or debug prints.
+- DO NOT refactor, rename, or reformat.
+- OUTPUT ONLY the requested code sections, exactly as-is (copy/paste).
+- No explanations, no summaries—CODE ONLY.
+
+GOAL:
+We want a 100% guaranteed fix. To do that we must cancel the EXACT SAME AlarmManager PendingIntent that was created in scheduleAlarm(). This requires seeing the exact PendingIntent identity:
+- Receiver class
+- Intent action (if any)
+- Intent extras (if any used when creating the PendingIntent)
+- requestCode
+- PendingIntent flags
+
+REQUESTED CODE SECTIONS (PASTE EXACTLY):
+
+A) UserAlarmPlugin.java
+1) The FULL scheduleAlarm(...) method (entire method).
+2) The EXACT block where it builds the Broadcast PendingIntent for AlarmManager:
+   - the Intent construction (component, setAction, putExtra calls)
+   - requestCode value
+   - PendingIntent.getBroadcast(...) line with flags
+3) The EXACT block where it calls AlarmManager.setExact / setExactAndAllowWhileIdle / setAlarmClock (the scheduling call).
+4) The FULL cancelAlarm(...) method (entire method).
+5) The FULL stopCurrentAlarm(...) method (entire method).
+
+B) AlarmReceiver.java
+1) The FULL onReceive(...) method (entire method).
+2) Any constants used for intent actions/extras (ACTION_..., EXTRA_...).
+
+C) AlarmSoundService.java
+1) The FULL onStartCommand(...) method (entire method).
+2) The FULL stopAlarm(...) method (entire method).
+3) The constants used for actions/extras (ACTION_STOP, EXTRA_ALARM_ID, etc.).
+
+D) Any shared constants file (if exists)
+If actions/extras are defined in a Constants class/file, paste that section too.
+
+FORMAT REQUIREMENTS:
+- Provide each file section in its own code block.
+- Include file path at the top of each block as a comment.
+- No ellipses (...) — full methods only.
+
+STOP CONDITION:
+If any of these methods do not exist, explicitly say “METHOD NOT FOUND” and paste the closest equivalent method where the PendingIntent is created/canceled.
