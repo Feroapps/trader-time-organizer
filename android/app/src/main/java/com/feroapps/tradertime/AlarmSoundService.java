@@ -61,6 +61,7 @@ public class AlarmSoundService extends Service {
 
         if (intent == null) {
             Log.w(TAG, "Intent is null - stopping self");
+            stopSelf();
             return START_NOT_STICKY;
         }
 
@@ -75,6 +76,13 @@ public class AlarmSoundService extends Service {
         currentAlarmId = intent.getStringExtra(EXTRA_ALARM_ID);
         currentLabel = intent.getStringExtra(EXTRA_ALARM_LABEL);
         currentSoundId = intent.getStringExtra(EXTRA_SOUND_ID);
+
+        if (currentAlarmId == null) {
+            Log.w(TAG, "alarmId is null - stopping self");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
         sCurrentAlarmId = currentAlarmId;
 
         if (currentLabel == null) currentLabel = "Trader Time Alert";
