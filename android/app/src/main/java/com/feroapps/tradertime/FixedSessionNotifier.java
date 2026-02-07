@@ -92,10 +92,9 @@ public class FixedSessionNotifier {
             case "TOKYO_LONDON_FRANKFURT_OVERLAP": return "Tokyo + London + Frankfurt overlap";
             case "TOKYO_END": return "End of Tokyo session";
             case "NY_LONDON_FRANKFURT_OVERLAP": return "New York + London + Frankfurt overlap";
-            case "FRANKFURT_END": return "End of Frankfurt session";
-            case "LONDON_END": return "End of London session";
-            case "NY_END_SYDNEY_START": return "End of NY + start of Sydney";
-            case "NY_END": return "End of New York session";
+            case "LONDON_FRANKFURT_END": return "End of London + Frankfurt session";
+            case "NY_CLOSE_SYDNEY_OPENS": return "New York close / Sydney opens";
+            case "END_OF_WEEK_NY_CLOSE": return "End of week - New York close";
             default: return "Session Alert";
         }
     }
