@@ -1,0 +1,45 @@
+ROLE: Replit Agent inside trader-time-organizer.
+
+GOAL:
+Fix the info indicator next to “Add Alert” EXACTLY as requested:
+- Do NOT change the “Add Alert” button style/size/layout AT ALL.
+- Add a red ❗️ icon-only clickable element (NO background, NO square, NO border) placed to the LEFT of the existing “Add Alert” button, aligned center, same row.
+
+STRICT CONSTRAINTS:
+- Touch ONLY: client/src/screens/Home.tsx
+- Do NOT add flex-1 or any className/variant/size changes to the existing Add Alert button.
+- Do NOT wrap Add Alert in a way that changes its width/height.
+- ❗️ must be separate clickable element, and must not trigger Add Alert.
+- Keep app language English only.
+- Dialog text must be exactly:
+  Title: "Important"
+  Body: "For alarms to work reliably, please allow the app to run in the background and disable battery optimization."
+  Button: "OK"
+- Show on Android, iOS, PWA.
+
+IMPLEMENTATION DETAILS (MANDATORY):
+1) Revert any styling/layout changes previously applied to the Add Alert button (remove flex-1 or any new props added).
+2) Place a small clickable element immediately BEFORE the Add Alert button, in the same row:
+   - Use a <button> (or shadcn Button with variant="ghost" BUT it must have NO background)
+   - Must render the character "❗️" only
+   - Style: red text only, e.g. className="text-red-600 text-lg leading-none"
+   - Ensure it has NO background on normal/hover (if using Button, use ghost + override bg to transparent):
+     className="p-0 m-0 bg-transparent hover:bg-transparent focus:bg-transparent"
+   - Add onClick(e) { e.preventDefault(); e.stopPropagation(); setAlarmInfoOpen(true); }
+3) Layout:
+   - Wrap ONLY the ❗️ + Add Alert button in a container that does NOT change Add Alert size:
+     <div className="flex items-center gap-2">
+        [❗️ button]
+        [EXISTING Add Alert button EXACTLY as it was before]
+     </div>
+   - Do NOT apply flex-grow to Add Alert.
+4) Add an AlertDialog (shadcn) controlled by alarmInfoOpen state.
+   - Clicking ❗️ opens it. OK closes it.
+
+DELIVERABLE:
+- Output ONLY the final code blocks you changed in Home.tsx:
+  (a) imports added/changed
+  (b) the new state line
+  (c) the exact JSX snippet showing ❗️ + unchanged Add Alert button
+  (d) the AlertDialog JSX
+- Confirm only Home.tsx was modified.

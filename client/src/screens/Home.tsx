@@ -198,26 +198,26 @@ export function Home() {
               Add Note
             </Button>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => setAddAlertOpen(true)}
-                className="gap-2 flex-1"
-                data-testid="button-add-alert"
-              >
-                <Plus className="w-4 h-4" />
-                Add Alert
-              </Button>
-              <Button
-                size="icon"
-                variant="destructive"
-                className="w-10 h-10 rounded-md text-lg"
+              <button
+                type="button"
+                className="p-0 m-0 bg-transparent hover:bg-transparent focus:bg-transparent text-red-600 text-lg leading-none cursor-pointer"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setAlarmInfoOpen(true);
                 }}
                 data-testid="button-alarm-info"
               >
-                !
+                &#10071;
+              </button>
+              <Button
+                size="sm"
+                onClick={() => setAddAlertOpen(true)}
+                className="gap-2"
+                data-testid="button-add-alert"
+              >
+                <Plus className="w-4 h-4" />
+                Add Alert
               </Button>
             </div>
           </div>
