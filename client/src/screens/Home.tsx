@@ -7,6 +7,15 @@ import { getDailyNote, type DailyNote } from "@/data/dailyNotes";
 import { getTradingContext, closedMessage, type TradingContext } from "@/data/tradingContext";
 import { getMarketStatus } from "@/utils/marketHours";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ChevronDown, ChevronUp, FileText, Plus, StickyNote, Eye } from "lucide-react";
 import { AlertModal } from "@/components/AlertModal";
 import { FixedAlarmModal } from "@/components/FixedAlarmModal";
@@ -40,6 +49,7 @@ export function Home() {
   const [isMarketOpen, setIsMarketOpen] = useState(() => getMarketStatus().isOpen);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [pairsAdModalOpen, setPairsAdModalOpen] = useState(false);
+  const [alarmInfoOpen, setAlarmInfoOpen] = useState(false);
   const [pairsUnlocked, setPairsUnlocked] = useState(false);
 
   async function handleAlertSave(alertData: CreateAlarmInput) {
@@ -187,15 +197,29 @@ export function Home() {
               <StickyNote className="w-4 h-4" />
               Add Note
             </Button>
-            <Button
-              size="sm"
-              onClick={() => setAddAlertOpen(true)}
-              className="gap-2"
-              data-testid="button-add-alert"
-            >
-              <Plus className="w-4 h-4" />
-              Add Alert
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setAddAlertOpen(true)}
+                className="gap-2 flex-1"
+                data-testid="button-add-alert"
+              >
+                <Plus className="w-4 h-4" />
+                Add Alert
+              </Button>
+              <Button
+                size="icon"
+                variant="destructive"
+                className="w-10 h-10 rounded-md text-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAlarmInfoOpen(true);
+                }}
+                data-testid="button-alarm-info"
+              >
+                !
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -337,6 +361,20 @@ export function Home() {
         continueLabel="Continue"
         cancelLabel="Not now"
       />
+
+      <AlertDialog open={alarmInfoOpen} onOpenChange={setAlarmInfoOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Important</AlertDialogTitle>
+            <AlertDialogDescription>
+              For alarms to work reliably, please allow the app to run in the background and disable battery optimization.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction data-testid="button-alarm-info-ok">OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

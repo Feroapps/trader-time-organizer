@@ -1,0 +1,39 @@
+TASK TYPE: UI-ONLY CHANGE (EXACTLY AS SPECIFIED) — NO OTHER CHANGES
+
+GOAL:
+Add a separate red ❗️ icon button NEXT TO the existing "+ Add Alert" button (same row, same level). The Add Alert button must remain unchanged. The ❗️ must be clickable independently and must NOT trigger Add Alert when pressed. On click, the ❗️ opens an in-app dialog (English only) explaining battery/background requirements for reliable alarms. This must appear on Android, iOS, and PWA.
+
+STRICT CONSTRAINTS:
+- Do NOT change any alarm logic, scheduling, notifications, storage, or native code.
+- Do NOT change the existing Add Alert button text, styling, or onClick behavior.
+- ONLY add the new ❗️ button beside it and the dialog UI.
+- English only.
+- No opening Android settings, no intents, no Capacitor calls.
+- Ensure clicks do not overlap: pressing ❗️ must NOT trigger Add Alert (use stopPropagation).
+
+WHERE:
+File: client/src/screens/Home.tsx (or the exact file where the "+ Add Alert" button in the Home screen is implemented).
+
+IMPLEMENTATION REQUIREMENTS:
+1) Wrap the existing "+ Add Alert" button and the new ❗️ button in:
+   <div className="flex items-center gap-2"> ... </div>
+
+2) Keep the existing Add Alert button exactly as-is (same component, props, handler).
+   - You may add className="flex-1" ONLY if it does not change existing layout negatively. Otherwise leave it unchanged.
+
+3) Add a separate ❗️ button to the right:
+   - Size: 40x40 (w-10 h-10), rounded-md
+   - Red background (destructive) or red text, but clearly visible
+   - Uses "❗️" character (no lucide icon required)
+   - Has onClick(e) { e.stopPropagation(); } to prevent triggering Add Alert
+
+4) On clicking ❗️, open an in-app dialog (English only) with:
+   Title: "Important"
+   Body:
+   "For alarms to work reliably, please allow the app to run in the background and disable battery optimization."
+
+Use the existing dialog system already in the project (Dialog/AlertDialog from shadcn UI). Do NOT introduce new libraries.
+
+DELIVERABLE:
+- Paste ONLY the final modified JSX block around "+ Add Alert" showing the new ❗️ button and the dialog.
+- Confirm the file path changed and that no other files were modified.
