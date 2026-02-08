@@ -4,7 +4,7 @@ import type { Alarm } from '@/types/Alarm';
 import { getAlarms } from '@/storage/alarmsRepo';
 import { migrateSoundId } from '@/utils/soundLibrary';
 import { getSelectedSoundId } from '@/utils/soundLibrary';
-import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative, canScheduleExactAlarmsNative } from '@/utils/userAlarmPlugin';
+import { scheduleUserAlarmNative, cancelUserAlarmNative, isAndroidNative, isIOSNative, canScheduleExactAlarmsNative, openAndroidSettingsNative } from '@/utils/userAlarmPlugin';
 
 const SOUND_CHANNEL_MAP: Record<string, { channelId: string; name: string; sound: string }> = {
   original: { channelId: 'alerts_original_v2', name: 'Alerts - Original', sound: 'alert_original' },
@@ -569,12 +569,19 @@ export async function openAndroidAlarmSoundSettings(): Promise<void> {
     return;
   }
 
-  try {
-    const alarmSoundUrl = `intent:#Intent;action=android.intent.action.RINGTONE_PICKER;i.android.intent.extra.ringtone.TYPE=4;end`;
-    window.location.href = alarmSoundUrl;
-  } catch (e) {
-    console.warn('[Notifications] Could not open Android alarm sound settings:', e);
+  const attempts: Array<{ action: string; useAppPackage?: boolean; intExtras?: Record<string, number> }> = [
+    { action: 'android.intent.action.RINGTONE_PICKER', intExtras: { 'android.intent.extra.ringtone.TYPE': 4 } },
+    { action: 'android.settings.SOUND_SETTINGS' },
+    { action: 'android.settings.SETTINGS' },
+    { action: 'android.settings.APPLICATION_DETAILS_SETTINGS', useAppPackage: true },
+  ];
+
+  for (const { action, useAppPackage, intExtras } of attempts) {
+    const success = await openAndroidSettingsNative(action, useAppPackage || false, intExtras);
+    if (success) return;
   }
+
+  console.warn('[Notifications] Could not open any Android alarm sound settings');
 }
 
 export async function openAndroidBatteryOptimizationSettings(): Promise<void> {
@@ -582,34 +589,20 @@ export async function openAndroidBatteryOptimizationSettings(): Promise<void> {
     return;
   }
 
-  const tryIntent = (intentUrl: string): boolean => {
-    try {
-      window.location.href = intentUrl;
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  const attempts = [
+    { action: 'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS', useAppPackage: true },
+    { action: 'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS' },
+    { action: 'android.settings.BATTERY_SAVER_SETTINGS' },
+    { action: 'android.settings.APPLICATION_DETAILS_SETTINGS', useAppPackage: true },
+    { action: 'android.settings.SETTINGS' },
+  ];
 
-  try {
-    const { App } = await import('@capacitor/app');
-    const appInfo = await App.getInfo();
-    const pkg = appInfo.id;
-
-    const intents = [
-      `intent:#Intent;action=android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;data=package:${pkg};end`,
-      `intent:#Intent;action=android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS;end`,
-      `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${pkg};end`,
-      `intent:#Intent;action=android.settings.BATTERY_SAVER_SETTINGS;end`,
-      `intent:#Intent;action=android.settings.SETTINGS;end`,
-    ];
-
-    for (const url of intents) {
-      if (tryIntent(url)) return;
-    }
-  } catch (e) {
-    console.warn('[Notifications] Could not open battery optimization settings:', e);
+  for (const { action, useAppPackage } of attempts) {
+    const success = await openAndroidSettingsNative(action, useAppPackage || false);
+    if (success) return;
   }
+
+  console.warn('[Notifications] Could not open any battery optimization settings');
 }
 
 export function isAndroidPlatform(): boolean {

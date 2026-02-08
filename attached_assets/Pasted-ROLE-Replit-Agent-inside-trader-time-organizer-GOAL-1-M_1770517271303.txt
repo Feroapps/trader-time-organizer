@@ -1,0 +1,61 @@
+ROLE: Replit Agent inside trader-time-organizer.
+GOAL: (1) Move the two Android settings buttons from the Alert Sound library modal/page into Settings screen, and (2) fix them so they actually open Android settings on Capacitor Android.
+SAFETY: This change MUST NOT affect alarm scheduling, weekly/monthly repeats, notifications, or any alarm logic.
+
+NON-NEGOTIABLE CONSTRAINTS:
+- Do NOT refactor unrelated code.
+- Do NOT modify any alarm scheduling code paths (scheduleAlarm, cancelAlarm, rescheduleAllAlarms, getNextOccurrence, etc.).
+- Only touch code needed for (a) button placement and (b) opening Android settings.
+- Keep button labels exactly:
+  1) "Open Android Alarm Sound Settings"
+  2) "Open Battery Optimization Settings"
+
+TASK A — Implement a native Android settings opener (minimal):
+1) File: android/app/src/main/java/com/feroapps/tradertime/UserAlarmPlugin.java
+Add ONE new @PluginMethod named openAndroidSettings that:
+- reads "action" (string, required)
+- reads "useAppPackage" (boolean, optional, default false)
+- creates Intent intent = new Intent(action)
+- if useAppPackage == true: intent.setData(Uri.fromParts("package", context.getPackageName(), null))
+- intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+- context.startActivity(intent)
+- returns { success: true } or { success: false, error: "..."} without throwing
+IMPORTANT: Do not modify existing methods.
+
+TASK B — Fix JS side (stop using intent: URLs):
+1) File: client/src/utils/nativeNotifications.ts
+Replace the current implementations of:
+- openAndroidAlarmSoundSettings()
+- openAndroidBatteryOptimizationSettings()
+so they DO NOT use window.location.href or intent:#Intent.
+Instead, call the new plugin method via registerPlugin('UserAlarmPlugin') and try actions with fallbacks:
+
+For Alarm Sound button try in this order:
+1) android.settings.SOUND_SETTINGS
+2) android.settings.SETTINGS
+3) android.settings.APPLICATION_DETAILS_SETTINGS (useAppPackage: true)
+
+For Battery Optimization button try in this order:
+1) android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+2) android.settings.BATTERY_SAVER_SETTINGS
+3) android.settings.APPLICATION_DETAILS_SETTINGS (useAppPackage: true)
+4) android.settings.SETTINGS
+
+Implementation rules:
+- Add a helper openAction(action, useAppPackage=false) that returns boolean success.
+- If not Android native, do nothing (or log warn).
+- No other functions changed.
+
+TASK C — Move buttons into Settings screen UI:
+1) File: client/src/screens/Settings.tsx
+Ensure BOTH buttons are rendered in Settings screen (not only inside the sound library UI).
+Place them under the "Alert Sound" section (below the Alert Sound card/list item is fine).
+Use the same onClick handlers that call:
+- openAndroidAlarmSoundSettings()
+- openAndroidBatteryOptimizationSettings()
+Remove/disable them from the sound library UI if they currently exist there so they appear ONLY in Settings screen.
+
+DELIVERABLE:
+- Provide the exact final code blocks you changed in each file (UserAlarmPlugin.java, nativeNotifications.ts, Settings.tsx).
+- Confirm no other files were modified.
+- Mention the exact new method signature and where it is used.

@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
@@ -226,6 +227,50 @@ public class UserAlarmPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("canSchedule", canSchedule);
         call.resolve(result);
+    }
+
+    @PluginMethod
+    public void openAndroidSettings(PluginCall call) {
+        String action = call.getString("action");
+        Boolean useAppPackage = call.getBoolean("useAppPackage", false);
+
+        if (action == null || action.isEmpty()) {
+            JSObject result = new JSObject();
+            result.put("success", false);
+            result.put("error", "Missing action");
+            call.resolve(result);
+            return;
+        }
+
+        try {
+            Context context = getContext();
+            Intent intent = new Intent(action);
+            if (Boolean.TRUE.equals(useAppPackage)) {
+                intent.setData(Uri.fromParts("package", context.getPackageName(), null));
+            }
+
+            JSObject intExtras = call.getObject("intExtras");
+            if (intExtras != null) {
+                java.util.Iterator<String> keys = intExtras.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    intent.putExtra(key, intExtras.getInt(key));
+                }
+            }
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+
+            JSObject result = new JSObject();
+            result.put("success", true);
+            call.resolve(result);
+        } catch (Exception e) {
+            Log.w(TAG, "openAndroidSettings failed for action: " + action, e);
+            JSObject result = new JSObject();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            call.resolve(result);
+        }
     }
 
     private void saveAlarmToPrefs(Context context, String alarmId, String label, long triggerTimeMs, String soundId) {

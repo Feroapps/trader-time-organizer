@@ -13,6 +13,8 @@ interface UserAlarmPlugin {
   stopCurrentAlarm(): Promise<{ success: boolean }>;
   
   canScheduleExactAlarms(): Promise<{ canSchedule: boolean }>;
+
+  openAndroidSettings(options: { action: string; useAppPackage?: boolean; intExtras?: Record<string, number> }): Promise<{ success: boolean; error?: string }>;
 }
 
 const UserAlarm = registerPlugin<UserAlarmPlugin>('UserAlarm');
@@ -108,6 +110,20 @@ export async function canScheduleExactAlarmsNative(): Promise<boolean> {
     return result.canSchedule;
   } catch (e) {
     console.error('[UserAlarm] Failed to check exact alarm permission:', e);
+    return false;
+  }
+}
+
+export async function openAndroidSettingsNative(action: string, useAppPackage: boolean = false, intExtras?: Record<string, number>): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+    return false;
+  }
+
+  try {
+    const result = await UserAlarm.openAndroidSettings({ action, useAppPackage, intExtras });
+    return result.success;
+  } catch (e) {
+    console.warn(`[UserAlarm] openAndroidSettings failed for action: ${action}`, e);
     return false;
   }
 }
