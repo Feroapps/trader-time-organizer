@@ -1,0 +1,48 @@
+ROLE: You are Replit Agent working inside the existing trader-time-organizer codebase.
+GOAL: Diagnose why the two buttons in the Alert Sound / sound library UI do not open any Android settings, WITHOUT modifying any code.
+
+CONSTRAINTS:
+- Do NOT edit, add, or delete any files.
+- Do NOT run formatting.
+- Do NOT refactor.
+- Only inspect and report.
+- Output MUST be a diagnostic report with exact file paths, function names, and the onClick/handler chain.
+
+TASKS:
+1) Locate the two buttons by their visible labels (or closest matches):
+   - "Open Android Alarm Sound Settings"
+   - "Open Battery Optimization Settings"
+   If labels differ, report the exact current labels found.
+
+2) For each button, trace the full execution path:
+   UI component -> onClick handler -> any helper function -> any Capacitor/Android bridge call -> final platform action (intent / openAppSettings / Browser.open / window.open).
+   Provide:
+   - file path(s)
+   - line numbers (approx ok)
+   - exact function names
+   - any conditions/guards (platform checks, isNative checks, feature flags, disabled state, early returns)
+
+3) Determine why they "do nothing" on Android:
+   Check and report any of these causes:
+   - handler not wired (onClick missing, wrong prop, wrong component)
+   - handler runs but exits early (platform guard, permission guard, try/catch swallowing)
+   - call uses web-only method (window.open) inside WebView
+   - uses Browser.open with non-http URL
+   - uses AppLauncher/App.openAppSettings incorrectly or not installed/imported
+   - calls a missing native plugin or wrong plugin name
+   - runtime error thrown (silent) — search for console.error/logcat hints in code
+   - buttons are disabled/covered by overlay/scroll container (pointer-events none)
+
+4) Provide a verification checklist WITHOUT code changes:
+   - exact place(s) to add temporary logs (but do not add them)
+   - how to confirm handler is firing (where to look in console/logcat)
+   - what the expected platform API should be for Android settings (Intent vs App.openAppSettings)
+
+DELIVERABLE:
+Return a structured report:
+
+A) Where the buttons are defined (paths + snippet references)
+B) Click-path trace for Button #1
+C) Click-path trace for Button #2
+D) Most likely root cause(s) ranked (with evidence)
+E) Minimal fix options (DESCRIBE ONLY, do not apply)
